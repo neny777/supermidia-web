@@ -1,0 +1,36 @@
+{
+  "name": "supermidia",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/source-sans-3": "^5.1.0",
+    "@vee-validate/rules": "^4.15.0",
+    "@vee-validate/yup": "^4.15.0",
+    "axios": "^1.7.9",
+    "bootstrap-icons": "^1.11.3",
+    "datatables.net-bs5": "^2.1.8",
+    "datatables.net-buttons": "^3.2.0",
+    "datatables.net-vue3": "^3.0.3",
+    "jwt-decode": "^4.0.0",
+    "lodash": "^4.17.21",
+    "overlayscrollbars": "^2.10.1",
+    "pinia": "^2.3.0",
+    "v-money3": "^3.24.1",
+    "vee-validate": "^4.15.0",
+    "vue": "^3.5.13",
+    "vue-axios": "^3.5.2",
+    "vue-router": "^4.5.0",
+    "vue-the-mask": "^0.11.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.5",
+    "vite-plugin-vue-devtools": "^7.6.8"
+  }
+}

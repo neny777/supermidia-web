@@ -1,0 +1,160 @@
+/* <!--begin::Adjust Buttons size-->*/
+.button-small {
+    width: 120px;
+}
+
+.button-medium {
+    width: 200px;
+}
+
+/* <!--end::Adjust Buttons size-->*/
+.login-page,
+.register-page,
+.error-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-box,
+.register-box,
+.error-box {
+    width: 25em;
+    box-shadow: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 576px) {
+
+    .login-box,
+    .register-box,
+    .error-box {
+        width: 90%;
+        margin-top: 0.5rem;
+    }
+}
+
+.login-box .card,
+.register-box .card,
+.error-box .card {
+    margin-bottom: 0;
+}
+
+.login-card-body,
+.register-card-body,
+.error-card-body {
+    padding: 20px;
+    color: var(--bs-secondary-color);
+    background-color: var(--bs-body-bg);
+    border-top: 0;
+}
+
+.login-box-msg,
+.register-box-msg,
+.error-box-msg {
+    padding: 0 20px 20px;
+    margin: 0;
+    text-align: center;
+}
+
+
+
+
+/* <!--begin::Adjust DataTable-->*/
+div.dt-container div.dt-length label {
+    font-weight: normal;
+    text-align: left;
+    white-space: nowrap;
+}
+
+div.dt-container div.dt-length select {
+    width: auto;
+    display: inline-block;
+    margin-right: 0.5em;
+}
+
+div.dt-container div.dt-search {
+    text-align: right;
+    width: 45em !important;
+}
+
+div.dt-container div.dt-search label {
+    font-weight: normal;
+    white-space: nowrap;
+    text-align: left;
+    width: 5em;
+}
+
+div.dt-container div.dt-search input {
+    margin-left: 0.5em;
+    display: inline-block;
+    width: 40em;
+}
+
+@media screen and (max-width: 767px) {
+
+    div.dt-container div.dt-search,
+    div.dt-container div.dt-search label,
+    div.dt-container div.dt-search input {
+        width: auto !important;
+    }
+}
+
+.super {
+    font-family: Arial, sans-serif;
+    font-size: 1.5em;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: bolder;
+}
+
+.midia {
+    font-family: Arial, sans-serif;
+    font-size: 1.5em;
+    font-style: italic;
+    font-variant: normal;
+    font-weight: normal;
+}
+
+.supermidia-logo {
+    width: 2.5em;
+    margin-right: 0.3em;
+}
+
+.supermidia-logo-bar {
+    width: 1.5em;
+    margin-right: 0.3em;
+    text-decoration: none;
+}
+
+.super-bar {
+    font-family: Arial, sans-serif;
+    font-size: 1em;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: bolder;
+}
+
+.midia-bar {
+    font-family: Arial, sans-serif;
+    font-size: 1em;
+    font-style: italic;
+    font-variant: normal;
+    font-weight: normal;
+}
+
+.super-bar a {
+    text-decoration: none;
+}
+
+.midia-bar a {
+    text-decoration: none;
+}
+
+.icon-error {
+    color: red;
+    margin-right: 0.5em;
+}
+
+/* <!--end::Adjust DataTable-->*/
