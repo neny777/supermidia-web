@@ -29,6 +29,8 @@ const ProdutoMateriaView = () => import('@/views/ProdutoMateriaView.vue');
 const ProdutoServicoView = () => import('@/views/ProdutoServicoView.vue');
 const ProdutoMateriaParametroView = () => import('@/views/ProdutoMateriaParametroView.vue');
 const ProdutoServicoParametroView = () => import('@/views/ProdutoServicoParametroView.vue');
+const VendasView = () => import('@/views/VendasView.vue');
+const VendaView = () => import('@/views/VendaView.vue');
 const ServerErrorView = () => import('@/views/ServerErrorView.vue');
 const PasswordRecoverEmailView = () => import('@/views/PasswordRecoverEmailView.vue');
 const PasswordRecoverCodeView = () => import('@/views/PasswordRecoverCodeView.vue');
@@ -266,6 +268,27 @@ const router = createRouter({
       path: '/produto/:produtoId/servico/:itemIndex/parametro/:parametroIndex',
       name: 'produto-servico-parametro-editar',
       component: ProdutoServicoParametroView,
+      props: true,
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/orcamentos',
+      name: 'orcamentos',
+      component: VendasView,
+      props: { status: 'ORCAMENTO' },
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/ordens-servico',
+      name: 'ordens-servico',
+      component: VendasView,
+      props: { status: 'ORDEM_SERVICO' },
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/venda/:vendaId?',
+      name: 'venda',
+      component: VendaView,
       props: true,
       meta: { layout: 'DefaultLayout' }
     },

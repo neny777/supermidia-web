@@ -37,6 +37,14 @@ const menuConfig = [
             },
         ],
     },
+    {
+        name: "Vendas",
+        icon: "bi bi-cart",
+        children: [
+            { name: "Orçamentos", path: "/orcamentos", permission: "vendas", icon: "bi bi-file-earmark-text" },
+            { name: "Ordens de Serviço", path: "/ordens-servico", permission: "vendas", icon: "bi bi-clipboard-check" },
+        ],
+    },
 ];
 
 // Função recursiva para filtrar menus
