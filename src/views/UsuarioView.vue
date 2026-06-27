@@ -18,6 +18,7 @@ const allowedPermissions = new Set([
   'grupos',
   'servicos',
   'produtos',
+  'vendas',
 ]);
 
 function normalizePermissions(permissions) {
@@ -295,7 +296,18 @@ const onSubmit = async (values, { resetForm }) => {
                         </div>
                       </div><!--end::Col-->
 
-
+                      <!--begin::Col-->
+                      <div class="col-lg-6 px-3">
+                        <div class="card">
+                          <div class="card-body">
+                            <Field id="vendas" name="permissoes" type="checkbox" value="vendas"
+                              class="form-check-input mx-2" />
+                            <label class="form-check-label mx-2" for="vendas">
+                              Vendas
+                            </label>
+                          </div>
+                        </div>
+                      </div><!--end::Col-->
 
                     </div> <!--end::Row-->
                   </div> <!--end::Body--> <!--begin::Footer-->
