@@ -21,14 +21,6 @@ const isEditMode = ref(!!route.params.produtoId);
 
 const schema = yup.object({
     nome: yup.string().required('Informe o nome do produto.').max(140, 'Máximo de 140 caracteres.'),
-    markupAtacado: yup.number()
-        .typeError('Informe um markup válido.')
-        .required('Informe o markup de atacado.')
-        .min(0, 'O markup não pode ser negativo.'),
-    markupVarejo: yup.number()
-        .typeError('Informe um markup válido.')
-        .required('Informe o markup de varejo.')
-        .min(0, 'O markup não pode ser negativo.'),
 });
 
 const state = reactive({
@@ -46,8 +38,6 @@ const hasChanges = (values) => JSON.stringify(values) !== JSON.stringify(origina
 const getErrorMessage = (error, fallback) => error?.response?.data?.message || fallback;
 const buildSnapshot = (produto) => ({
     nome: produto.nome ?? '',
-    markupAtacado: produto.markupAtacado ?? '',
-    markupVarejo: produto.markupVarejo ?? '',
 });
 
 const removerMateria = (index) => {
@@ -135,8 +125,6 @@ const onSubmit = async (values) => {
                     const payload = normalizeProdutoPayload({
                         ...state.produto,
                         nome: values.nome,
-                        markupAtacado: values.markupAtacado,
-                        markupVarejo: values.markupVarejo,
                     });
                     await axiosInstance.put(`/produtos/${route.params.produtoId}`, payload);
                     showToast('sucesso', 'Produto editado com sucesso!');
@@ -155,8 +143,6 @@ const onSubmit = async (values) => {
         const response = await axiosInstance.post('/produtos', normalizeProdutoPayload({
             ...createProduto(),
             nome: values.nome,
-            markupAtacado: values.markupAtacado,
-            markupVarejo: values.markupVarejo,
         }));
         showToast('sucesso', 'Produto criado com sucesso!');
         router.push({ name: 'produto', params: { produtoId: response.data.id } });
@@ -214,7 +200,7 @@ const onSubmit = async (values) => {
                                     v-if="state.formReady"
                                     @submit="onSubmit"
                                     :validation-schema="schema"
-                                    :initial-values="{ nome: state.produto.nome, markupAtacado: state.produto.markupAtacado, markupVarejo: state.produto.markupVarejo }"
+                                    :initial-values="{ nome: state.produto.nome }"
                                 >
                                     <div class="card-body my-4">
                                         <div class="row g-3 p-3">
@@ -224,24 +210,6 @@ const onSubmit = async (values) => {
                                                     <div class="col-lg-9">
                                                         <Field id="nome" name="nome" type="text" class="form-control" />
                                                         <ErrorMessage name="nome" class="text-danger d-block mt-1" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-6">
-                                                <div class="row p-2">
-                                                    <label for="markupAtacado" class="col-form-label col-lg-3">Markup Atacado (%)</label>
-                                                    <div class="col-lg-9">
-                                                        <Field id="markupAtacado" name="markupAtacado" type="number" step="0.01" min="0" class="form-control" />
-                                                        <ErrorMessage name="markupAtacado" class="text-danger d-block mt-1" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-6">
-                                                <div class="row p-2">
-                                                    <label for="markupVarejo" class="col-form-label col-lg-3">Markup Varejo (%)</label>
-                                                    <div class="col-lg-9">
-                                                        <Field id="markupVarejo" name="markupVarejo" type="number" step="0.01" min="0" class="form-control" />
-                                                        <ErrorMessage name="markupVarejo" class="text-danger d-block mt-1" />
                                                     </div>
                                                 </div>
                                             </div>

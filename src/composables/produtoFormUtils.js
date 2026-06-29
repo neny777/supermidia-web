@@ -31,9 +31,7 @@ export const parametrosObrigatoriosPorTipo = {
 export const createParametro = () => ({ codigo: '', valor: '' });
 export const createMateriaItem = () => ({ materiaId: '', calculoId: '', parametros: [] });
 export const createServicoItem = () => ({ servicoId: '', calculoId: '', parametros: [] });
-export const createProduto = () => ({ nome: '', markupAtacado: '', markupVarejo: '', materiasCalculo: [], servicosCalculo: [] });
-
-const toNumberOrNull = (valor) => (valor === '' || valor == null ? null : Number(valor));
+export const createProduto = () => ({ nome: '', materiasCalculo: [], servicosCalculo: [] });
 
 export const permiteZero = (codigo) => ['ACRESCIMO_ALTURA', 'ACRESCIMO_LARGURA'].includes(codigo);
 
@@ -71,8 +69,6 @@ export const normalizeItems = (items, tipo) => (items || []).map((item) => ({
 
 export const normalizeProdutoPayload = (values) => ({
   nome: values.nome ?? '',
-  markupAtacado: toNumberOrNull(values.markupAtacado),
-  markupVarejo: toNumberOrNull(values.markupVarejo),
   materiasCalculo: normalizeItems(values.materiasCalculo, 'materia'),
   servicosCalculo: normalizeItems(values.servicosCalculo, 'servico'),
 });
