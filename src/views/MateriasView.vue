@@ -118,6 +118,7 @@ onMounted(async () => {
                                                         <tr>
                                                             <th class="d-none">id</th>
                                                             <th>Nome</th>
+                                                            <th>Grupo</th>
                                                             <th>Unidade</th>
                                                             <th>Preço</th>
                                                             <th class="text-center">Ações</th>
@@ -127,6 +128,7 @@ onMounted(async () => {
                                                         <tr v-for="materia in state.materias" :key="materia.id">
                                                             <td class="d-none">{{ materia.id }}</td>
                                                             <td>{{ materia.nome }}</td>
+                                                            <td>{{ materia.grupo || '-' }}</td>
                                                             <td>{{ materia.unidade }}</td>
                                                             <td>R$ {{ Number(materia.preco).toFixed(2) }}</td>
                                                             <td class="text-center">
