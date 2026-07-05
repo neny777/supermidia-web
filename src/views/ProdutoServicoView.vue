@@ -9,6 +9,7 @@ import { showToast } from '@/composables/toastUtils';
 import {
     buildItemSchema,
     createServicoItem,
+    createVinculo,
     metadataParametro,
     normalizeProdutoPayload,
     syncRequiredParametros,
@@ -17,6 +18,34 @@ import {
 const route = useRoute();
 const router = useRouter();
 const isEditMode = computed(() => route.params.itemIndex !== undefined);
+
+// Contexto: componente BASE do produto ou componente de uma OPÇÃO de grupo
+const grupoIndex = route.params.grupoIndex !== undefined ? Number(route.params.grupoIndex) : null;
+const opcaoIndex = route.params.opcaoIndex !== undefined ? Number(route.params.opcaoIndex) : null;
+const isOpcaoContext = grupoIndex !== null;
+
+const getLista = (produto) => (isOpcaoContext
+    ? produto?.gruposOpcoes?.[grupoIndex]?.opcoes?.[opcaoIndex]?.servicosCalculo
+    : produto?.servicosCalculo) || [];
+
+const voltar = () => {
+    if (isOpcaoContext) {
+        router.push({ name: 'produto-grupo-editar', params: { produtoId: route.params.produtoId, grupoIndex } });
+        return;
+    }
+    router.push({ name: 'produto', params: { produtoId: route.params.produtoId } });
+};
+
+const adicionarVinculo = (values, setFieldValue, parametroIndex) => {
+    const parametros = JSON.parse(JSON.stringify(values.parametros || []));
+    parametros[parametroIndex].vinculos = [...(parametros[parametroIndex].vinculos || []), createVinculo()];
+    setFieldValue('parametros', parametros);
+};
+const removerVinculo = (values, setFieldValue, parametroIndex, vinculoIndex) => {
+    const parametros = JSON.parse(JSON.stringify(values.parametros || []));
+    parametros[parametroIndex].vinculos.splice(vinculoIndex, 1);
+    setFieldValue('parametros', parametros);
+};
 
 const state = reactive({
     produto: null,
@@ -65,10 +94,10 @@ const loadForm = async () => {
         state.calculos = calculosResponse.data;
 
         if (isEditMode.value) {
-            const item = state.produto.servicosCalculo?.[Number(route.params.itemIndex)];
+            const item = getLista(state.produto)[Number(route.params.itemIndex)];
             if (!item) {
                 showToast('erro', 'Serviço do produto não encontrado.');
-                router.push({ name: 'produto', params: { produtoId: route.params.produtoId } });
+                voltar();
                 return;
             }
             state.item = {
@@ -111,45 +140,46 @@ const onSubmit = async (values) => {
 
         const salvar = async () => {
             state.isProcessing = true;
-            const servicosCalculo = [...(state.produto.servicosCalculo || [])];
-            if (isEditMode.value) {
-                servicosCalculo[Number(route.params.itemIndex)] = {
-                    ...servicosCalculo[Number(route.params.itemIndex)],
-                    servicoId: values.servicoId,
-                    calculoId: values.calculoId,
-                    parametros,
-                };
+            const produtoAtualizado = JSON.parse(JSON.stringify(state.produto));
+            let lista;
+            if (isOpcaoContext) {
+                const opcao = produtoAtualizado.gruposOpcoes[grupoIndex].opcoes[opcaoIndex];
+                opcao.servicosCalculo = opcao.servicosCalculo || [];
+                lista = opcao.servicosCalculo;
             } else {
-                servicosCalculo.push({
-                    servicoId: values.servicoId,
-                    calculoId: values.calculoId,
-                    parametros,
-                });
+                produtoAtualizado.servicosCalculo = produtoAtualizado.servicosCalculo || [];
+                lista = produtoAtualizado.servicosCalculo;
             }
 
-            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`, normalizeProdutoPayload({
-                ...state.produto,
-                servicosCalculo,
-            }));
+            const novoItem = { servicoId: values.servicoId, calculoId: values.calculoId, parametros };
+            if (isEditMode.value) {
+                lista[Number(route.params.itemIndex)] = { ...lista[Number(route.params.itemIndex)], ...novoItem };
+            } else {
+                lista.push(novoItem);
+            }
+
+            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`,
+                normalizeProdutoPayload(produtoAtualizado));
 
             showToast('sucesso', isEditMode.value ? 'Serviço do produto editado com sucesso!' : 'Serviço do produto criado com sucesso!');
+            const listaSalva = getLista(response.data);
             if (isEditMode.value) {
-                router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex } });
                 state.produto = response.data;
+                const itemSalvo = listaSalva[Number(route.params.itemIndex)];
                 state.item = {
-                    ...response.data.servicosCalculo[Number(route.params.itemIndex)],
-                    parametros: syncRequiredParametros(
-                        response.data.servicosCalculo[Number(route.params.itemIndex)].calculoId,
-                        state.calculos,
-                        response.data.servicosCalculo[Number(route.params.itemIndex)].parametros,
-                    ),
+                    ...itemSalvo,
+                    parametros: syncRequiredParametros(itemSalvo.calculoId, state.calculos, itemSalvo.parametros),
                 };
                 originalSnapshot.value = snapshotItem(state.item);
                 return;
             }
 
-            const novoIndex = response.data.servicosCalculo.length - 1;
-            router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: novoIndex } });
+            const novoIndex = listaSalva.length - 1;
+            if (isOpcaoContext) {
+                router.push({ name: 'produto-grupo-servico', params: { produtoId: route.params.produtoId, grupoIndex, opcaoIndex, itemIndex: novoIndex } });
+            } else {
+                router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: novoIndex } });
+            }
         };
 
         if (isEditMode.value) {
@@ -277,6 +307,29 @@ const onSubmit = async (values) => {
                                                                         </div>
                                                                         <Field :name="`parametros[${parametroIndex}].codigo`" type="hidden" :value="parametro.codigo" />
                                                                         <ErrorMessage :name="`parametros[${parametroIndex}].valor`" class="text-danger d-block mt-1" />
+
+                                                                        <!-- Vínculos: soma medidas do orçamento ao parâmetro -->
+                                                                        <div v-for="(vinculo, vinculoIndex) in (parametro.vinculos || [])" :key="vinculoIndex"
+                                                                            class="input-group input-group-sm mt-1">
+                                                                            <span class="input-group-text">+ medida</span>
+                                                                            <Field :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].medidaNome`"
+                                                                                as="select" class="form-select">
+                                                                                <option value="">Selecione</option>
+                                                                                <option v-for="medida in state.produto?.medidas || []" :key="medida.nome"
+                                                                                    :value="medida.nome">{{ medida.nome }}</option>
+                                                                            </Field>
+                                                                            <span class="input-group-text">×</span>
+                                                                            <Field :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].multiplicador`"
+                                                                                type="number" step="0.0001" class="form-control" />
+                                                                            <button type="button" class="btn btn-outline-danger"
+                                                                                @click="removerVinculo(values, setFieldValue, parametroIndex, vinculoIndex)">
+                                                                                <i class="bi bi-x"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                        <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
+                                                                            @click="adicionarVinculo(values, setFieldValue, parametroIndex)">
+                                                                            <i class="bi bi-link-45deg"></i> Vincular medida
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -292,7 +345,7 @@ const onSubmit = async (values) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="router.push({ name: 'produto', params: { produtoId: route.params.produtoId } })">
+                                        <button type="button" class="btn btn-primary button-medium m-2" @click="voltar()">
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

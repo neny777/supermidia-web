@@ -29,6 +29,7 @@ const ProdutoMateriaView = () => import('@/views/ProdutoMateriaView.vue');
 const ProdutoServicoView = () => import('@/views/ProdutoServicoView.vue');
 const ProdutoMateriaParametroView = () => import('@/views/ProdutoMateriaParametroView.vue');
 const ProdutoServicoParametroView = () => import('@/views/ProdutoServicoParametroView.vue');
+const ProdutoGrupoOpcaoView = () => import('@/views/ProdutoGrupoOpcaoView.vue');
 const VendasView = () => import('@/views/VendasView.vue');
 const VendaView = () => import('@/views/VendaView.vue');
 const ServerErrorView = () => import('@/views/ServerErrorView.vue');
@@ -268,6 +269,34 @@ const router = createRouter({
       path: '/produto/:produtoId/servico/:itemIndex/parametro/:parametroIndex',
       name: 'produto-servico-parametro-editar',
       component: ProdutoServicoParametroView,
+      props: true,
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/produto/:produtoId/grupo',
+      name: 'produto-grupo',
+      component: ProdutoGrupoOpcaoView,
+      props: true,
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/produto/:produtoId/grupo/:grupoIndex',
+      name: 'produto-grupo-editar',
+      component: ProdutoGrupoOpcaoView,
+      props: true,
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/produto/:produtoId/grupo/:grupoIndex/opcao/:opcaoIndex/materia/:itemIndex?',
+      name: 'produto-grupo-materia',
+      component: ProdutoMateriaView,
+      props: true,
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/produto/:produtoId/grupo/:grupoIndex/opcao/:opcaoIndex/servico/:itemIndex?',
+      name: 'produto-grupo-servico',
+      component: ProdutoServicoView,
       props: true,
       meta: { layout: 'DefaultLayout' }
     },

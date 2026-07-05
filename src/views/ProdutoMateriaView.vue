@@ -9,6 +9,7 @@ import { showToast } from '@/composables/toastUtils';
 import {
     buildItemSchema,
     createMateriaItem,
+    createVinculo,
     normalizeProdutoPayload,
     metadataParametro,
     syncRequiredParametros,
@@ -17,6 +18,23 @@ import {
 const route = useRoute();
 const router = useRouter();
 const isEditMode = ref(route.params.itemIndex !== undefined);
+
+// Contexto: componente BASE do produto ou componente de uma OPÇÃO de grupo
+const grupoIndex = route.params.grupoIndex !== undefined ? Number(route.params.grupoIndex) : null;
+const opcaoIndex = route.params.opcaoIndex !== undefined ? Number(route.params.opcaoIndex) : null;
+const isOpcaoContext = grupoIndex !== null;
+
+const getLista = (produto) => (isOpcaoContext
+    ? produto?.gruposOpcoes?.[grupoIndex]?.opcoes?.[opcaoIndex]?.materiasCalculo
+    : produto?.materiasCalculo) || [];
+
+const voltar = () => {
+    if (isOpcaoContext) {
+        router.push({ name: 'produto-grupo-editar', params: { produtoId: route.params.produtoId, grupoIndex } });
+        return;
+    }
+    router.push({ name: 'produto', params: { produtoId: route.params.produtoId } });
+};
 
 const state = reactive({
     produto: null,
@@ -42,6 +60,17 @@ const normalizeParametrosForSave = (values) => syncRequiredParametros(values.cal
         valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
         vinculos: parametro.vinculos || [],
     }));
+
+const adicionarVinculo = (values, setFieldValue, parametroIndex) => {
+    const parametros = JSON.parse(JSON.stringify(values.parametros || []));
+    parametros[parametroIndex].vinculos = [...(parametros[parametroIndex].vinculos || []), createVinculo()];
+    setFieldValue('parametros', parametros);
+};
+const removerVinculo = (values, setFieldValue, parametroIndex, vinculoIndex) => {
+    const parametros = JSON.parse(JSON.stringify(values.parametros || []));
+    parametros[parametroIndex].vinculos.splice(vinculoIndex, 1);
+    setFieldValue('parametros', parametros);
+};
 
 const snapshotItem = (item) => JSON.stringify({
     materiaId: item.materiaId || '',
@@ -70,10 +99,10 @@ onMounted(async () => {
         state.grupos = gruposResponse.data;
 
         if (isEditMode.value) {
-            const item = state.produto.materiasCalculo?.[Number(route.params.itemIndex)];
+            const item = getLista(state.produto)[Number(route.params.itemIndex)];
             if (!item) {
                 showToast('erro', 'Matéria do produto não encontrada.');
-                router.push({ name: 'produto', params: { produtoId: route.params.produtoId } });
+                voltar();
                 return;
             }
             state.item = {
@@ -110,36 +139,34 @@ const onSubmit = async (values) => {
 
         const salvar = async () => {
             state.isProcessing = true;
-            const materiasCalculo = [...(state.produto.materiasCalculo || [])];
-            const materiaId = origem.value === 'fixa' ? values.materiaId : '';
-            const grupoSlot = origem.value === 'slot' ? values.grupoSlot : '';
-            if (isEditMode.value) {
-                materiasCalculo[Number(route.params.itemIndex)] = {
-                    ...materiasCalculo[Number(route.params.itemIndex)],
-                    materiaId,
-                    grupoSlot,
-                    calculoId: values.calculoId,
-                    parametros,
-                };
+            const produtoAtualizado = JSON.parse(JSON.stringify(state.produto));
+            let lista;
+            if (isOpcaoContext) {
+                const opcao = produtoAtualizado.gruposOpcoes[grupoIndex].opcoes[opcaoIndex];
+                opcao.materiasCalculo = opcao.materiasCalculo || [];
+                lista = opcao.materiasCalculo;
             } else {
-                materiasCalculo.push({
-                    materiaId,
-                    grupoSlot,
-                    calculoId: values.calculoId,
-                    parametros,
-                });
+                produtoAtualizado.materiasCalculo = produtoAtualizado.materiasCalculo || [];
+                lista = produtoAtualizado.materiasCalculo;
             }
 
-            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`, normalizeProdutoPayload({
-                ...state.produto,
-                materiasCalculo,
-            }));
+            const materiaId = origem.value === 'fixa' ? values.materiaId : '';
+            const grupoSlot = origem.value === 'slot' ? values.grupoSlot : '';
+            const novoItem = { materiaId, grupoSlot, calculoId: values.calculoId, parametros };
+            if (isEditMode.value) {
+                lista[Number(route.params.itemIndex)] = { ...lista[Number(route.params.itemIndex)], ...novoItem };
+            } else {
+                lista.push(novoItem);
+            }
+
+            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`,
+                normalizeProdutoPayload(produtoAtualizado));
 
             showToast('sucesso', isEditMode.value ? 'Matéria do produto editada com sucesso!' : 'Matéria do produto criada com sucesso!');
+            const listaSalva = getLista(response.data);
             if (isEditMode.value) {
-                router.push({ name: 'produto-materia-editar', params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex } });
                 state.produto = response.data;
-                const itemSalvo = response.data.materiasCalculo[Number(route.params.itemIndex)];
+                const itemSalvo = listaSalva[Number(route.params.itemIndex)];
                 state.item = {
                     ...itemSalvo,
                     materiaId: itemSalvo.materiaId || '',
@@ -151,8 +178,12 @@ const onSubmit = async (values) => {
                 return;
             }
 
-            const novoIndex = response.data.materiasCalculo.length - 1;
-            router.push({ name: 'produto-materia-editar', params: { produtoId: route.params.produtoId, itemIndex: novoIndex } });
+            const novoIndex = listaSalva.length - 1;
+            if (isOpcaoContext) {
+                router.push({ name: 'produto-grupo-materia', params: { produtoId: route.params.produtoId, grupoIndex, opcaoIndex, itemIndex: novoIndex } });
+            } else {
+                router.push({ name: 'produto-materia-editar', params: { produtoId: route.params.produtoId, itemIndex: novoIndex } });
+            }
         };
 
         if (isEditMode.value) {
@@ -301,6 +332,29 @@ const onSubmit = async (values) => {
                                                                         </div>
                                                                         <Field :name="`parametros[${parametroIndex}].codigo`" type="hidden" :value="parametro.codigo" />
                                                                         <ErrorMessage :name="`parametros[${parametroIndex}].valor`" class="text-danger d-block mt-1" />
+
+                                                                        <!-- Vínculos: soma medidas do orçamento ao parâmetro (ex.: BORDA ×2) -->
+                                                                        <div v-for="(vinculo, vinculoIndex) in (parametro.vinculos || [])" :key="vinculoIndex"
+                                                                            class="input-group input-group-sm mt-1">
+                                                                            <span class="input-group-text">+ medida</span>
+                                                                            <Field :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].medidaNome`"
+                                                                                as="select" class="form-select">
+                                                                                <option value="">Selecione</option>
+                                                                                <option v-for="medida in state.produto?.medidas || []" :key="medida.nome"
+                                                                                    :value="medida.nome">{{ medida.nome }}</option>
+                                                                            </Field>
+                                                                            <span class="input-group-text">×</span>
+                                                                            <Field :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].multiplicador`"
+                                                                                type="number" step="0.0001" class="form-control" />
+                                                                            <button type="button" class="btn btn-outline-danger"
+                                                                                @click="removerVinculo(values, setFieldValue, parametroIndex, vinculoIndex)">
+                                                                                <i class="bi bi-x"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                        <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
+                                                                            @click="adicionarVinculo(values, setFieldValue, parametroIndex)">
+                                                                            <i class="bi bi-link-45deg"></i> Vincular medida
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -316,7 +370,7 @@ const onSubmit = async (values) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="router.push({ name: 'produto', params: { produtoId: route.params.produtoId } })">
+                                        <button type="button" class="btn btn-primary button-medium m-2" @click="voltar()">
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

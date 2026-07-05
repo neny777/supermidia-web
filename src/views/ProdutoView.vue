@@ -43,6 +43,27 @@ const buildSnapshot = (produto) => ({
 const hasChanges = (values) =>
     JSON.stringify(buildSnapshot({ ...state.produto, nome: values.nome })) !== JSON.stringify(originalSnapshot.value);
 
+const removerGrupo = (index) => {
+    const modal = showModal('Excluir grupo de opções', 'Confirma a exclusão deste grupo de opções do produto?', async () => {
+        try {
+            state.isProcessing = true;
+            const payload = normalizeProdutoPayload({
+                ...state.produto,
+                gruposOpcoes: state.produto.gruposOpcoes.filter((_, itemIndex) => itemIndex !== index),
+            });
+            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`, payload);
+            state.produto = response.data;
+            originalSnapshot.value = buildSnapshot(response.data);
+            showToast('sucesso', 'Grupo de opções excluído com sucesso!');
+        } catch (error) {
+            showToast('erro', getErrorMessage(error, 'Erro ao excluir o grupo de opções.'));
+        } finally {
+            state.isProcessing = false;
+            modal.hide();
+        }
+    });
+};
+
 const adicionarMedida = () => {
     state.produto.medidas = [...(state.produto.medidas || []), createMedida()];
 };
@@ -379,6 +400,66 @@ const onSubmit = async (values) => {
                                                                                 type="button"
                                                                                 class="btn btn-danger btn-sm mx-2"
                                                                                 @click="removerServico(index)"
+                                                                            >
+                                                                                <i class="bi bi-trash"></i>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12 mt-4">
+                                                <div class="row p-2 align-items-center">
+                                                    <div class="col-lg-6">
+                                                        <h6 class="mb-0">Grupos de Opções</h6>
+                                                        <small class="text-muted">Acabamentos e seleções do orçamento (ex.: Ilhós, Recorte).</small>
+                                                    </div>
+                                                    <div class="col-lg-6 text-lg-end mt-2 mt-lg-0">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-primary button-medium"
+                                                            @click="router.push({ name: 'produto-grupo', params: { produtoId: route.params.produtoId } })"
+                                                        >
+                                                            <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="row p-2">
+                                                    <div class="col-12">
+                                                        <div v-if="!state.produto.gruposOpcoes?.length" class="text-muted">
+                                                            Nenhum grupo de opções.
+                                                        </div>
+                                                        <div v-else class="table-responsive">
+                                                            <table class="table table-bordered table-striped mb-0" style="table-layout: fixed;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th style="width: 35%;">Grupo</th>
+                                                                        <th style="width: 35%;">Opções</th>
+                                                                        <th style="width: 15%;">Obrigatório</th>
+                                                                        <th class="text-center" style="width: 15%;">Ações</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr v-for="(grupo, index) in state.produto.gruposOpcoes" :key="index">
+                                                                        <td>{{ grupo.nome }}</td>
+                                                                        <td>{{ (grupo.opcoes || []).map((opcao) => opcao.nome).join(', ') }}</td>
+                                                                        <td>{{ grupo.obrigatorio ? 'Sim' : 'Não' }}</td>
+                                                                        <td class="text-center">
+                                                                            <button
+                                                                                type="button"
+                                                                                class="btn btn-primary btn-sm mx-2"
+                                                                                @click="router.push({ name: 'produto-grupo-editar', params: { produtoId: route.params.produtoId, grupoIndex: index } })"
+                                                                            >
+                                                                                <i class="bi bi-pen"></i>
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                class="btn btn-danger btn-sm mx-2"
+                                                                                @click="removerGrupo(index)"
                                                                             >
                                                                                 <i class="bi bi-trash"></i>
                                                                             </button>

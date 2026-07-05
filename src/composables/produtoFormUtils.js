@@ -33,6 +33,10 @@ export const createParametro = () => ({ codigo: '', valor: '', vinculos: [] });
 export const createMateriaItem = () => ({ materiaId: '', grupoSlot: '', calculoId: '', parametros: [] });
 export const createServicoItem = () => ({ servicoId: '', calculoId: '', parametros: [] });
 export const createMedida = () => ({ nome: '', unidade: '', obrigatoria: false, valorPadrao: '', minimo: '', maximo: '' });
+export const createVinculo = () => ({ medidaNome: '', multiplicador: 1 });
+export const createContribuicao = () => ({ codigo: '', valor: '' });
+export const createOpcao = () => ({ nome: '', materiasCalculo: [], servicosCalculo: [], contribuicoes: [] });
+export const createGrupoOpcao = () => ({ nome: '', obrigatorio: false, opcoes: [] });
 export const createProduto = () => ({ nome: '', medidas: [], materiasCalculo: [], servicosCalculo: [], gruposOpcoes: [] });
 
 const numeroOuNull = (valor) => (valor === '' || valor == null ? null : Number(valor));
