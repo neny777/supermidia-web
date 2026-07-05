@@ -71,9 +71,9 @@ watch(() => props.status, fetchVendas);
                                 <div class="card-title">
                                     <h5>{{ titulo }}</h5>
                                 </div>
-                                <button v-if="isOrcamento" type="button" class="btn btn-primary button-medium float-end"
-                                    @click="router.push({ name: 'venda' })">
-                                    <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo Orçamento
+                                <button type="button" class="btn btn-primary button-medium float-end"
+                                    @click="router.push({ name: 'venda', query: isOrcamento ? {} : { tipo: 'os' } })">
+                                    <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;{{ isOrcamento ? 'Novo Orçamento' : 'Nova Ordem de Serviço' }}
                                 </button>
                             </div>
                             <div class="card-body position-relative">

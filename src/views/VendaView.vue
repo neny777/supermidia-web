@@ -12,8 +12,10 @@ const isDetail = computed(() => !!route.params.vendaId);
 const state = reactive({
     clientes: [],
     produtos: [],
+    materias: [],
     venda: null,
     form: {
+        status: 'ORCAMENTO',
         clienteId: '',
         itens: [novoItem()],
     },
@@ -22,7 +24,15 @@ const state = reactive({
 });
 
 function novoItem() {
-    return { produtoId: '', altura: '', largura: '', quantidade: '' };
+    return {
+        produtoId: '',
+        altura: '',
+        largura: '',
+        quantidade: '',
+        medidas: {},        // nome da medida -> valor
+        escolhasMateria: {}, // componenteId (slot) -> materiaId
+        escolhasOpcao: {},   // grupoId -> opcaoId ('' = nenhum)
+    };
 }
 
 const getErrorMessage = (error, fallback) => error?.response?.data?.message || fallback;
@@ -30,6 +40,29 @@ const formatBRL = (valor) =>
     valor == null ? '-' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatData = (valor) => (valor ? new Date(valor).toLocaleDateString('pt-BR') : '-');
 const nomeCliente = (id) => state.clientes.find((c) => c.id === id)?.nome || '-';
+
+// ---- definição dinâmica do item conforme o produto escolhido ----
+const produtoDe = (item) => state.produtos.find((p) => p.id === item.produtoId) || null;
+const medidasDe = (item) => produtoDe(item)?.medidas || [];
+const slotsDe = (item) => (produtoDe(item)?.materiasCalculo || []).filter((mc) => mc.grupoSlot);
+const gruposDe = (item) => produtoDe(item)?.gruposOpcoes || [];
+const materiasDoGrupo = (grupo) =>
+    state.materias.filter((m) => (m.grupo || '').toUpperCase() === (grupo || '').toUpperCase());
+
+const aoTrocarProduto = (item) => {
+    item.medidas = {};
+    item.escolhasMateria = {};
+    item.escolhasOpcao = {};
+    medidasDe(item).forEach((medida) => {
+        item.medidas[medida.nome] = medida.valorPadrao ?? '';
+    });
+    slotsDe(item).forEach((slot) => {
+        item.escolhasMateria[slot.id] = '';
+    });
+    gruposDe(item).forEach((grupo) => {
+        item.escolhasOpcao[grupo.id] = '';
+    });
+};
 
 const statusLabel = computed(() => {
     switch (state.venda?.status) {
@@ -56,36 +89,73 @@ const removerItem = (index) => {
     }
 };
 
-const salvar = async () => {
+const validarFormulario = () => {
     if (!state.form.clienteId) {
-        showToast('erro', 'Selecione o cliente.');
-        return;
+        return 'Selecione o cliente.';
     }
-    const itensInvalidos = state.form.itens.some(
-        (i) => !i.produtoId || !(Number(i.altura) > 0) || !(Number(i.largura) > 0) || !(Number(i.quantidade) > 0)
-    );
-    if (itensInvalidos) {
-        showToast('erro', 'Preencha produto, altura, largura e quantidade (maiores que zero) em todos os itens.');
+    for (const item of state.form.itens) {
+        if (!item.produtoId) {
+            return 'Selecione o produto em todos os itens.';
+        }
+        if (!(Number(item.altura) > 0) || !(Number(item.largura) > 0) || !(Number(item.quantidade) > 0)) {
+            return 'Preencha altura, largura e quantidade (maiores que zero) em todos os itens.';
+        }
+        for (const medida of medidasDe(item)) {
+            const valor = item.medidas[medida.nome];
+            if (medida.obrigatoria && (valor === '' || valor == null)) {
+                return `Informe a medida ${medida.nome}.`;
+            }
+        }
+        for (const slot of slotsDe(item)) {
+            if (!item.escolhasMateria[slot.id]) {
+                return `Escolha o material do grupo ${slot.grupoSlot}.`;
+            }
+        }
+        for (const grupo of gruposDe(item)) {
+            if (grupo.obrigatorio && !item.escolhasOpcao[grupo.id]) {
+                return `Escolha uma opção de ${grupo.nome}.`;
+            }
+        }
+    }
+    return null;
+};
+
+const salvar = async () => {
+    const erro = validarFormulario();
+    if (erro) {
+        showToast('erro', erro);
         return;
     }
 
     const payload = {
         clienteId: state.form.clienteId,
-        itens: state.form.itens.map((i) => ({
-            produtoId: i.produtoId,
-            altura: Number(i.altura),
-            largura: Number(i.largura),
-            quantidade: Number(i.quantidade),
+        status: state.form.status,
+        itens: state.form.itens.map((item) => ({
+            produtoId: item.produtoId,
+            altura: Number(item.altura),
+            largura: Number(item.largura),
+            quantidade: Number(item.quantidade),
+            medidas: Object.fromEntries(
+                Object.entries(item.medidas)
+                    .filter(([, valor]) => valor !== '' && valor != null)
+                    .map(([nome, valor]) => [nome, Number(valor)])
+            ),
+            escolhasMateria: Object.entries(item.escolhasMateria)
+                .filter(([, materiaId]) => materiaId)
+                .map(([componenteId, materiaId]) => ({ componenteId, materiaId })),
+            escolhasOpcao: Object.values(item.escolhasOpcao).filter((opcaoId) => opcaoId),
         })),
     };
 
     try {
         state.isProcessing = true;
         const response = await axiosInstance.post('/vendas', payload);
-        showToast('sucesso', 'Orçamento criado com sucesso!');
+        showToast('sucesso', state.form.status === 'ORDEM_SERVICO'
+            ? 'Ordem de serviço criada com sucesso!'
+            : 'Orçamento criado com sucesso!');
         router.push({ name: 'venda', params: { vendaId: response.data.id } });
     } catch (error) {
-        showToast('erro', getErrorMessage(error, 'Erro ao criar orçamento.'));
+        showToast('erro', getErrorMessage(error, 'Erro ao criar a venda.'));
     } finally {
         state.isProcessing = false;
     }
@@ -120,16 +190,20 @@ const cancelar = () =>
 onMounted(async () => {
     try {
         state.isProcessing = true;
-        const [clientesResponse, produtosResponse] = await Promise.all([
+        const [clientesResponse, produtosResponse, materiasResponse] = await Promise.all([
             axiosInstance.get('/clientes'),
             axiosInstance.get('/produtos'),
+            axiosInstance.get('/materias'),
         ]);
         state.clientes = clientesResponse.data;
         state.produtos = produtosResponse.data;
+        state.materias = materiasResponse.data;
 
         if (isDetail.value) {
             const response = await axiosInstance.get(`/vendas/${route.params.vendaId}`);
             state.venda = response.data;
+        } else if (route.query.tipo === 'os') {
+            state.form.status = 'ORDEM_SERVICO';
         }
         state.isReady = true;
     } catch (error) {
@@ -153,7 +227,7 @@ onMounted(async () => {
                         <ol class="breadcrumb float-sm-end">
                             <li class="breadcrumb-item">Vendas</li>
                             <li class="breadcrumb-item active" aria-current="page">
-                                {{ isDetail ? 'Detalhe' : 'Novo Orçamento' }}
+                                {{ isDetail ? 'Detalhe' : 'Nova Venda' }}
                             </li>
                         </ol>
                     </div>
@@ -179,12 +253,19 @@ onMounted(async () => {
                                 <template v-if="state.isReady && !isDetail">
                                     <div class="card-header">
                                         <div class="card-title">
-                                            <h5>Novo Orçamento</h5>
+                                            <h5>{{ state.form.status === 'ORDEM_SERVICO' ? 'Nova Ordem de Serviço' : 'Novo Orçamento' }}</h5>
                                         </div>
                                     </div>
                                     <div class="card-body my-3">
                                         <div class="row g-3 p-2">
-                                            <div class="col-lg-6">
+                                            <div class="col-lg-4">
+                                                <label class="form-label"><strong>Tipo</strong></label>
+                                                <select v-model="state.form.status" class="form-select">
+                                                    <option value="ORCAMENTO">Orçamento</option>
+                                                    <option value="ORDEM_SERVICO">Ordem de Serviço (venda direta)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-8">
                                                 <label for="cliente" class="form-label"><strong>Cliente</strong></label>
                                                 <select id="cliente" v-model="state.form.clienteId" class="form-select">
                                                     <option value="">Selecione</option>
@@ -204,42 +285,83 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <div class="table-responsive p-2">
-                                            <table class="table table-bordered align-middle mb-0">
-                                                <thead>
-                                                    <tr>
-                                                        <th style="width: 40%;">Produto</th>
-                                                        <th>Altura (cm)</th>
-                                                        <th>Largura (cm)</th>
-                                                        <th>Qtde</th>
-                                                        <th class="text-center" style="width: 60px;"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr v-for="(item, index) in state.form.itens" :key="index">
-                                                        <td>
-                                                            <select v-model="item.produtoId" class="form-select">
-                                                                <option value="">Selecione</option>
-                                                                <option v-for="produto in state.produtos"
-                                                                    :key="produto.id" :value="produto.id">
-                                                                    {{ produto.nome }}</option>
-                                                            </select>
-                                                        </td>
-                                                        <td><input v-model="item.altura" type="number" step="0.01"
-                                                                min="0.01" class="form-control" /></td>
-                                                        <td><input v-model="item.largura" type="number" step="0.01"
-                                                                min="0.01" class="form-control" /></td>
-                                                        <td><input v-model="item.quantidade" type="number" step="0.01"
-                                                                min="0.01" class="form-control" /></td>
-                                                        <td class="text-center">
-                                                            <button type="button" class="btn btn-danger btn-sm"
-                                                                @click="removerItem(index)">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                        <div v-for="(item, index) in state.form.itens" :key="index"
+                                            class="border rounded p-3 m-2">
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-lg-4">
+                                                    <label class="form-label">Produto</label>
+                                                    <select v-model="item.produtoId" class="form-select"
+                                                        @change="aoTrocarProduto(item)">
+                                                        <option value="">Selecione</option>
+                                                        <option v-for="produto in state.produtos" :key="produto.id"
+                                                            :value="produto.id">{{ produto.nome }}</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <label class="form-label">Altura (cm)</label>
+                                                    <input v-model="item.altura" type="number" step="0.01" min="0.01"
+                                                        class="form-control" />
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <label class="form-label">Largura (cm)</label>
+                                                    <input v-model="item.largura" type="number" step="0.01" min="0.01"
+                                                        class="form-control" />
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <label class="form-label">Qtde</label>
+                                                    <input v-model="item.quantidade" type="number" step="0.01" min="0.01"
+                                                        class="form-control" />
+                                                </div>
+                                                <div class="col-lg-2 text-end">
+                                                    <button type="button" class="btn btn-danger"
+                                                        @click="removerItem(index)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Medidas extras declaradas pelo produto -->
+                                            <div v-if="medidasDe(item).length" class="row g-2 mt-1">
+                                                <div v-for="medida in medidasDe(item)" :key="medida.id"
+                                                    class="col-lg-3">
+                                                    <label class="form-label">
+                                                        {{ medida.nome }}
+                                                        <span v-if="medida.unidade">({{ medida.unidade }})</span>
+                                                        <span v-if="medida.obrigatoria" class="text-danger">*</span>
+                                                    </label>
+                                                    <input v-model="item.medidas[medida.nome]" type="number" step="0.01"
+                                                        class="form-control" />
+                                                </div>
+                                            </div>
+
+                                            <!-- Escolha do material dos slots -->
+                                            <div v-if="slotsDe(item).length" class="row g-2 mt-1">
+                                                <div v-for="slot in slotsDe(item)" :key="slot.id" class="col-lg-4">
+                                                    <label class="form-label">Material ({{ slot.grupoSlot }})
+                                                        <span class="text-danger">*</span></label>
+                                                    <select v-model="item.escolhasMateria[slot.id]" class="form-select">
+                                                        <option value="">Selecione</option>
+                                                        <option v-for="materia in materiasDoGrupo(slot.grupoSlot)"
+                                                            :key="materia.id" :value="materia.id">
+                                                            {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{ materia.unidade }}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <!-- Grupos de opções (acabamentos/seleções) -->
+                                            <div v-if="gruposDe(item).length" class="row g-2 mt-1">
+                                                <div v-for="grupo in gruposDe(item)" :key="grupo.id" class="col-lg-3">
+                                                    <label class="form-label">{{ grupo.nome }}
+                                                        <span v-if="grupo.obrigatorio" class="text-danger">*</span></label>
+                                                    <select v-model="item.escolhasOpcao[grupo.id]" class="form-select">
+                                                        <option v-if="!grupo.obrigatorio" value="">Nenhum</option>
+                                                        <option v-else value="" disabled>Selecione</option>
+                                                        <option v-for="opcao in grupo.opcoes" :key="opcao.id"
+                                                            :value="opcao.id">{{ opcao.nome }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="card-footer text-center">
@@ -247,7 +369,7 @@ onMounted(async () => {
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
                                         <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="router.push('/orcamentos')">
+                                            @click="router.push(state.form.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos')">
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>
@@ -291,7 +413,7 @@ onMounted(async () => {
                                             </div>
                                             <div class="row text-muted small mb-2">
                                                 <div class="col">Custo: {{ formatBRL(item.custoTotal) }} ·
-                                                    Markup: {{ item.markupAplicado }}% ·
+                                                    Margem: {{ item.markupAplicado }}% ·
                                                     Sugerido: {{ formatBRL(item.precoSugerido) }}</div>
                                             </div>
                                             <div class="table-responsive">
@@ -308,7 +430,10 @@ onMounted(async () => {
                                                     </thead>
                                                     <tbody>
                                                         <tr v-for="(d, di) in item.detalhes" :key="di">
-                                                            <td>{{ d.nome }}</td>
+                                                            <td>{{ d.nome }}
+                                                                <small v-if="d.opcaoNome" class="text-muted">
+                                                                    ({{ d.opcaoNome }})</small>
+                                                            </td>
                                                             <td>{{ d.tipoItem }}</td>
                                                             <td class="text-end">{{ d.quantidadeCalculada }}</td>
                                                             <td>{{ d.unidade }}</td>
