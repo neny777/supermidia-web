@@ -29,10 +29,13 @@ export const parametrosObrigatoriosPorTipo = {
   METRO_LINEAR_INFORMADO: [],
 };
 
-export const createParametro = () => ({ codigo: '', valor: '' });
-export const createMateriaItem = () => ({ materiaId: '', calculoId: '', parametros: [] });
+export const createParametro = () => ({ codigo: '', valor: '', vinculos: [] });
+export const createMateriaItem = () => ({ materiaId: '', grupoSlot: '', calculoId: '', parametros: [] });
 export const createServicoItem = () => ({ servicoId: '', calculoId: '', parametros: [] });
-export const createProduto = () => ({ nome: '', materiasCalculo: [], servicosCalculo: [] });
+export const createMedida = () => ({ nome: '', unidade: '', obrigatoria: false, valorPadrao: '', minimo: '', maximo: '' });
+export const createProduto = () => ({ nome: '', medidas: [], materiasCalculo: [], servicosCalculo: [], gruposOpcoes: [] });
+
+const numeroOuNull = (valor) => (valor === '' || valor == null ? null : Number(valor));
 
 export const permiteZero = (codigo) => ['ACRESCIMO_ALTURA', 'ACRESCIMO_LARGURA'].includes(codigo);
 
@@ -55,32 +58,88 @@ export const syncRequiredParametros = (calculoId, calculos, parametros = []) => 
     return {
       codigo,
       valor: origemValor?.valor === '' || origemValor?.valor == null ? '' : origemValor.valor,
+      // preserva os vínculos de medida existentes (editados na tela de produto/SQL)
+      vinculos: origemValor?.vinculos || [],
     };
   });
 };
 
+const normalizeVinculos = (vinculos) => (vinculos || []).map((vinculo) => ({
+  medidaNome: vinculo.medidaNome ?? '',
+  multiplicador: vinculo.multiplicador === '' || vinculo.multiplicador == null ? 1 : Number(vinculo.multiplicador),
+}));
+
+export const normalizeParametros = (parametros) => (parametros || []).map((parametro) => ({
+  codigo: parametro.codigo ?? '',
+  valor: numeroOuNull(parametro.valor),
+  vinculos: normalizeVinculos(parametro.vinculos),
+}));
+
 export const normalizeItems = (items, tipo) => (items || []).map((item) => ({
-  ...(tipo === 'materia' ? { materiaId: item.materiaId ?? '' } : { servicoId: item.servicoId ?? '' }),
+  ...(tipo === 'materia'
+    ? { materiaId: item.materiaId || null, grupoSlot: item.grupoSlot || null }
+    : { servicoId: item.servicoId ?? '' }),
   calculoId: item.calculoId ?? '',
-  parametros: (item.parametros || []).map((parametro) => ({
-    codigo: parametro.codigo ?? '',
-    valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
+  parametros: normalizeParametros(item.parametros),
+}));
+
+const normalizeMedidas = (medidas) => (medidas || []).map((medida) => ({
+  nome: medida.nome ?? '',
+  unidade: medida.unidade || null,
+  obrigatoria: !!medida.obrigatoria,
+  valorPadrao: numeroOuNull(medida.valorPadrao),
+  minimo: numeroOuNull(medida.minimo),
+  maximo: numeroOuNull(medida.maximo),
+}));
+
+const normalizeGrupos = (grupos) => (grupos || []).map((grupo) => ({
+  nome: grupo.nome ?? '',
+  obrigatorio: !!grupo.obrigatorio,
+  opcoes: (grupo.opcoes || []).map((opcao) => ({
+    nome: opcao.nome ?? '',
+    materiasCalculo: normalizeItems(opcao.materiasCalculo, 'materia'),
+    servicosCalculo: normalizeItems(opcao.servicosCalculo, 'servico'),
+    contribuicoes: (opcao.contribuicoes || []).map((contribuicao) => ({
+      codigo: contribuicao.codigo ?? '',
+      valor: numeroOuNull(contribuicao.valor),
+    })),
   })),
 }));
 
+// Envia o produto COMPLETO no PUT (o update substitui tudo): medidas, componentes
+// (com slot e vínculos) e grupos de opções são preservados mesmo quando a tela
+// só edita uma parte.
 export const normalizeProdutoPayload = (values) => ({
   nome: values.nome ?? '',
+  medidas: normalizeMedidas(values.medidas),
   materiasCalculo: normalizeItems(values.materiasCalculo, 'materia'),
   servicosCalculo: normalizeItems(values.servicosCalculo, 'servico'),
+  gruposOpcoes: normalizeGrupos(values.gruposOpcoes),
 });
 
 export const buildItemSchema = (tipoItem, calculos) => yup.object({
-  [`${tipoItem}Id`]: yup.string().required(`Selecione ${tipoItem === 'materia' ? 'a matéria' : 'o serviço'}.`),
+  ...(tipoItem === 'materia'
+    ? {
+      materiaId: yup.string().test(
+        'materia-ou-slot',
+        'Informe a matéria fixa OU o grupo do slot (apenas um dos dois).',
+        function (materiaId) {
+          const grupoSlot = this.parent.grupoSlot;
+          return Boolean(materiaId) !== Boolean(grupoSlot);
+        }
+      ),
+      grupoSlot: yup.string(),
+    }
+    : { servicoId: yup.string().required('Selecione o serviço.') }),
   calculoId: yup.string().required('Selecione o cálculo.'),
   parametros: yup.array().of(
     yup.object({
       codigo: yup.string().required('Selecione o parâmetro.'),
-      valor: yup.number().typeError('Informe um valor válido.').required('Informe o valor.'),
+      valor: yup.number()
+        .transform((valor, original) => (original === '' || original == null ? null : valor))
+        .typeError('Informe um valor válido.')
+        .nullable(),
+      vinculos: yup.array(),
     })
   ).test(
     'parametros-obrigatorios',
@@ -111,10 +170,20 @@ export const buildItemSchema = (tipoItem, calculos) => yup.object({
     'Valores inválidos.',
     function (parametros = []) {
       for (const parametro of parametros) {
-        if (!parametro?.codigo || parametro?.valor == null || parametro?.valor === '') {
+        if (!parametro?.codigo) {
           continue;
         }
-        if (permiteZero(parametro.codigo)) {
+        const temVinculo = (parametro.vinculos || []).length > 0;
+        const semValor = parametro.valor == null || parametro.valor === '';
+        if (semValor) {
+          if (!temVinculo) {
+            return this.createError({
+              message: `Informe o valor do parâmetro ${parametro.codigo} (ou um vínculo de medida).`,
+            });
+          }
+          continue;
+        }
+        if (permiteZero(parametro.codigo) || temVinculo) {
           if (Number(parametro.valor) < 0) {
             return this.createError({
               message: `O parâmetro ${parametro.codigo} não pode ser negativo.`,

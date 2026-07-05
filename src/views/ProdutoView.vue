@@ -8,6 +8,7 @@ import axiosInstance from '@/axiosInstance';
 import { showModal } from '@/composables/modalUtils';
 import { showToast } from '@/composables/toastUtils';
 import {
+    createMedida,
     createProduto,
     getNomeCalculo,
     getNomeMateria,
@@ -34,11 +35,20 @@ const state = reactive({
 
 const originalSnapshot = ref(null);
 
-const hasChanges = (values) => JSON.stringify(values) !== JSON.stringify(originalSnapshot.value);
 const getErrorMessage = (error, fallback) => error?.response?.data?.message || fallback;
 const buildSnapshot = (produto) => ({
     nome: produto.nome ?? '',
+    medidas: JSON.parse(JSON.stringify(produto.medidas ?? [])),
 });
+const hasChanges = (values) =>
+    JSON.stringify(buildSnapshot({ ...state.produto, nome: values.nome })) !== JSON.stringify(originalSnapshot.value);
+
+const adicionarMedida = () => {
+    state.produto.medidas = [...(state.produto.medidas || []), createMedida()];
+};
+const removerMedida = (index) => {
+    state.produto.medidas.splice(index, 1);
+};
 
 const removerMateria = (index) => {
     const modal = showModal('Excluir matéria do produto', 'Confirma a exclusão desta matéria do produto?', async () => {
@@ -219,6 +229,57 @@ const onSubmit = async (values) => {
                                             <div class="col-12 mt-3">
                                                 <div class="row p-2 align-items-center">
                                                     <div class="col-lg-6">
+                                                        <h6 class="mb-0">Medidas do Orçamento</h6>
+                                                        <small class="text-muted">Altura, largura e quantidade são padrão; declare aqui as extras (ex.: BORDA). Salve com o botão Salvar.</small>
+                                                    </div>
+                                                    <div class="col-lg-6 text-lg-end mt-2 mt-lg-0">
+                                                        <button type="button" class="btn btn-primary button-medium" @click="adicionarMedida">
+                                                            <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Nova Medida
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="row p-2">
+                                                    <div class="col-12">
+                                                        <div v-if="!state.produto.medidas?.length" class="text-muted">
+                                                            Nenhuma medida extra declarada.
+                                                        </div>
+                                                        <div v-else class="table-responsive">
+                                                            <table class="table table-bordered align-middle mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Nome</th>
+                                                                        <th style="width: 12%;">Unidade</th>
+                                                                        <th class="text-center" style="width: 12%;">Obrigatória</th>
+                                                                        <th style="width: 14%;">Padrão</th>
+                                                                        <th style="width: 14%;">Mínimo</th>
+                                                                        <th style="width: 14%;">Máximo</th>
+                                                                        <th class="text-center" style="width: 8%;"></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr v-for="(medida, index) in state.produto.medidas" :key="index">
+                                                                        <td><input v-model="medida.nome" type="text" class="form-control" placeholder="Ex.: BORDA" /></td>
+                                                                        <td><input v-model="medida.unidade" type="text" class="form-control" placeholder="cm" /></td>
+                                                                        <td class="text-center"><input v-model="medida.obrigatoria" type="checkbox" class="form-check-input" /></td>
+                                                                        <td><input v-model="medida.valorPadrao" type="number" step="0.01" class="form-control" /></td>
+                                                                        <td><input v-model="medida.minimo" type="number" step="0.01" class="form-control" /></td>
+                                                                        <td><input v-model="medida.maximo" type="number" step="0.01" class="form-control" /></td>
+                                                                        <td class="text-center">
+                                                                            <button type="button" class="btn btn-danger btn-sm" @click="removerMedida(index)">
+                                                                                <i class="bi bi-trash"></i>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12 mt-3">
+                                                <div class="row p-2 align-items-center">
+                                                    <div class="col-lg-6">
                                                         <h6 class="mb-0">Matérias</h6>
                                                     </div>
                                                     <div class="col-lg-6 text-lg-end mt-2 mt-lg-0">
@@ -247,7 +308,7 @@ const onSubmit = async (values) => {
                                                                 </thead>
                                                                 <tbody>
                                                                     <tr v-for="(item, index) in state.produto.materiasCalculo" :key="index">
-                                                                        <td>{{ getNomeMateria(state.materiasCalculoApoio || [], item.materiaId) }}</td>
+                                                                        <td>{{ item.grupoSlot ? 'SLOT: ' + item.grupoSlot : getNomeMateria(state.materiasCalculoApoio || [], item.materiaId) }}</td>
                                                                         <td>{{ getNomeCalculo(state.calculosApoio || [], item.calculoId) }}</td>
                                                                         <td class="text-center">
                                                                             <button

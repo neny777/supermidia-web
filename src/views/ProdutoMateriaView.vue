@@ -22,12 +22,15 @@ const state = reactive({
     produto: null,
     materias: [],
     calculos: [],
+    grupos: [],
     item: createMateriaItem(),
     isProcessing: false,
     formReady: false,
 });
 
 const originalSnapshot = ref(null);
+// origem do material: 'fixa' (matéria específica) ou 'slot' (escolhida no orçamento, por grupo)
+const origem = ref('fixa');
 
 const schema = computed(() => buildItemSchema('materia', state.calculos));
 const getErrorMessage = (error, fallback) => error?.response?.data?.message || fallback;
@@ -37,29 +40,34 @@ const normalizeParametrosForSave = (values) => syncRequiredParametros(values.cal
     .map((parametro) => ({
         codigo: parametro.codigo,
         valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
+        vinculos: parametro.vinculos || [],
     }));
 
 const snapshotItem = (item) => JSON.stringify({
     materiaId: item.materiaId || '',
+    grupoSlot: item.grupoSlot || '',
     calculoId: item.calculoId || '',
     parametros: (item.parametros || []).map((parametro) => ({
         codigo: parametro.codigo,
         valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
+        vinculos: parametro.vinculos || [],
     })),
 });
 
 onMounted(async () => {
     try {
         state.isProcessing = true;
-        const [produtoResponse, materiasResponse, calculosResponse] = await Promise.all([
+        const [produtoResponse, materiasResponse, calculosResponse, gruposResponse] = await Promise.all([
             axiosInstance.get(`/produtos/${route.params.produtoId}`),
             axiosInstance.get('/materias'),
             axiosInstance.get('/calculos'),
+            axiosInstance.get('/materias/grupos'),
         ]);
 
         state.produto = produtoResponse.data;
         state.materias = materiasResponse.data;
         state.calculos = calculosResponse.data;
+        state.grupos = gruposResponse.data;
 
         if (isEditMode.value) {
             const item = state.produto.materiasCalculo?.[Number(route.params.itemIndex)];
@@ -69,10 +77,12 @@ onMounted(async () => {
                 return;
             }
             state.item = {
-                materiaId: item.materiaId,
+                materiaId: item.materiaId || '',
+                grupoSlot: item.grupoSlot || '',
                 calculoId: item.calculoId,
                 parametros: syncRequiredParametros(item.calculoId, state.calculos, item.parametros),
             };
+            origem.value = item.grupoSlot ? 'slot' : 'fixa';
         }
 
         originalSnapshot.value = snapshotItem(state.item);
@@ -101,16 +111,20 @@ const onSubmit = async (values) => {
         const salvar = async () => {
             state.isProcessing = true;
             const materiasCalculo = [...(state.produto.materiasCalculo || [])];
+            const materiaId = origem.value === 'fixa' ? values.materiaId : '';
+            const grupoSlot = origem.value === 'slot' ? values.grupoSlot : '';
             if (isEditMode.value) {
                 materiasCalculo[Number(route.params.itemIndex)] = {
                     ...materiasCalculo[Number(route.params.itemIndex)],
-                    materiaId: values.materiaId,
+                    materiaId,
+                    grupoSlot,
                     calculoId: values.calculoId,
                     parametros,
                 };
             } else {
                 materiasCalculo.push({
-                    materiaId: values.materiaId,
+                    materiaId,
+                    grupoSlot,
                     calculoId: values.calculoId,
                     parametros,
                 });
@@ -125,14 +139,14 @@ const onSubmit = async (values) => {
             if (isEditMode.value) {
                 router.push({ name: 'produto-materia-editar', params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex } });
                 state.produto = response.data;
+                const itemSalvo = response.data.materiasCalculo[Number(route.params.itemIndex)];
                 state.item = {
-                    ...response.data.materiasCalculo[Number(route.params.itemIndex)],
-                    parametros: syncRequiredParametros(
-                        response.data.materiasCalculo[Number(route.params.itemIndex)].calculoId,
-                        state.calculos,
-                        response.data.materiasCalculo[Number(route.params.itemIndex)].parametros,
-                    ),
+                    ...itemSalvo,
+                    materiaId: itemSalvo.materiaId || '',
+                    grupoSlot: itemSalvo.grupoSlot || '',
+                    parametros: syncRequiredParametros(itemSalvo.calculoId, state.calculos, itemSalvo.parametros),
                 };
+                origem.value = itemSalvo.grupoSlot ? 'slot' : 'fixa';
                 originalSnapshot.value = snapshotItem(state.item);
                 return;
             }
@@ -205,12 +219,33 @@ const onSubmit = async (values) => {
                                         <div class="row g-3 p-3">
                                             <div class="col-lg-6">
                                                 <div class="row p-2">
-                                                    <label class="col-form-label col-lg-3">Matéria</label>
+                                                    <label class="col-form-label col-lg-3">Origem</label>
+                                                    <div class="col-lg-9 d-flex align-items-center gap-4">
+                                                        <div class="form-check">
+                                                            <input id="origem-fixa" type="radio" value="fixa" v-model="origem"
+                                                                class="form-check-input" @change="setFieldValue('grupoSlot', '')" />
+                                                            <label class="form-check-label" for="origem-fixa">Matéria fixa</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input id="origem-slot" type="radio" value="slot" v-model="origem"
+                                                                class="form-check-input" @change="setFieldValue('materiaId', '')" />
+                                                            <label class="form-check-label" for="origem-slot">Escolhida no orçamento (slot)</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row p-2">
+                                                    <label class="col-form-label col-lg-3">{{ origem === 'slot' ? 'Grupo' : 'Matéria' }}</label>
                                                     <div class="col-lg-9">
-                                                        <Field name="materiaId" as="select" class="form-select">
+                                                        <Field v-if="origem === 'fixa'" name="materiaId" as="select" class="form-select">
                                                             <option value="">Selecione</option>
                                                             <option v-for="materia in state.materias" :key="materia.id" :value="materia.id">
                                                                 {{ materia.nome }}
+                                                            </option>
+                                                        </Field>
+                                                        <Field v-else name="grupoSlot" as="select" class="form-select">
+                                                            <option value="">Selecione o grupo</option>
+                                                            <option v-for="grupo in state.grupos" :key="grupo" :value="grupo">
+                                                                {{ grupo }}
                                                             </option>
                                                         </Field>
                                                         <ErrorMessage name="materiaId" class="text-danger d-block mt-1" />

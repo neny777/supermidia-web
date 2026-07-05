@@ -37,6 +37,7 @@ const normalizeParametrosForSave = (values) => syncRequiredParametros(values.cal
     .map((parametro) => ({
         codigo: parametro.codigo,
         valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
+        vinculos: parametro.vinculos || [],
     }));
 
 const snapshotItem = (item) => JSON.stringify({
@@ -45,6 +46,7 @@ const snapshotItem = (item) => JSON.stringify({
     parametros: (item.parametros || []).map((parametro) => ({
         codigo: parametro.codigo,
         valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
+        vinculos: parametro.vinculos || [],
     })),
 });
 
