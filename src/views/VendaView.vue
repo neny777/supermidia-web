@@ -7,7 +7,8 @@ import { showToast } from '@/composables/toastUtils';
 
 const route = useRoute();
 const router = useRouter();
-const isDetail = computed(() => !!route.params.vendaId);
+const isEditVenda = computed(() => route.name === 'venda-editar');
+const isDetail = computed(() => !!route.params.vendaId && !isEditVenda.value);
 
 const state = reactive({
     clientes: [],
@@ -81,6 +82,43 @@ const statusBadgeClass = computed(() => {
     }
 });
 
+// Reconstrói o formulário a partir do snapshot (entradaJson) para a edição na janela de 1h.
+const preencherFormularioParaEdicao = (venda) => {
+    state.form.status = venda.status;
+    state.form.clienteId = venda.clienteId;
+    state.form.itens = (venda.itens || []).map((itemVenda) => {
+        let entrada = {};
+        try {
+            entrada = JSON.parse(itemVenda.entradaJson || '{}');
+        } catch {
+            entrada = {};
+        }
+        const item = novoItem();
+        item.produtoId = itemVenda.produtoId;
+        item.altura = itemVenda.altura;
+        item.largura = itemVenda.largura;
+        item.quantidade = itemVenda.quantidade;
+        const produto = state.produtos.find((p) => p.id === itemVenda.produtoId);
+        if (produto) {
+            (produto.medidas || []).forEach((medida) => {
+                item.medidas[medida.nome] = entrada.medidas?.[medida.nome] ?? medida.valorPadrao ?? '';
+            });
+            (produto.materiasCalculo || []).filter((mc) => mc.grupoSlot).forEach((slot) => {
+                const escolha = (entrada.escolhasMateria || []).find((e) => e.componenteId === slot.id);
+                item.escolhasMateria[slot.id] = escolha ? escolha.materiaId : '';
+            });
+            (produto.gruposOpcoes || []).forEach((grupo) => {
+                const escolhida = (grupo.opcoes || []).find((o) => (entrada.escolhasOpcao || []).includes(o.id));
+                item.escolhasOpcao[grupo.id] = escolhida ? escolhida.id : '';
+            });
+        }
+        return item;
+    });
+    if (!state.form.itens.length) {
+        state.form.itens = [novoItem()];
+    }
+};
+
 const adicionarItem = () => state.form.itens.push(novoItem());
 const removerItem = (index) => {
     state.form.itens.splice(index, 1);
@@ -149,17 +187,44 @@ const salvar = async () => {
 
     try {
         state.isProcessing = true;
-        await axiosInstance.post('/vendas', payload);
-        showToast('sucesso', state.form.status === 'ORDEM_SERVICO'
-            ? 'Ordem de serviço criada com sucesso!'
-            : 'Orçamento criado com sucesso!');
+        if (isEditVenda.value) {
+            await axiosInstance.put(`/vendas/${route.params.vendaId}`, payload);
+            showToast('sucesso', 'Venda editada com sucesso!');
+        } else {
+            await axiosInstance.post('/vendas', payload);
+            showToast('sucesso', state.form.status === 'ORDEM_SERVICO'
+                ? 'Ordem de serviço criada com sucesso!'
+                : 'Orçamento criado com sucesso!');
+        }
         // Salvar conclui a tarefa: volta para a lista correspondente.
         router.push(state.form.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos');
     } catch (error) {
-        showToast('erro', getErrorMessage(error, 'Erro ao criar a venda.'));
+        showToast('erro', getErrorMessage(error, 'Erro ao salvar a venda.'));
     } finally {
         state.isProcessing = false;
     }
+};
+
+const editarVenda = () => {
+    router.push({ name: 'venda-editar', params: { vendaId: route.params.vendaId } });
+};
+
+const excluirVenda = () => {
+    const modal = showModal('Excluir venda',
+        'Excluir definitivamente esta venda? (permitido apenas na primeira hora após a criação)', async () => {
+        try {
+            state.isProcessing = true;
+            const destino = state.venda.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos';
+            await axiosInstance.delete(`/vendas/${route.params.vendaId}`);
+            showToast('sucesso', 'Venda excluída.');
+            router.push(destino);
+        } catch (error) {
+            showToast('erro', getErrorMessage(error, 'Não foi possível excluir a venda.'));
+        } finally {
+            state.isProcessing = false;
+            modal.hide();
+        }
+    });
 };
 
 const executarAcao = (titulo, mensagem, acao, sucesso) => {
@@ -200,9 +265,12 @@ onMounted(async () => {
         state.produtos = produtosResponse.data;
         state.materias = materiasResponse.data;
 
-        if (isDetail.value) {
+        if (route.params.vendaId) {
             const response = await axiosInstance.get(`/vendas/${route.params.vendaId}`);
             state.venda = response.data;
+            if (isEditVenda.value) {
+                preencherFormularioParaEdicao(response.data);
+            }
         } else if (route.query.tipo === 'os') {
             state.form.status = 'ORDEM_SERVICO';
         }
@@ -228,7 +296,7 @@ onMounted(async () => {
                         <ol class="breadcrumb float-sm-end">
                             <li class="breadcrumb-item">Vendas</li>
                             <li class="breadcrumb-item active" aria-current="page">
-                                {{ isDetail ? 'Detalhe' : 'Nova Venda' }}
+                                {{ isDetail ? 'Detalhe' : (isEditVenda ? 'Editar' : 'Nova Venda') }}
                             </li>
                         </ol>
                     </div>
@@ -254,7 +322,7 @@ onMounted(async () => {
                                 <template v-if="state.isReady && !isDetail">
                                     <div class="card-header">
                                         <div class="card-title">
-                                            <h5>{{ state.form.status === 'ORDEM_SERVICO' ? 'Nova Ordem de Serviço' : 'Novo Orçamento' }}</h5>
+                                            <h5>{{ isEditVenda ? 'Editar Venda' : (state.form.status === 'ORDEM_SERVICO' ? 'Nova Ordem de Serviço' : 'Novo Orçamento') }}</h5>
                                         </div>
                                     </div>
                                     <div class="card-body my-3">
@@ -404,20 +472,18 @@ onMounted(async () => {
                                         <div v-for="(item, index) in state.venda.itens" :key="index"
                                             class="border rounded p-3 m-2">
                                             <div class="row">
-                                                <div class="col-lg-5"><strong>{{ item.produtoNome }}</strong></div>
-                                                <div class="col-lg-4 text-muted">
-                                                    {{ item.altura }} × {{ item.largura }} cm · qtd {{ item.quantidade }}
-                                                </div>
+                                                <div class="col-lg-9"><strong>{{ item.descricao || item.produtoNome }}</strong></div>
                                                 <div class="col-lg-3 text-end">
                                                     <strong>{{ formatBRL(item.precoFinal) }}</strong>
                                                 </div>
                                             </div>
                                             <div class="row text-muted small mb-2">
-                                                <div class="col">Custo: {{ formatBRL(item.custoTotal) }} ·
-                                                    Margem: {{ item.markupAplicado }}% ·
-                                                    Sugerido: {{ formatBRL(item.precoSugerido) }}</div>
+                                                <div class="col">Sugerido: {{ formatBRL(item.precoSugerido) }}<span
+                                                        v-if="item.custoTotal != null"> ·
+                                                        Custo: {{ formatBRL(item.custoTotal) }} ·
+                                                        Margem: {{ item.markupAplicado }}%</span></div>
                                             </div>
-                                            <div class="table-responsive">
+                                            <div v-if="item.detalhes?.length" class="table-responsive">
                                                 <table class="table table-sm table-bordered mb-0">
                                                     <thead>
                                                         <tr>
@@ -447,6 +513,14 @@ onMounted(async () => {
                                         </div>
                                     </div>
                                     <div class="card-footer text-center">
+                                        <button v-if="state.venda.editavel" type="button"
+                                            class="btn btn-primary button-medium m-2" @click="editarVenda">
+                                            <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
+                                        </button>
+                                        <button v-if="state.venda.editavel" type="button"
+                                            class="btn btn-danger button-medium m-2" @click="excluirVenda">
+                                            <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
+                                        </button>
                                         <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
                                             class="btn btn-success button-medium m-2" @click="converter">
                                             <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS

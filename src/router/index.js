@@ -322,6 +322,13 @@ const router = createRouter({
       meta: { layout: 'DefaultLayout' }
     },
     {
+      path: '/venda/:vendaId/editar',
+      name: 'venda-editar',
+      component: VendaView,
+      props: true,
+      meta: { layout: 'DefaultLayout' }
+    },
+    {
       path: '/server-error',
       name: 'server-error',
       component: ServerErrorView,
