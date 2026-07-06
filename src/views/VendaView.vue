@@ -205,6 +205,13 @@ const salvar = async () => {
     }
 };
 
+// Toggle "Detalhes" por item: quem tem a permissão 'custos' decide se quer ver.
+const detalhesAbertos = reactive({});
+const toggleDetalhes = (index) => {
+    detalhesAbertos[index] = !detalhesAbertos[index];
+};
+const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || []).length > 0;
+
 const editarVenda = () => {
     router.push({ name: 'venda-editar', params: { vendaId: route.params.vendaId } });
 };
@@ -478,12 +485,22 @@ onMounted(async () => {
                                                 </div>
                                             </div>
                                             <div class="row text-muted small mb-2">
-                                                <div class="col">Sugerido: {{ formatBRL(item.precoSugerido) }}<span
-                                                        v-if="item.custoTotal != null"> ·
-                                                        Custo: {{ formatBRL(item.custoTotal) }} ·
-                                                        Margem: {{ item.markupAplicado }}%</span></div>
+                                                <div class="col">
+                                                    Sugerido: {{ formatBRL(item.precoSugerido) }}
+                                                    <button v-if="temDadosDeCusto(item)" type="button"
+                                                        class="btn btn-outline-secondary btn-sm ms-2 py-0"
+                                                        @click="toggleDetalhes(index)">
+                                                        <i class="bi" :class="detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'"></i>
+                                                        {{ detalhesAbertos[index] ? 'Ocultar detalhes' : 'Detalhes' }}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div v-if="item.detalhes?.length" class="table-responsive">
+                                            <div v-if="detalhesAbertos[index] && item.custoTotal != null"
+                                                class="row text-muted small mb-2">
+                                                <div class="col">Custo: {{ formatBRL(item.custoTotal) }} ·
+                                                    Margem: {{ item.markupAplicado }}%</div>
+                                            </div>
+                                            <div v-if="detalhesAbertos[index] && item.detalhes?.length" class="table-responsive">
                                                 <table class="table table-sm table-bordered mb-0">
                                                     <thead>
                                                         <tr>
