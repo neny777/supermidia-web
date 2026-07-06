@@ -149,11 +149,12 @@ const salvar = async () => {
 
     try {
         state.isProcessing = true;
-        const response = await axiosInstance.post('/vendas', payload);
+        await axiosInstance.post('/vendas', payload);
         showToast('sucesso', state.form.status === 'ORDEM_SERVICO'
             ? 'Ordem de serviço criada com sucesso!'
             : 'Orçamento criado com sucesso!');
-        router.push({ name: 'venda', params: { vendaId: response.data.id } });
+        // Salvar conclui a tarefa: volta para a lista correspondente.
+        router.push(state.form.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos');
     } catch (error) {
         showToast('erro', getErrorMessage(error, 'Erro ao criar a venda.'));
     } finally {
