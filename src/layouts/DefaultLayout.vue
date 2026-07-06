@@ -10,7 +10,8 @@ import { RouterView } from 'vue-router';
   <div class="app-wrapper"> <!--begin::Header-->    
     <Navbar />
     <Sidebar />
-    <RouterView />
+    <!-- key por fullPath: força remontagem quando só os params mudam (evita telas "presas") -->
+    <RouterView :key="$route.fullPath" />
     <ConfirmationModal />
     <ToastManager />
     <Footer></Footer>

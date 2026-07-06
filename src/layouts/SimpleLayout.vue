@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue';
 import { RouterView } from 'vue-router';
 </script>
 <template>
-    <router-view />
+    <router-view :key="$route.fullPath" />
     <ToastManager />
     <Footer></Footer>
 </template>
