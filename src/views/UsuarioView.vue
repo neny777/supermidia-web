@@ -97,12 +97,7 @@ const onSubmit = async (values, { resetForm }) => {
               resetForm();
               router.push('/usuarios');
             } catch (error) {
-              if (error.response && error.response.data) {
-                const { message, errorType } = error.response.data;
-              } else {
-                console.error(error);
-                showToast("erro", "Erro inesperado ao processar a solicitação.");
-              }
+              showToast("erro", error?.response?.data?.message || "Erro ao editar usuário.");
             } finally {
               state.isProcessing = false;
               modal.hide(); // Fecha o modal
@@ -117,13 +112,27 @@ const onSubmit = async (values, { resetForm }) => {
         showToast("erro", "Erro: Colaborador não selecionado.");
         return;
       }
-      await axiosInstance.post('/usuarios', payload);
-      showToast("sucesso", "Usuário criado com sucesso!");
-      resetForm();
-      router.push('/usuarios');
+      const response = await axiosInstance.post('/usuarios', payload);
+      const senhaInicial = response.data?.senhaInicial;
+      if (senhaInicial) {
+        // Senha exibida UMA única vez: o administrador anota e entrega ao colaborador.
+        const modal = showModal(
+          "Usuário criado com sucesso!",
+          `Senha inicial de acesso: ${senhaInicial} — anote agora e entregue ao colaborador (não será exibida novamente).`,
+          async () => {
+            modal.hide();
+            resetForm();
+            router.push('/usuarios');
+          }
+        );
+      } else {
+        showToast("sucesso", "Usuário criado com sucesso!");
+        resetForm();
+        router.push('/usuarios');
+      }
     }
   } catch (error) {
-    showToast("erro", "Erro ao salvar usuário.");
+    showToast("erro", error?.response?.data?.message || "Erro ao salvar usuário.");
   }
 };
 </script>
