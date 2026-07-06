@@ -250,6 +250,13 @@ onMounted(async () => {
                                                 </div>
                                             </div>
 
+                                            <!-- Opção vazia não altera o preço: avisar -->
+                                            <div v-if="!(opcao.materiasCalculo?.length || opcao.servicosCalculo?.length || opcao.contribuicoes?.length)"
+                                                class="alert alert-warning py-1 px-2 mt-2 mb-0">
+                                                <small><i class="bi bi-exclamation-triangle"></i>
+                                                    Opção vazia: sem componentes nem contribuições, ela <strong>não altera o preço</strong> do orçamento.</small>
+                                            </div>
+
                                             <!-- Componentes da opção -->
                                             <div v-if="opcao.materiasCalculo?.length || opcao.servicosCalculo?.length"
                                                 class="table-responsive mt-2">
