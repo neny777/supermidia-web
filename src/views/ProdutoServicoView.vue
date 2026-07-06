@@ -162,24 +162,8 @@ const onSubmit = async (values) => {
                 normalizeProdutoPayload(produtoAtualizado));
 
             showToast('sucesso', isEditMode.value ? 'Serviço do produto editado com sucesso!' : 'Serviço do produto criado com sucesso!');
-            const listaSalva = getLista(response.data);
-            if (isEditMode.value) {
-                state.produto = response.data;
-                const itemSalvo = listaSalva[Number(route.params.itemIndex)];
-                state.item = {
-                    ...itemSalvo,
-                    parametros: syncRequiredParametros(itemSalvo.calculoId, state.calculos, itemSalvo.parametros),
-                };
-                originalSnapshot.value = snapshotItem(state.item);
-                return;
-            }
-
-            const novoIndex = listaSalva.length - 1;
-            if (isOpcaoContext) {
-                router.push({ name: 'produto-grupo-servico', params: { produtoId: route.params.produtoId, grupoIndex, opcaoIndex, itemIndex: novoIndex } });
-            } else {
-                router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: novoIndex } });
-            }
+            // Salvar conclui a tarefa: volta para a página-pai (produto ou grupo de opções).
+            voltar();
         };
 
         if (isEditMode.value) {

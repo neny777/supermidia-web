@@ -78,17 +78,11 @@ const salvar = async () => {
         } else {
             grupos.push(state.grupo);
         }
-        const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`,
+        await axiosInstance.put(`/produtos/${route.params.produtoId}`,
             normalizeProdutoPayload({ ...state.produto, gruposOpcoes: grupos }));
         showToast('sucesso', 'Grupo de opções salvo com sucesso!');
-
-        const indexSalvo = isEditMode.value ? grupoIndex.value : response.data.gruposOpcoes.length - 1;
-        state.produto = response.data;
-        state.grupo = JSON.parse(JSON.stringify(response.data.gruposOpcoes[indexSalvo]));
-        if (!isEditMode.value) {
-            router.push({ name: 'produto-grupo-editar', params: { produtoId: route.params.produtoId, grupoIndex: indexSalvo } });
-            isEditMode.value = true;
-        }
+        // Salvar conclui a tarefa: volta para o produto.
+        router.push({ name: 'produto', params: { produtoId: route.params.produtoId } });
     } catch (error) {
         showToast('erro', getErrorMessage(error, 'Erro ao salvar o grupo de opções.'));
     } finally {
@@ -233,7 +227,7 @@ onMounted(async () => {
                                                 </div>
                                             </div>
                                             <small v-if="!isEditMode" class="text-muted d-block mt-1">
-                                                Salve o grupo para poder adicionar matérias e serviços às opções.
+                                                Salve o grupo e reabra-o para adicionar matérias e serviços às opções.
                                             </small>
 
                                             <!-- Contribuições: somam nos parâmetros dos componentes BASE (ex.: bainha +6cm) -->

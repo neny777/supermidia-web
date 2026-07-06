@@ -163,27 +163,8 @@ const onSubmit = async (values) => {
                 normalizeProdutoPayload(produtoAtualizado));
 
             showToast('sucesso', isEditMode.value ? 'Matéria do produto editada com sucesso!' : 'Matéria do produto criada com sucesso!');
-            const listaSalva = getLista(response.data);
-            if (isEditMode.value) {
-                state.produto = response.data;
-                const itemSalvo = listaSalva[Number(route.params.itemIndex)];
-                state.item = {
-                    ...itemSalvo,
-                    materiaId: itemSalvo.materiaId || '',
-                    grupoSlot: itemSalvo.grupoSlot || '',
-                    parametros: syncRequiredParametros(itemSalvo.calculoId, state.calculos, itemSalvo.parametros),
-                };
-                origem.value = itemSalvo.grupoSlot ? 'slot' : 'fixa';
-                originalSnapshot.value = snapshotItem(state.item);
-                return;
-            }
-
-            const novoIndex = listaSalva.length - 1;
-            if (isOpcaoContext) {
-                router.push({ name: 'produto-grupo-materia', params: { produtoId: route.params.produtoId, grupoIndex, opcaoIndex, itemIndex: novoIndex } });
-            } else {
-                router.push({ name: 'produto-materia-editar', params: { produtoId: route.params.produtoId, itemIndex: novoIndex } });
-            }
+            // Salvar conclui a tarefa: volta para a página-pai (produto ou grupo de opções).
+            voltar();
         };
 
         if (isEditMode.value) {
