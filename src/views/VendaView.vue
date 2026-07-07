@@ -212,6 +212,40 @@ const toggleDetalhes = (index) => {
 };
 const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || []).length > 0;
 
+// Ajuste manual do preço final — a única edição permitida depois do congelamento.
+const precoEdicao = reactive({ index: null, valor: null });
+const podeAjustarPreco = computed(() =>
+    state.venda && state.venda.status !== 'CANCELADO' && !state.venda.vencido);
+const precoAjustado = (item) => item.precoSugerido != null && item.precoFinal != null
+    && Number(item.precoFinal) !== Number(item.precoSugerido);
+const iniciarEdicaoPreco = (index, item) => {
+    precoEdicao.index = index;
+    precoEdicao.valor = item.precoFinal;
+};
+const cancelarEdicaoPreco = () => {
+    precoEdicao.index = null;
+    precoEdicao.valor = null;
+};
+const salvarPrecoFinal = async (item) => {
+    const valor = Number(precoEdicao.valor);
+    if (!valor || valor <= 0) {
+        showToast('erro', 'Informe um preço final maior que zero.');
+        return;
+    }
+    try {
+        state.isProcessing = true;
+        const response = await axiosInstance.put(
+            `/vendas/${route.params.vendaId}/itens/${item.id}/preco-final`, { precoFinal: valor });
+        state.venda = response.data;
+        cancelarEdicaoPreco();
+        showToast('sucesso', 'Preço final ajustado.');
+    } catch (error) {
+        showToast('erro', getErrorMessage(error, 'Não foi possível ajustar o preço.'));
+    } finally {
+        state.isProcessing = false;
+    }
+};
+
 const editarVenda = () => {
     router.push({ name: 'venda-editar', params: { vendaId: route.params.vendaId } });
 };
@@ -481,7 +515,35 @@ onMounted(async () => {
                                             <div class="row">
                                                 <div class="col-lg-9"><strong>{{ item.descricao || item.produtoNome }}</strong></div>
                                                 <div class="col-lg-3 text-end">
-                                                    <strong>{{ formatBRL(item.precoFinal) }}</strong>
+                                                    <template v-if="precoEdicao.index === index">
+                                                        <div class="input-group input-group-sm justify-content-end">
+                                                            <input type="number" step="0.01" min="0.01"
+                                                                class="form-control text-end" style="max-width: 8rem"
+                                                                v-model="precoEdicao.valor"
+                                                                @keyup.enter="salvarPrecoFinal(item)"
+                                                                @keyup.esc="cancelarEdicaoPreco" />
+                                                            <button type="button" class="btn btn-success"
+                                                                :disabled="state.isProcessing"
+                                                                @click="salvarPrecoFinal(item)">
+                                                                <i class="bi bi-check-lg"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary"
+                                                                @click="cancelarEdicaoPreco">
+                                                                <i class="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <span v-if="precoAjustado(item)"
+                                                            class="badge text-bg-info me-2">ajustado</span>
+                                                        <strong>{{ formatBRL(item.precoFinal) }}</strong>
+                                                        <button v-if="podeAjustarPreco" type="button"
+                                                            class="btn btn-outline-secondary btn-sm ms-2 py-0"
+                                                            title="Ajustar preço final"
+                                                            @click="iniciarEdicaoPreco(index, item)">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    </template>
                                                 </div>
                                             </div>
                                             <div class="row text-muted small mb-2">
