@@ -490,7 +490,8 @@ onMounted(async () => {
                                     <div class="card-header">
                                         <div class="card-title">
                                             <h5>
-                                                {{ statusLabel }}
+                                                {{ statusLabel }}<template v-if="state.venda.numero"> nº
+                                                    {{ state.venda.numero }}</template>
                                                 <span class="badge ms-2" :class="statusBadgeClass">{{ statusLabel }}</span>
                                             </h5>
                                         </div>
@@ -611,6 +612,11 @@ onMounted(async () => {
                                         <button v-if="state.venda.status !== 'CANCELADO'" type="button"
                                             class="btn btn-danger button-medium m-2" @click="cancelar">
                                             <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
+                                        </button>
+                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
+                                            class="btn btn-secondary button-medium m-2"
+                                            @click="router.push({ name: 'venda-imprimir', params: { vendaId: route.params.vendaId } })">
+                                            <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
                                         </button>
                                         <button type="button" class="btn btn-primary button-medium m-2"
                                             @click="router.push('/orcamentos')">

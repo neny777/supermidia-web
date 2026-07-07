@@ -32,6 +32,7 @@ const ProdutoServicoParametroView = () => import('@/views/ProdutoServicoParametr
 const ProdutoGrupoOpcaoView = () => import('@/views/ProdutoGrupoOpcaoView.vue');
 const VendasView = () => import('@/views/VendasView.vue');
 const VendaView = () => import('@/views/VendaView.vue');
+const VendaImprimirView = () => import('@/views/VendaImprimirView.vue');
 const ServerErrorView = () => import('@/views/ServerErrorView.vue');
 const PasswordRecoverEmailView = () => import('@/views/PasswordRecoverEmailView.vue');
 const PasswordRecoverCodeView = () => import('@/views/PasswordRecoverCodeView.vue');
@@ -327,6 +328,13 @@ const router = createRouter({
       component: VendaView,
       props: true,
       meta: { layout: 'DefaultLayout' }
+    },
+    {
+      path: '/venda/:vendaId/imprimir',
+      name: 'venda-imprimir',
+      component: VendaImprimirView,
+      props: true,
+      meta: { layout: 'SimpleLayout' }
     },
     {
       path: '/server-error',

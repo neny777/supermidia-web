@@ -30,7 +30,8 @@ const fetchVendas = async () => {
             axiosInstance.get('/vendas', { params: { status: props.status } }),
             axiosInstance.get('/clientes'),
         ]);
-        state.vendas = vendasResponse.data;
+        // Mais recentes primeiro (vendas antigas sem número vão para o fim).
+        state.vendas = (vendasResponse.data || []).sort((a, b) => (b.numero || 0) - (a.numero || 0));
         state.clientesById = Object.fromEntries((clientesResponse.data || []).map((c) => [c.id, c.nome]));
     } catch (error) {
         showToast('erro', `Erro ao carregar ${titulo.value.toLowerCase()}.`);
@@ -92,6 +93,7 @@ watch(() => props.status, fetchVendas);
                                     <table class="table table-bordered table-striped mb-0">
                                         <thead>
                                             <tr>
+                                                <th style="width: 70px;">Nº</th>
                                                 <th>Data</th>
                                                 <th>Cliente</th>
                                                 <th class="text-end">Total</th>
@@ -101,6 +103,7 @@ watch(() => props.status, fetchVendas);
                                         </thead>
                                         <tbody>
                                             <tr v-for="venda in state.vendas" :key="venda.id">
+                                                <td>{{ venda.numero ?? '—' }}</td>
                                                 <td>{{ formatData(venda.dataCriacao) }}</td>
                                                 <td>{{ nomeCliente(venda.clienteId) }}</td>
                                                 <td class="text-end">{{ formatBRL(venda.total) }}</td>
