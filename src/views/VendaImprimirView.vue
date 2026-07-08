@@ -12,6 +12,7 @@ const EMPRESA = {
     linhas: [
         'Supermidia Alfenas Comercio Servicos e Comunicacao LTDA · CNPJ 06.333.873/0001-00 · IE 016305690.00-24',
         'Av. José Paulino da Costa, 693 · Cruz Preta · Alfenas/MG · CEP 37132-204',
+        'WhatsApp: (35) 98879-1615 · contato@supermidiaalfenas.com.br',
     ],
 };
 
