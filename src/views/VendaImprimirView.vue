@@ -9,7 +9,10 @@ import logo from '@/assets/img/supermidia-logo-291x226.png';
 const EMPRESA = {
     nome: 'SuperMídia',
     ramo: 'Comunicação Visual',
-    contato: '',
+    linhas: [
+        'Supermidia Alfenas Comercio Servicos e Comunicacao LTDA · CNPJ 06.333.873/0001-00 · IE 016305690.00-24',
+        'Av. José Paulino da Costa, 693 · Cruz Preta · Alfenas/MG · CEP 37132-204',
+    ],
 };
 
 const route = useRoute();
@@ -80,7 +83,8 @@ onBeforeUnmount(() => {
                     <div>
                         <div class="empresa-nome">{{ EMPRESA.nome }}</div>
                         <div class="empresa-ramo">{{ EMPRESA.ramo }}</div>
-                        <div v-if="EMPRESA.contato" class="empresa-contato">{{ EMPRESA.contato }}</div>
+                        <div v-for="(linha, index) in EMPRESA.linhas" :key="index" class="empresa-contato">
+                            {{ linha }}</div>
                     </div>
                 </div>
                 <div class="documento-info">
@@ -205,9 +209,13 @@ onBeforeUnmount(() => {
     letter-spacing: 1px;
 }
 
-.empresa-ramo,
-.empresa-contato {
+.empresa-ramo {
     font-size: 10pt;
+    color: #444;
+}
+
+.empresa-contato {
+    font-size: 8pt;
     color: #444;
 }
 
