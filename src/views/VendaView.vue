@@ -18,6 +18,9 @@ const state = reactive({
     form: {
         status: 'ORCAMENTO',
         clienteId: '',
+        formaPagamento: '',
+        prazoEntrega: '',
+        observacoes: '',
         itens: [novoItem()],
     },
     isProcessing: false,
@@ -86,6 +89,9 @@ const statusBadgeClass = computed(() => {
 const preencherFormularioParaEdicao = (venda) => {
     state.form.status = venda.status;
     state.form.clienteId = venda.clienteId;
+    state.form.formaPagamento = venda.formaPagamento || '';
+    state.form.prazoEntrega = venda.prazoEntrega || '';
+    state.form.observacoes = venda.observacoes || '';
     state.form.itens = (venda.itens || []).map((itemVenda) => {
         let entrada = {};
         try {
@@ -168,6 +174,9 @@ const salvar = async () => {
     const payload = {
         clienteId: state.form.clienteId,
         status: state.form.status,
+        formaPagamento: state.form.formaPagamento,
+        prazoEntrega: state.form.prazoEntrega,
+        observacoes: state.form.observacoes,
         itens: state.form.itens.map((item) => ({
             produtoId: item.produtoId,
             altura: Number(item.altura),
@@ -211,6 +220,33 @@ const toggleDetalhes = (index) => {
     detalhesAbertos[index] = !detalhesAbertos[index];
 };
 const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || []).length > 0;
+
+// Condições (pagamento/prazo/observações): não mexem em preço, então são
+// editáveis fora da janela de 1h — só venda cancelada trava.
+const cabecalho = reactive({ editando: false, formaPagamento: '', prazoEntrega: '', observacoes: '' });
+const editarCabecalho = () => {
+    cabecalho.formaPagamento = state.venda.formaPagamento || '';
+    cabecalho.prazoEntrega = state.venda.prazoEntrega || '';
+    cabecalho.observacoes = state.venda.observacoes || '';
+    cabecalho.editando = true;
+};
+const salvarCabecalho = async () => {
+    try {
+        state.isProcessing = true;
+        const response = await axiosInstance.put(`/vendas/${route.params.vendaId}/cabecalho`, {
+            formaPagamento: cabecalho.formaPagamento,
+            prazoEntrega: cabecalho.prazoEntrega,
+            observacoes: cabecalho.observacoes,
+        });
+        state.venda = response.data;
+        cabecalho.editando = false;
+        showToast('sucesso', 'Condições salvas.');
+    } catch (error) {
+        showToast('erro', getErrorMessage(error, 'Não foi possível salvar as condições.'));
+    } finally {
+        state.isProcessing = false;
+    }
+};
 
 // Ajuste manual do preço final — a única edição permitida depois do congelamento.
 const precoEdicao = reactive({ index: null, valor: null });
@@ -385,6 +421,24 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
+                                        <div class="row g-3 p-2">
+                                            <div class="col-lg-4">
+                                                <label class="form-label">Forma de pagamento</label>
+                                                <input v-model="state.form.formaPagamento" type="text" maxlength="120"
+                                                    class="form-control" placeholder="ex.: PIX, 50% entrada + 50% na entrega" />
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <label class="form-label">Prazo de entrega</label>
+                                                <input v-model="state.form.prazoEntrega" type="text" maxlength="60"
+                                                    class="form-control" placeholder="ex.: 5 dias úteis" />
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <label class="form-label">Observações</label>
+                                                <textarea v-model="state.form.observacoes" maxlength="1000" rows="1"
+                                                    class="form-control" placeholder="instruções de produção, detalhes combinados..."></textarea>
+                                            </div>
+                                        </div>
+
                                         <div class="row p-2 mt-2 align-items-center">
                                             <div class="col-6"><h6 class="mb-0">Itens</h6></div>
                                             <div class="col-6 text-end">
@@ -509,6 +563,56 @@ onMounted(async () => {
                                                 {{ formatData(state.venda.dataCriacao) }}</div>
                                             <div class="col-lg-4"><strong>Total:</strong>
                                                 {{ formatBRL(state.venda.total) }}</div>
+                                        </div>
+
+                                        <div class="border rounded p-3 m-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong>Condições</strong>
+                                                <button v-if="state.venda.status !== 'CANCELADO' && !cabecalho.editando"
+                                                    type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                    title="Editar condições" @click="editarCabecalho">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </div>
+                                            <template v-if="!cabecalho.editando">
+                                                <div class="row small">
+                                                    <div class="col-lg-4"><strong>Forma de pagamento:</strong>
+                                                        {{ state.venda.formaPagamento || '—' }}</div>
+                                                    <div class="col-lg-4"><strong>Prazo de entrega:</strong>
+                                                        {{ state.venda.prazoEntrega || '—' }}</div>
+                                                    <div class="col-lg-4"><strong>Observações:</strong>
+                                                        {{ state.venda.observacoes || '—' }}</div>
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <div class="row g-2">
+                                                    <div class="col-lg-4">
+                                                        <label class="form-label small mb-0">Forma de pagamento</label>
+                                                        <input v-model="cabecalho.formaPagamento" type="text"
+                                                            maxlength="120" class="form-control form-control-sm" />
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <label class="form-label small mb-0">Prazo de entrega</label>
+                                                        <input v-model="cabecalho.prazoEntrega" type="text"
+                                                            maxlength="60" class="form-control form-control-sm" />
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <label class="form-label small mb-0">Observações</label>
+                                                        <textarea v-model="cabecalho.observacoes" maxlength="1000"
+                                                            rows="1" class="form-control form-control-sm"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end mt-2">
+                                                    <button type="button" class="btn btn-success btn-sm me-2"
+                                                        :disabled="state.isProcessing" @click="salvarCabecalho">
+                                                        <i class="bi bi-check-lg"></i>&nbsp;Salvar
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                        @click="cabecalho.editando = false">
+                                                        <i class="bi bi-x-lg"></i>&nbsp;Cancelar
+                                                    </button>
+                                                </div>
+                                            </template>
                                         </div>
 
                                         <div v-for="(item, index) in state.venda.itens" :key="index"

@@ -138,14 +138,22 @@ onBeforeUnmount(() => {
                 </table>
             </section>
 
-            <section v-if="!isOrcamento" class="bloco linha-preencher">
-                <div>Forma de pagamento: <span class="lacuna"></span></div>
-                <div>Prazo de entrega: <span class="lacuna"></span></div>
+            <!-- Condições: valor digitado quando existe; na OS, campo vazio vira lacuna p/ caneta -->
+            <section v-if="!isOrcamento || state.venda.formaPagamento || state.venda.prazoEntrega"
+                class="bloco linha-preencher">
+                <div v-if="!isOrcamento || state.venda.formaPagamento">Forma de pagamento:
+                    <strong v-if="state.venda.formaPagamento">{{ state.venda.formaPagamento }}</strong>
+                    <span v-else class="lacuna"></span>
+                </div>
+                <div v-if="!isOrcamento || state.venda.prazoEntrega">Prazo de entrega:
+                    <strong v-if="state.venda.prazoEntrega">{{ state.venda.prazoEntrega }}</strong>
+                    <span v-else class="lacuna"></span>
+                </div>
             </section>
 
-            <section v-if="!isOrcamento" class="bloco">
+            <section v-if="!isOrcamento || state.venda.observacoes" class="bloco">
                 <div class="bloco-titulo">Observações</div>
-                <div class="observacoes"></div>
+                <div class="observacoes">{{ state.venda.observacoes }}</div>
             </section>
 
             <section v-if="!isOrcamento" class="assinaturas">
@@ -335,6 +343,8 @@ onBeforeUnmount(() => {
 .observacoes {
     border: 1px solid #999;
     min-height: 60px;
+    padding: 4px 8px;
+    white-space: pre-wrap;
 }
 
 .assinaturas {
