@@ -3,10 +3,11 @@ import { reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axiosInstance from '@/axiosInstance';
 import { showToast } from '@/composables/toastUtils';
+import logo from '@/assets/img/supermidia-logo-291x226.png';
 
 // Dados da empresa no cabeçalho do impresso (futuro: configuração global).
 const EMPRESA = {
-    nome: 'SUPERMÍDIA',
+    nome: 'SuperMídia',
     ramo: 'Comunicação Visual',
     contato: '',
 };
@@ -74,10 +75,13 @@ onBeforeUnmount(() => {
 
         <div v-if="state.isReady" class="folha">
             <header class="folha-cabecalho">
-                <div>
-                    <div class="empresa-nome">{{ EMPRESA.nome }}</div>
-                    <div class="empresa-ramo">{{ EMPRESA.ramo }}</div>
-                    <div v-if="EMPRESA.contato" class="empresa-contato">{{ EMPRESA.contato }}</div>
+                <div class="empresa">
+                    <img :src="logo" alt="Logo Supermídia" class="empresa-logo" />
+                    <div>
+                        <div class="empresa-nome">{{ EMPRESA.nome }}</div>
+                        <div class="empresa-ramo">{{ EMPRESA.ramo }}</div>
+                        <div v-if="EMPRESA.contato" class="empresa-contato">{{ EMPRESA.contato }}</div>
+                    </div>
                 </div>
                 <div class="documento-info">
                     <div class="documento-titulo">{{ tituloDocumento }}</div>
@@ -182,6 +186,17 @@ onBeforeUnmount(() => {
     border-bottom: 2px solid #111;
     padding-bottom: 8px;
     margin-bottom: 14px;
+}
+
+.empresa {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.empresa-logo {
+    height: 16mm;
+    width: auto;
 }
 
 .empresa-nome {
