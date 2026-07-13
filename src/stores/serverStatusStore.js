@@ -7,11 +7,12 @@ export const useServerStatusStore = defineStore('serverStatus', {
   }),
   actions: {
     async checkServerStatus() {
-      try {        
-        await axiosInstance.get('/health');
-        this.isOffline = false; // Servidor está online        
+      try {
+        // Timeout curto próprio: detectar servidor fora do ar tem que ser rápido.
+        await axiosInstance.get('/health', { timeout: 3000 });
+        this.isOffline = false; // Servidor está online
       } catch (err) {
-        this.isOffline = true; // Servidor está offline        
+        this.isOffline = true; // Servidor está offline
       }
     },
     setRequestInProgress(value) {

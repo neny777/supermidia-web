@@ -4,9 +4,12 @@ import { showToast } from '@/composables/toastUtils';
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/+$/, '');
 
+// 15s: uma operação legítima (venda com muitos itens, máquina modesta) pode
+// passar de 3s — e estourar o timeout aparece como "Servidor indisponível".
+// O health-check continua rápido: timeout próprio de 3s no serverStatusStore.
 const axiosInstance = Axios.create({
   baseURL: apiBaseUrl,
-  timeout: 3000,
+  timeout: 15000,
 });
 
 // Lista de rotas públicas
