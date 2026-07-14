@@ -1168,7 +1168,7 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <!-- 4 · Pagamento (4) / Entrega (5) / Total (3): pares Forma+Condição e
+                                        <!-- 4 · Pagamento / Entrega / Total em 4/4/4: pares Forma+Condição e
                                              Forma+Prazo na horizontal — mesma altura em todos -->
                                         <div class="row g-2 m-2">
                                             <div class="col-lg-4">
@@ -1238,7 +1238,7 @@ onMounted(async () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-5">
+                                            <div class="col-lg-4">
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                         <strong>Entrega</strong>
@@ -1305,7 +1305,7 @@ onMounted(async () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div v-if="resumoFinanceiro" class="col-lg-3">
+                                            <div v-if="resumoFinanceiro" class="col-lg-4">
                                                 <div class="border rounded p-3 h-100 text-end">
                                                     <div class="text-muted small">
                                                         Total sugerido: {{ formatBRL(resumoFinanceiro.sugerido) }}
