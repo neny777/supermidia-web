@@ -9,12 +9,20 @@ import logo from '@/assets/img/supermidia-logo-291x226.png';
 const EMPRESA = {
     nome: 'SuperMídia',
     ramo: 'Comunicação Visual',
+    whatsapp: '(35) 98879-1615',
     linhas: [
         'Supermidia Alfenas Comercio Servicos e Comunicacao LTDA · CNPJ 06.333.873/0001-00 · IE 016305690.00-24',
         'Av. José Paulino da Costa, 693 · Cruz Preta · Alfenas/MG · CEP 37132-204',
         'WhatsApp: (35) 98879-1615 · contato@supermidiaalfenas.com.br',
     ],
 };
+
+// Cláusulas fixas do orçamento impresso (futuro: configuração global).
+const MIUDINHAS = [
+    'O prazo de produção conta a partir da aprovação da arte e da confirmação do pagamento combinado.',
+    'Cores impressas podem variar levemente em relação às exibidas em tela.',
+    'Este orçamento não reserva agenda de produção.',
+];
 
 const route = useRoute();
 const router = useRouter();
@@ -35,6 +43,13 @@ const formatBRL = (valor) =>
     valor == null ? '-' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatData = (valor) => (valor ? new Date(valor).toLocaleDateString('pt-BR') : '-');
 const formatDia = (valor) => (valor ? new Date(`${valor}T00:00:00`).toLocaleDateString('pt-BR') : '-');
+
+// Apresentação comercial: itens ao preço SUGERIDO; os ajustes de preço final
+// aparecem como linha de DESCONTO (ou acréscimo) antes do total.
+const subtotalSugerido = computed(() => (state.venda?.itens || [])
+    .reduce((soma, item) => soma + Number(item.precoSugerido ?? item.precoFinal ?? 0), 0));
+const ajusteTotal = computed(() =>
+    Math.round((Number(state.venda?.total || 0) - subtotalSugerido.value) * 100) / 100);
 
 // A descrição estruturada ("2 × LONA · BRILHO · 100 × 150 cm · ...") vira
 // título (1ª parte) + linha de características (restante).
@@ -93,6 +108,7 @@ onBeforeUnmount(() => {
                     <div class="documento-numero">Nº {{ numeroFormatado }}</div>
                     <div v-if="state.venda.referencia"><strong>Ref.: {{ state.venda.referencia }}</strong></div>
                     <div>Data: {{ formatData(state.venda.dataCriacao) }}</div>
+                    <div v-if="state.venda.atendenteNome">Atendente: {{ state.venda.atendenteNome }}</div>
                     <div v-if="isOrcamento">Válido até: {{ formatDia(state.venda.validoAte) }}</div>
                     <div v-if="isCancelado" class="documento-cancelado">CANCELADO</div>
                 </div>
@@ -127,10 +143,18 @@ onBeforeUnmount(() => {
                                 <div v-if="caracteristicasItem(item)" class="item-caracteristicas">
                                     {{ caracteristicasItem(item) }}</div>
                             </td>
-                            <td class="col-valor">{{ formatBRL(item.precoFinal) }}</td>
+                            <td class="col-valor">{{ formatBRL(item.precoSugerido ?? item.precoFinal) }}</td>
                         </tr>
                     </tbody>
                     <tfoot>
+                        <tr v-if="ajusteTotal !== 0">
+                            <td colspan="2" class="total-rotulo">SUBTOTAL</td>
+                            <td class="col-valor">{{ formatBRL(subtotalSugerido) }}</td>
+                        </tr>
+                        <tr v-if="ajusteTotal !== 0">
+                            <td colspan="2" class="total-rotulo">{{ ajusteTotal < 0 ? 'DESCONTO' : 'ACRÉSCIMO' }}</td>
+                            <td class="col-valor">{{ formatBRL(Math.abs(ajusteTotal)) }}</td>
+                        </tr>
                         <tr>
                             <td colspan="2" class="total-rotulo">TOTAL</td>
                             <td class="col-valor total-valor">{{ formatBRL(state.venda.total) }}</td>
@@ -168,7 +192,11 @@ onBeforeUnmount(() => {
                 </div>
             </section>
             <section v-else class="rodape-orcamento">
-                Este orçamento não é comprovante de compra. Preços válidos até a data indicada.
+                <ul class="miudinhas">
+                    <li v-for="(clausula, index) in MIUDINHAS" :key="index">{{ clausula }}</li>
+                </ul>
+                <div class="cta">PARA APROVAR: chame no WhatsApp {{ EMPRESA.whatsapp }} informando o nº
+                    {{ numeroFormatado }}.</div>
             </section>
         </div>
     </div>
@@ -368,10 +396,20 @@ onBeforeUnmount(() => {
 
 .rodape-orcamento {
     margin-top: 24px;
-    font-size: 9pt;
-    color: #555;
     border-top: 1px solid #bbb;
     padding-top: 6px;
+}
+
+.miudinhas {
+    margin: 0 0 8px;
+    padding-left: 16px;
+    font-size: 8pt;
+    color: #555;
+}
+
+.cta {
+    font-weight: 700;
+    font-size: 10.5pt;
 }
 
 /* Na impressão só a folha existe; regras presas ao body.modo-impressao para
