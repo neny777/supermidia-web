@@ -397,11 +397,12 @@ const categoriaClienteLabel = computed(() => {
 const abrirFichaCliente = () => {
     const cliente = clienteVenda.value;
     if (!cliente) return;
-    router.push(
+    const rota =
         cliente.tipo === 'JURÍDICA'
             ? { name: 'cliente-juridico', params: { juridicoId: cliente.id } }
-            : { name: 'cliente-fisico', params: { fisicoId: cliente.id } }
-    );
+            : { name: 'cliente-fisico', params: { fisicoId: cliente.id } };
+    // Nova guia: consultar a ficha é tarefa paralela — a venda continua aberta aqui.
+    window.open(router.resolve(rota).href, '_blank');
 };
 const formatDia = (valor) => (valor ? new Date(`${valor}T00:00:00`).toLocaleDateString('pt-BR') : '-');
 
@@ -930,7 +931,7 @@ onMounted(async () => {
                                                     v-if="clienteVenda"
                                                     type="button"
                                                     class="btn btn-outline-secondary btn-sm py-0"
-                                                    title="Abrir a ficha do cliente"
+                                                    title="Abrir a ficha do cliente em outra guia"
                                                     @click="abrirFichaCliente"
                                                 >
                                                     <i class="bi bi-box-arrow-up-right"></i>&nbsp;Ficha
