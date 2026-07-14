@@ -644,11 +644,10 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <div class="row p-2 mt-2 align-items-center">
-                                            <div class="col-6">
-                                                <h6 class="mb-0">Itens</h6>
-                                            </div>
-                                            <div class="col-6 text-end">
+                                        <!-- Contêiner dos itens (mesmo padrão dos demais blocos) -->
+                                        <div class="border rounded p-3 m-2 mt-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>Itens</strong>
                                                 <button
                                                     type="button"
                                                     class="btn btn-primary button-medium"
@@ -657,168 +656,183 @@ onMounted(async () => {
                                                     <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Adicionar item
                                                 </button>
                                             </div>
-                                        </div>
 
-                                        <div
-                                            v-for="(item, index) in state.form.itens"
-                                            :key="index"
-                                            class="border rounded p-3 m-2"
-                                        >
-                                            <div class="row g-2 align-items-end">
-                                                <div class="col-lg-4">
-                                                    <label class="form-label">Produto</label>
-                                                    <BuscaSelect
-                                                        :model-value="item.produtoId"
-                                                        :opcoes="state.produtos"
-                                                        placeholder="Digite para buscar o produto..."
-                                                        @update:model-value="
-                                                            (valor) => {
-                                                                item.produtoId = valor;
-                                                                aoTrocarProduto(item);
-                                                            }
-                                                        "
-                                                    />
-                                                </div>
-                                                <div class="col-lg-2">
-                                                    <label class="form-label">Altura (cm)</label>
-                                                    <input
-                                                        v-model="item.altura"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0.01"
-                                                        class="form-control"
-                                                    />
-                                                </div>
-                                                <div class="col-lg-2">
-                                                    <label class="form-label">Largura (cm)</label>
-                                                    <input
-                                                        v-model="item.largura"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0.01"
-                                                        class="form-control"
-                                                    />
-                                                </div>
-                                                <div class="col-lg-2">
-                                                    <label class="form-label">Qtde</label>
-                                                    <input
-                                                        v-model="item.quantidade"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0.01"
-                                                        class="form-control"
-                                                    />
-                                                </div>
-                                                <div class="col-lg-2 text-end">
-                                                    <button
-                                                        type="button"
-                                                        class="btn btn-danger"
-                                                        @click="removerItem(index)"
-                                                    >
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <!-- Medidas extras declaradas pelo produto -->
-                                            <div v-if="medidasDe(item).length" class="row g-2 mt-1">
-                                                <div
-                                                    v-for="medida in medidasDe(item)"
-                                                    :key="medida.id"
-                                                    class="col-lg-3"
-                                                >
-                                                    <label class="form-label">
-                                                        {{ medida.nome }}
-                                                        <span v-if="medida.unidade">({{ medida.unidade }})</span>
-                                                        <span v-if="medida.obrigatoria" class="text-danger">*</span>
-                                                        <small
-                                                            v-if="medida.minimo != null || medida.maximo != null"
-                                                            class="text-muted"
+                                            <div
+                                                v-for="(item, index) in state.form.itens"
+                                                :key="index"
+                                                class="border rounded p-3 mt-3"
+                                            >
+                                                <div class="row g-2 align-items-end">
+                                                    <div class="col-lg-4">
+                                                        <label class="form-label">Produto</label>
+                                                        <BuscaSelect
+                                                            :model-value="item.produtoId"
+                                                            :opcoes="state.produtos"
+                                                            placeholder="Digite para buscar o produto..."
+                                                            @update:model-value="
+                                                                (valor) => {
+                                                                    item.produtoId = valor;
+                                                                    aoTrocarProduto(item);
+                                                                }
+                                                            "
+                                                        />
+                                                    </div>
+                                                    <div class="col-lg-2">
+                                                        <label class="form-label">Altura (cm)</label>
+                                                        <input
+                                                            v-model="item.altura"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
+                                                    </div>
+                                                    <div class="col-lg-2">
+                                                        <label class="form-label">Largura (cm)</label>
+                                                        <input
+                                                            v-model="item.largura"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
+                                                    </div>
+                                                    <div class="col-lg-2">
+                                                        <label class="form-label">Qtde</label>
+                                                        <input
+                                                            v-model="item.quantidade"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
+                                                    </div>
+                                                    <div class="col-lg-2 text-end">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger"
+                                                            @click="removerItem(index)"
                                                         >
-                                                            [{{ medida.minimo ?? '…' }} a {{ medida.maximo ?? '…' }}]
-                                                        </small>
-                                                    </label>
-                                                    <input
-                                                        v-model="item.medidas[medida.nome]"
-                                                        type="number"
-                                                        step="0.01"
-                                                        class="form-control"
-                                                    />
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <!-- Escolha do material dos slots -->
-                                            <div v-if="slotsDe(item).length" class="row g-2 mt-1">
-                                                <div v-for="slot in slotsDe(item)" :key="slot.id" class="col-lg-4">
-                                                    <label class="form-label"
-                                                        >Material ({{ slot.grupoSlot }})
-                                                        <span class="text-danger">*</span></label
+                                                <!-- Medidas extras declaradas pelo produto -->
+                                                <div v-if="medidasDe(item).length" class="row g-2 mt-1">
+                                                    <div
+                                                        v-for="medida in medidasDe(item)"
+                                                        :key="medida.id"
+                                                        class="col-lg-3"
                                                     >
-                                                    <select v-model="item.escolhasMateria[slot.id]" class="form-select">
-                                                        <option value="">Selecione</option>
-                                                        <option
-                                                            v-for="materia in materiasDoGrupo(slot.grupoSlot)"
-                                                            :key="materia.id"
-                                                            :value="materia.id"
+                                                        <label class="form-label">
+                                                            {{ medida.nome }}
+                                                            <span v-if="medida.unidade">({{ medida.unidade }})</span>
+                                                            <span v-if="medida.obrigatoria" class="text-danger">*</span>
+                                                            <small
+                                                                v-if="medida.minimo != null || medida.maximo != null"
+                                                                class="text-muted"
+                                                            >
+                                                                [{{ medida.minimo ?? '…' }} a
+                                                                {{ medida.maximo ?? '…' }}]
+                                                            </small>
+                                                        </label>
+                                                        <input
+                                                            v-model="item.medidas[medida.nome]"
+                                                            type="number"
+                                                            step="0.01"
+                                                            class="form-control"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Escolha do material dos slots -->
+                                                <div v-if="slotsDe(item).length" class="row g-2 mt-1">
+                                                    <div v-for="slot in slotsDe(item)" :key="slot.id" class="col-lg-4">
+                                                        <label class="form-label"
+                                                            >Material ({{ slot.grupoSlot }})
+                                                            <span class="text-danger">*</span></label
                                                         >
-                                                            {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{
-                                                                materia.unidade
-                                                            }}
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <!-- Grupos de opções (acabamentos/seleções) -->
-                                            <div v-if="gruposDe(item).length" class="row g-2 mt-1">
-                                                <div v-for="grupo in gruposDe(item)" :key="grupo.id" class="col-lg-3">
-                                                    <label class="form-label"
-                                                        >{{ grupo.nome }}
-                                                        <span v-if="grupo.obrigatorio" class="text-danger"
-                                                            >*</span
-                                                        ></label
-                                                    >
-                                                    <select v-model="item.escolhasOpcao[grupo.id]" class="form-select">
-                                                        <option v-if="!grupo.obrigatorio" value="">Nenhum</option>
-                                                        <option v-else value="" disabled>Selecione</option>
-                                                        <option
-                                                            v-for="opcao in grupo.opcoes"
-                                                            :key="opcao.id"
-                                                            :value="opcao.id"
+                                                        <select
+                                                            v-model="item.escolhasMateria[slot.id]"
+                                                            class="form-select"
                                                         >
-                                                            {{ opcao.nome }}
-                                                        </option>
-                                                    </select>
+                                                            <option value="">Selecione</option>
+                                                            <option
+                                                                v-for="materia in materiasDoGrupo(slot.grupoSlot)"
+                                                                :key="materia.id"
+                                                                :value="materia.id"
+                                                            >
+                                                                {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{
+                                                                    materia.unidade
+                                                                }}
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Grupos de opções (acabamentos/seleções) -->
+                                                <div v-if="gruposDe(item).length" class="row g-2 mt-1">
+                                                    <div
+                                                        v-for="grupo in gruposDe(item)"
+                                                        :key="grupo.id"
+                                                        class="col-lg-3"
+                                                    >
+                                                        <label class="form-label"
+                                                            >{{ grupo.nome }}
+                                                            <span v-if="grupo.obrigatorio" class="text-danger"
+                                                                >*</span
+                                                            ></label
+                                                        >
+                                                        <select
+                                                            v-model="item.escolhasOpcao[grupo.id]"
+                                                            class="form-select"
+                                                        >
+                                                            <option v-if="!grupo.obrigatorio" value="">Nenhum</option>
+                                                            <option v-else value="" disabled>Selecione</option>
+                                                            <option
+                                                                v-for="opcao in grupo.opcoes"
+                                                                :key="opcao.id"
+                                                                :value="opcao.id"
+                                                            >
+                                                                {{ opcao.nome }}
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Preço ao vivo do item -->
+                                                <div class="row mt-2">
+                                                    <div class="col text-end">
+                                                        <span
+                                                            v-if="previews[index]?.carregando"
+                                                            class="text-muted small"
+                                                            >calculando…</span
+                                                        >
+                                                        <span
+                                                            v-else-if="previews[index]?.erro"
+                                                            class="text-danger small"
+                                                            >{{ previews[index].erro }}</span
+                                                        >
+                                                        <strong v-else-if="previews[index]?.preco != null">
+                                                            {{ formatBRL(previews[index].preco) }}</strong
+                                                        >
+                                                        <span v-else-if="previews[index]?.varejo != null" class="small">
+                                                            Varejo
+                                                            <strong>{{ formatBRL(previews[index].varejo) }}</strong> ·
+                                                            Atacado
+                                                            <strong>{{ formatBRL(previews[index].atacado) }}</strong>
+                                                            <span class="text-muted">(escolha o cliente)</span>
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Preço ao vivo do item -->
-                                            <div class="row mt-2">
-                                                <div class="col text-end">
-                                                    <span v-if="previews[index]?.carregando" class="text-muted small"
-                                                        >calculando…</span
-                                                    >
-                                                    <span v-else-if="previews[index]?.erro" class="text-danger small">{{
-                                                        previews[index].erro
-                                                    }}</span>
-                                                    <strong v-else-if="previews[index]?.preco != null">
-                                                        {{ formatBRL(previews[index].preco) }}</strong
-                                                    >
-                                                    <span v-else-if="previews[index]?.varejo != null" class="small">
-                                                        Varejo
-                                                        <strong>{{ formatBRL(previews[index].varejo) }}</strong> ·
-                                                        Atacado
-                                                        <strong>{{ formatBRL(previews[index].atacado) }}</strong>
-                                                        <span class="text-muted">(escolha o cliente)</span>
-                                                    </span>
+                                            <!-- Total corrente -->
+                                            <div v-if="totalPrevisto != null" class="row mt-3">
+                                                <div class="col text-end fs-5">
+                                                    <strong>Total: {{ formatBRL(totalPrevisto) }}</strong>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Total corrente -->
-                                        <div v-if="totalPrevisto != null" class="row p-2">
-                                            <div class="col text-end fs-5">
-                                                <strong>Total: {{ formatBRL(totalPrevisto) }}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -970,121 +984,132 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <!-- 3 · Itens -->
-                                        <h6 class="mt-3 ms-2 mb-0">Itens</h6>
-                                        <div
-                                            v-for="(item, index) in state.venda.itens"
-                                            :key="index"
-                                            class="border rounded p-3 m-2"
-                                        >
-                                            <div class="row">
-                                                <div class="col-lg-9">
-                                                    <strong>{{ item.descricao || item.produtoNome }}</strong>
+                                        <!-- 3 · Itens: contêiner único; itens separados por divisórias -->
+                                        <div class="border rounded p-3 m-2">
+                                            <div class="mb-2"><strong>Itens</strong></div>
+                                            <div
+                                                v-for="(item, index) in state.venda.itens"
+                                                :key="index"
+                                                class="py-2"
+                                                :class="{ 'border-top': index > 0 }"
+                                            >
+                                                <div class="row">
+                                                    <div class="col-lg-9">
+                                                        <strong>{{ item.descricao || item.produtoNome }}</strong>
+                                                    </div>
+                                                    <div class="col-lg-3 text-end">
+                                                        <template v-if="precoEdicao.index === index">
+                                                            <div class="input-group input-group-sm justify-content-end">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min="0.01"
+                                                                    class="form-control text-end"
+                                                                    style="max-width: 8rem"
+                                                                    v-model="precoEdicao.valor"
+                                                                    @keyup.enter="salvarPrecoFinal(item)"
+                                                                    @keyup.esc="cancelarEdicaoPreco"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-success"
+                                                                    :disabled="state.isProcessing"
+                                                                    @click="salvarPrecoFinal(item)"
+                                                                >
+                                                                    <i class="bi bi-check-lg"></i>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-outline-secondary"
+                                                                    @click="cancelarEdicaoPreco"
+                                                                >
+                                                                    <i class="bi bi-x-lg"></i>
+                                                                </button>
+                                                            </div>
+                                                        </template>
+                                                        <template v-else>
+                                                            <span
+                                                                v-if="precoAjustado(item)"
+                                                                class="badge text-bg-info me-2"
+                                                                >ajustado</span
+                                                            >
+                                                            <strong>{{ formatBRL(item.precoFinal) }}</strong>
+                                                            <button
+                                                                v-if="podeAjustarPreco"
+                                                                type="button"
+                                                                class="btn btn-outline-secondary btn-sm ms-2 py-0"
+                                                                title="Ajustar preço final"
+                                                                @click="iniciarEdicaoPreco(index, item)"
+                                                            >
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+                                                        </template>
+                                                    </div>
                                                 </div>
-                                                <div class="col-lg-3 text-end">
-                                                    <template v-if="precoEdicao.index === index">
-                                                        <div class="input-group input-group-sm justify-content-end">
-                                                            <input
-                                                                type="number"
-                                                                step="0.01"
-                                                                min="0.01"
-                                                                class="form-control text-end"
-                                                                style="max-width: 8rem"
-                                                                v-model="precoEdicao.valor"
-                                                                @keyup.enter="salvarPrecoFinal(item)"
-                                                                @keyup.esc="cancelarEdicaoPreco"
-                                                            />
-                                                            <button
-                                                                type="button"
-                                                                class="btn btn-success"
-                                                                :disabled="state.isProcessing"
-                                                                @click="salvarPrecoFinal(item)"
-                                                            >
-                                                                <i class="bi bi-check-lg"></i>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                class="btn btn-outline-secondary"
-                                                                @click="cancelarEdicaoPreco"
-                                                            >
-                                                                <i class="bi bi-x-lg"></i>
-                                                            </button>
-                                                        </div>
-                                                    </template>
-                                                    <template v-else>
-                                                        <span v-if="precoAjustado(item)" class="badge text-bg-info me-2"
-                                                            >ajustado</span
-                                                        >
-                                                        <strong>{{ formatBRL(item.precoFinal) }}</strong>
+                                                <div class="row text-muted small mb-2">
+                                                    <div class="col">
+                                                        Sugerido: {{ formatBRL(item.precoSugerido) }}
                                                         <button
-                                                            v-if="podeAjustarPreco"
+                                                            v-if="temDadosDeCusto(item)"
                                                             type="button"
                                                             class="btn btn-outline-secondary btn-sm ms-2 py-0"
-                                                            title="Ajustar preço final"
-                                                            @click="iniciarEdicaoPreco(index, item)"
+                                                            @click="toggleDetalhes(index)"
                                                         >
-                                                            <i class="bi bi-pencil"></i>
+                                                            <i
+                                                                class="bi"
+                                                                :class="
+                                                                    detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'
+                                                                "
+                                                            ></i>
+                                                            {{
+                                                                detalhesAbertos[index] ? 'Ocultar detalhes' : 'Detalhes'
+                                                            }}
                                                         </button>
-                                                    </template>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="row text-muted small mb-2">
-                                                <div class="col">
-                                                    Sugerido: {{ formatBRL(item.precoSugerido) }}
-                                                    <button
-                                                        v-if="temDadosDeCusto(item)"
-                                                        type="button"
-                                                        class="btn btn-outline-secondary btn-sm ms-2 py-0"
-                                                        @click="toggleDetalhes(index)"
-                                                    >
-                                                        <i
-                                                            class="bi"
-                                                            :class="detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'"
-                                                        ></i>
-                                                        {{ detalhesAbertos[index] ? 'Ocultar detalhes' : 'Detalhes' }}
-                                                    </button>
+                                                <div
+                                                    v-if="detalhesAbertos[index] && item.custoTotal != null"
+                                                    class="row text-muted small mb-2"
+                                                >
+                                                    <div class="col">
+                                                        Custo: {{ formatBRL(item.custoTotal) }} · Margem:
+                                                        {{ item.markupAplicado }}%
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div
-                                                v-if="detalhesAbertos[index] && item.custoTotal != null"
-                                                class="row text-muted small mb-2"
-                                            >
-                                                <div class="col">
-                                                    Custo: {{ formatBRL(item.custoTotal) }} · Margem:
-                                                    {{ item.markupAplicado }}%
+                                                <div
+                                                    v-if="detalhesAbertos[index] && item.detalhes?.length"
+                                                    class="table-responsive"
+                                                >
+                                                    <table class="table table-sm table-bordered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Item</th>
+                                                                <th>Tipo</th>
+                                                                <th class="text-end">Qtde</th>
+                                                                <th>Un</th>
+                                                                <th class="text-end">Preço</th>
+                                                                <th class="text-end">Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(d, di) in item.detalhes" :key="di">
+                                                                <td>
+                                                                    {{ d.nome }}
+                                                                    <small v-if="d.opcaoNome" class="text-muted">
+                                                                        ({{ d.opcaoNome }})</small
+                                                                    >
+                                                                </td>
+                                                                <td>{{ d.tipoItem }}</td>
+                                                                <td class="text-end">{{ d.quantidadeCalculada }}</td>
+                                                                <td>{{ d.unidade }}</td>
+                                                                <td class="text-end">
+                                                                    {{ formatBRL(d.precoUnitario) }}
+                                                                </td>
+                                                                <td class="text-end">{{ formatBRL(d.valorTotal) }}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                            </div>
-                                            <div
-                                                v-if="detalhesAbertos[index] && item.detalhes?.length"
-                                                class="table-responsive"
-                                            >
-                                                <table class="table table-sm table-bordered mb-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Item</th>
-                                                            <th>Tipo</th>
-                                                            <th class="text-end">Qtde</th>
-                                                            <th>Un</th>
-                                                            <th class="text-end">Preço</th>
-                                                            <th class="text-end">Total</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(d, di) in item.detalhes" :key="di">
-                                                            <td>
-                                                                {{ d.nome }}
-                                                                <small v-if="d.opcaoNome" class="text-muted">
-                                                                    ({{ d.opcaoNome }})</small
-                                                                >
-                                                            </td>
-                                                            <td>{{ d.tipoItem }}</td>
-                                                            <td class="text-end">{{ d.quantidadeCalculada }}</td>
-                                                            <td>{{ d.unidade }}</td>
-                                                            <td class="text-end">{{ formatBRL(d.precoUnitario) }}</td>
-                                                            <td class="text-end">{{ formatBRL(d.valorTotal) }}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
                                             </div>
                                         </div>
 
