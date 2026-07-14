@@ -600,37 +600,42 @@ onMounted(async () => {
                                 <!-- ===================== DETALHE ===================== -->
                                 <template v-if="state.isReady && isDetail && state.venda">
                                     <div class="card-header">
-                                        <div class="card-title">
-                                            <h5 class="mb-0">
-                                                {{ tituloVenda }}
-                                                <span v-if="badgeSituacao" class="badge ms-2"
-                                                    :class="badgeSituacao.classe">{{ badgeSituacao.texto }}</span>
-                                            </h5>
-                                            <template v-if="campoEdicao.campo === 'referencia'">
-                                                <div class="input-group input-group-sm mt-1" style="max-width: 26rem;">
-                                                    <input v-model="campoEdicao.valor" type="text" maxlength="120"
-                                                        class="form-control" placeholder="referência do trabalho"
-                                                        @keyup.enter="salvarCampo" @keyup.esc="cancelarEdicaoCampo" />
-                                                    <button type="button" class="btn btn-success"
-                                                        :disabled="state.isProcessing" @click="salvarCampo">
-                                                        <i class="bi bi-check-lg"></i>
+                                        <!-- Identidade em linha única: título+situação+referência à esquerda,
+                                             datas/atendente à direita; flex-wrap quebra bem em tela estreita. -->
+                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 w-100">
+                                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                                <h5 class="mb-0">
+                                                    {{ tituloVenda }}
+                                                    <span v-if="badgeSituacao" class="badge ms-1"
+                                                        :class="badgeSituacao.classe">{{ badgeSituacao.texto }}</span>
+                                                </h5>
+                                                <template v-if="campoEdicao.campo === 'referencia'">
+                                                    <div class="input-group input-group-sm" style="max-width: 22rem;">
+                                                        <input v-model="campoEdicao.valor" type="text" maxlength="120"
+                                                            class="form-control" placeholder="referência do trabalho"
+                                                            @keyup.enter="salvarCampo"
+                                                            @keyup.esc="cancelarEdicaoCampo" />
+                                                        <button type="button" class="btn btn-success"
+                                                            :disabled="state.isProcessing" @click="salvarCampo">
+                                                            <i class="bi bi-check-lg"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            @click="cancelarEdicaoCampo">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                                <span v-else class="text-muted fw-semibold">
+                                                    · {{ state.venda.referencia || 'sem referência' }}
+                                                    <button v-if="podeEditarCabecalho" type="button"
+                                                        class="btn btn-outline-secondary btn-sm ms-1 py-0"
+                                                        title="Editar referência"
+                                                        @click="iniciarEdicaoCampo('referencia')">
+                                                        <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-secondary"
-                                                        @click="cancelarEdicaoCampo">
-                                                        <i class="bi bi-x-lg"></i>
-                                                    </button>
-                                                </div>
-                                            </template>
-                                            <div v-else class="text-muted fw-semibold mt-1">
-                                                {{ state.venda.referencia || 'sem referência' }}
-                                                <button v-if="podeEditarCabecalho" type="button"
-                                                    class="btn btn-outline-secondary btn-sm ms-2 py-0"
-                                                    title="Editar referência"
-                                                    @click="iniciarEdicaoCampo('referencia')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
+                                                </span>
                                             </div>
-                                            <div class="text-muted small mt-1">
+                                            <div class="text-muted small">
                                                 Data: {{ formatData(state.venda.dataCriacao) }}
                                                 <template v-if="state.venda.status === 'ORCAMENTO'"> · Válido até:
                                                     {{ formatDia(state.venda.validoAte) }}</template>
