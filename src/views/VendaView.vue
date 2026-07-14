@@ -21,6 +21,7 @@ const state = reactive({
         clienteId: '',
         referencia: '',
         formaPagamento: '',
+        formaEntrega: '',
         prazoEntrega: '',
         observacoes: '',
         itens: [novoItem()],
@@ -116,6 +117,7 @@ const preencherFormularioParaEdicao = (venda) => {
     state.form.clienteId = venda.clienteId;
     state.form.referencia = venda.referencia || '';
     state.form.formaPagamento = venda.formaPagamento || '';
+    state.form.formaEntrega = venda.formaEntrega || '';
     state.form.prazoEntrega = venda.prazoEntrega || '';
     state.form.observacoes = venda.observacoes || '';
     state.form.itens = (venda.itens || []).map((itemVenda) => {
@@ -292,6 +294,7 @@ const salvar = async () => {
         status: state.form.status,
         referencia: state.form.referencia,
         formaPagamento: state.form.formaPagamento,
+        formaEntrega: state.form.formaEntrega,
         prazoEntrega: state.form.prazoEntrega,
         observacoes: state.form.observacoes,
         itens: state.form.itens.map((item) => ({
@@ -344,22 +347,34 @@ const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || [
 // Campos livres do cabeçalho (referência/pagamento/prazo/observações): não
 // mexem em preço, então são editáveis fora da janela de 1h. Cada bloco tem
 // seu lápis; tudo bate no mesmo PUT /cabecalho.
-const CAMPOS_CABECALHO = ['referencia', 'formaPagamento', 'prazoEntrega', 'observacoes'];
-const campoEdicao = reactive({ campo: null, valor: '' });
+const CAMPOS_CABECALHO = ['referencia', 'formaPagamento', 'formaEntrega', 'prazoEntrega', 'observacoes'];
+// O pseudo-campo 'entrega' edita forma+prazo juntos (valor + valorPrazo).
+const campoEdicao = reactive({ campo: null, valor: '', valorPrazo: '' });
 const podeEditarCabecalho = computed(() => state.venda && state.venda.status !== 'CANCELADO');
 const iniciarEdicaoCampo = (campo) => {
     campoEdicao.campo = campo;
-    campoEdicao.valor = state.venda[campo] || '';
+    if (campo === 'entrega') {
+        campoEdicao.valor = state.venda.formaEntrega || '';
+        campoEdicao.valorPrazo = state.venda.prazoEntrega || '';
+    } else {
+        campoEdicao.valor = state.venda[campo] || '';
+    }
 };
 const cancelarEdicaoCampo = () => {
     campoEdicao.campo = null;
     campoEdicao.valor = '';
+    campoEdicao.valorPrazo = '';
 };
 const salvarCampo = async () => {
     try {
         state.isProcessing = true;
         const payload = Object.fromEntries(CAMPOS_CABECALHO.map((campo) => [campo, state.venda[campo]]));
-        payload[campoEdicao.campo] = campoEdicao.valor;
+        if (campoEdicao.campo === 'entrega') {
+            payload.formaEntrega = campoEdicao.valor;
+            payload.prazoEntrega = campoEdicao.valorPrazo;
+        } else {
+            payload[campoEdicao.campo] = campoEdicao.valor;
+        }
         const response = await axiosInstance.put(`/vendas/${route.params.vendaId}/cabecalho`, payload);
         state.venda = response.data;
         cancelarEdicaoCampo();
@@ -612,17 +627,27 @@ onMounted(async () => {
                                         </div>
 
                                         <div class="row g-3 p-2">
-                                            <div class="col-lg-4">
+                                            <div class="col-lg-3">
                                                 <label class="form-label">Forma de pagamento</label>
                                                 <input
                                                     v-model="state.form.formaPagamento"
                                                     type="text"
                                                     maxlength="120"
                                                     class="form-control"
-                                                    placeholder="ex.: PIX, 50% entrada + 50% na entrega"
+                                                    placeholder="ex.: PIX, 50% entrada + 50%"
                                                 />
                                             </div>
-                                            <div class="col-lg-4">
+                                            <div class="col-lg-3">
+                                                <label class="form-label">Forma de entrega</label>
+                                                <input
+                                                    v-model="state.form.formaEntrega"
+                                                    type="text"
+                                                    maxlength="120"
+                                                    class="form-control"
+                                                    placeholder="ex.: retirada, entrega, instalação"
+                                                />
+                                            </div>
+                                            <div class="col-lg-2">
                                                 <label class="form-label">Prazo de entrega</label>
                                                 <input
                                                     v-model="state.form.prazoEntrega"
@@ -1113,25 +1138,7 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <!-- 4 · Resumo financeiro (derivado dos snapshots) -->
-                                        <div v-if="resumoFinanceiro" class="border rounded p-3 m-2 text-end">
-                                            <div class="text-muted small">
-                                                Total sugerido: {{ formatBRL(resumoFinanceiro.sugerido) }}
-                                            </div>
-                                            <div
-                                                v-if="resumoFinanceiro.ajuste !== 0"
-                                                class="small"
-                                                :class="resumoFinanceiro.ajuste < 0 ? 'text-success' : 'text-danger'"
-                                            >
-                                                {{ resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo' }}:
-                                                {{ formatBRL(Math.abs(resumoFinanceiro.ajuste)) }}
-                                            </div>
-                                            <div class="fs-5">
-                                                <strong>Total: {{ formatBRL(state.venda.total) }}</strong>
-                                            </div>
-                                        </div>
-
-                                        <!-- 5 · Pagamento / 6 · Entrega / Observações -->
+                                        <!-- 4 · Pagamento / Entrega / Resumo em uma linha -->
                                         <div class="row g-0 m-2 gap-2 flex-lg-nowrap">
                                             <div class="col-lg border rounded p-3">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -1183,72 +1190,35 @@ onMounted(async () => {
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                                     <strong>Entrega</strong>
                                                     <button
-                                                        v-if="
-                                                            podeEditarCabecalho && campoEdicao.campo !== 'prazoEntrega'
-                                                        "
+                                                        v-if="podeEditarCabecalho && campoEdicao.campo !== 'entrega'"
                                                         type="button"
                                                         class="btn btn-outline-secondary btn-sm py-0"
-                                                        title="Editar prazo de entrega"
-                                                        @click="iniciarEdicaoCampo('prazoEntrega')"
+                                                        title="Editar forma e prazo de entrega"
+                                                        @click="iniciarEdicaoCampo('entrega')"
                                                     >
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
                                                 </div>
-                                                <div
-                                                    v-if="campoEdicao.campo === 'prazoEntrega'"
-                                                    class="input-group input-group-sm"
-                                                >
+                                                <template v-if="campoEdicao.campo === 'entrega'">
+                                                    <label class="form-label small mb-0">Forma (transporte)</label>
                                                     <input
                                                         v-model="campoEdicao.valor"
                                                         type="text"
-                                                        maxlength="60"
-                                                        class="form-control"
+                                                        maxlength="120"
+                                                        class="form-control form-control-sm"
+                                                        placeholder="retirada, entrega, instalação..."
                                                         @keyup.enter="salvarCampo"
                                                         @keyup.esc="cancelarEdicaoCampo"
                                                     />
-                                                    <button
-                                                        type="button"
-                                                        class="btn btn-success"
-                                                        :disabled="state.isProcessing"
-                                                        @click="salvarCampo"
-                                                    >
-                                                        <i class="bi bi-check-lg"></i>
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        class="btn btn-outline-secondary"
-                                                        @click="cancelarEdicaoCampo"
-                                                    >
-                                                        <i class="bi bi-x-lg"></i>
-                                                    </button>
-                                                </div>
-                                                <div v-else class="small">
-                                                    Prazo: {{ state.venda.prazoEntrega || '—' }}
-                                                </div>
-                                            </div>
-                                            <div class="col-lg border rounded p-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <strong>Observações</strong>
-                                                    <button
-                                                        v-if="
-                                                            podeEditarCabecalho && campoEdicao.campo !== 'observacoes'
-                                                        "
-                                                        type="button"
-                                                        class="btn btn-outline-secondary btn-sm py-0"
-                                                        title="Editar observações"
-                                                        @click="iniciarEdicaoCampo('observacoes')"
-                                                    >
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                </div>
-                                                <template v-if="campoEdicao.campo === 'observacoes'">
-                                                    <textarea
-                                                        v-model="campoEdicao.valor"
-                                                        maxlength="1000"
-                                                        rows="2"
+                                                    <label class="form-label small mb-0 mt-1">Prazo</label>
+                                                    <input
+                                                        v-model="campoEdicao.valorPrazo"
+                                                        type="text"
+                                                        maxlength="60"
                                                         class="form-control form-control-sm"
+                                                        @keyup.enter="salvarCampo"
                                                         @keyup.esc="cancelarEdicaoCampo"
-                                                    ></textarea>
+                                                    />
                                                     <div class="text-end mt-1">
                                                         <button
                                                             type="button"
@@ -1267,9 +1237,80 @@ onMounted(async () => {
                                                         </button>
                                                     </div>
                                                 </template>
-                                                <div v-else class="small" style="white-space: pre-wrap">
-                                                    {{ state.venda.observacoes || '—' }}
+                                                <template v-else>
+                                                    <div class="small">
+                                                        Forma: {{ state.venda.formaEntrega || '—' }}
+                                                    </div>
+                                                    <div class="small">
+                                                        Prazo: {{ state.venda.prazoEntrega || '—' }}
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div v-if="resumoFinanceiro" class="col-lg border rounded p-3">
+                                                <div class="mb-1"><strong>Resumo</strong></div>
+                                                <div class="text-end">
+                                                    <div class="text-muted small">
+                                                        Total sugerido: {{ formatBRL(resumoFinanceiro.sugerido) }}
+                                                    </div>
+                                                    <div
+                                                        v-if="resumoFinanceiro.ajuste !== 0"
+                                                        class="small"
+                                                        :class="
+                                                            resumoFinanceiro.ajuste < 0 ? 'text-success' : 'text-danger'
+                                                        "
+                                                    >
+                                                        {{ resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo' }}:
+                                                        {{ formatBRL(Math.abs(resumoFinanceiro.ajuste)) }}
+                                                    </div>
+                                                    <div class="fs-5">
+                                                        <strong>Total: {{ formatBRL(state.venda.total) }}</strong>
+                                                    </div>
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Observações em linha própria (texto longo merece largura) -->
+                                        <div class="border rounded p-3 m-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong>Observações</strong>
+                                                <button
+                                                    v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
+                                                    type="button"
+                                                    class="btn btn-outline-secondary btn-sm py-0"
+                                                    title="Editar observações"
+                                                    @click="iniciarEdicaoCampo('observacoes')"
+                                                >
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </div>
+                                            <template v-if="campoEdicao.campo === 'observacoes'">
+                                                <textarea
+                                                    v-model="campoEdicao.valor"
+                                                    maxlength="1000"
+                                                    rows="2"
+                                                    class="form-control form-control-sm"
+                                                    @keyup.esc="cancelarEdicaoCampo"
+                                                ></textarea>
+                                                <div class="text-end mt-1">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-success btn-sm me-1"
+                                                        :disabled="state.isProcessing"
+                                                        @click="salvarCampo"
+                                                    >
+                                                        <i class="bi bi-check-lg"></i>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-secondary btn-sm"
+                                                        @click="cancelarEdicaoCampo"
+                                                    >
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <div v-else class="small" style="white-space: pre-wrap">
+                                                {{ state.venda.observacoes || '—' }}
                                             </div>
                                         </div>
                                     </div>
