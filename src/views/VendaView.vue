@@ -74,7 +74,7 @@ const aoTrocarProduto = (item) => {
 // porque o tipo original não é mais relevante.
 const tituloVenda = computed(() => {
     if (!state.venda) return '-';
-    const numero = state.venda.numero ? ` ${String(state.venda.numero).padStart(4, '0')}`  : '';
+    const numero = state.venda.numero ? ` ${String(state.venda.numero).padStart(4, '0')}` : '';
     switch (state.venda.status) {
         case 'ORCAMENTO': return `ORÇAMENTO${numero}`;
         case 'ORDEM_SERVICO': return `OS${numero}`; // curto: cabe na coluna do título
@@ -884,136 +884,136 @@ onMounted(async () => {
                                                 {{ formatBRL(resumoFinanceiro.sugerido) }}</div>
                                             <div v-if="resumoFinanceiro.ajuste !== 0" class="small"
                                                 :class="resumoFinanceiro.ajuste < 0 ? 'text-success' : 'text-danger'">
-                                                {{ resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo' }}: {{
-                                                    formatBRL(Math.abs(resumoFinanceiro.ajuste)) }} </div>
-                                                    <div class="fs-5"><strong>Total:
-                                                            {{ formatBRL(state.venda.total) }}</strong></div>
+                                                {{ resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo' }}:
+                                                {{ formatBRL(Math.abs(resumoFinanceiro.ajuste)) }}
                                             </div>
+                                            <div class="fs-5"><strong>Total:
+                                                    {{ formatBRL(state.venda.total) }}</strong></div>
+                                        </div>
 
-                                            <!-- 5 · Pagamento / 6 · Entrega / Observações -->
-                                            <div class="row g-0 m-2 gap-2 flex-lg-nowrap">
-                                                <div class="col-lg border rounded p-3">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <strong>Pagamento</strong>
-                                                        <button
-                                                            v-if="podeEditarCabecalho && campoEdicao.campo !== 'formaPagamento'"
-                                                            type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                            title="Editar forma de pagamento"
-                                                            @click="iniciarEdicaoCampo('formaPagamento')">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                    </div>
-                                                    <div v-if="campoEdicao.campo === 'formaPagamento'"
-                                                        class="input-group input-group-sm">
-                                                        <input v-model="campoEdicao.valor" type="text" maxlength="120"
-                                                            class="form-control" @keyup.enter="salvarCampo"
-                                                            @keyup.esc="cancelarEdicaoCampo" />
-                                                        <button type="button" class="btn btn-success"
-                                                            :disabled="state.isProcessing" @click="salvarCampo">
-                                                            <i class="bi bi-check-lg"></i></button>
-                                                        <button type="button" class="btn btn-outline-secondary"
-                                                            @click="cancelarEdicaoCampo">
-                                                            <i class="bi bi-x-lg"></i></button>
-                                                    </div>
-                                                    <div v-else class="small">{{ state.venda.formaPagamento || '—' }}
-                                                    </div>
+                                        <!-- 5 · Pagamento / 6 · Entrega / Observações -->
+                                        <div class="row g-0 m-2 gap-2 flex-lg-nowrap">
+                                            <div class="col-lg border rounded p-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <strong>Pagamento</strong>
+                                                    <button
+                                                        v-if="podeEditarCabecalho && campoEdicao.campo !== 'formaPagamento'"
+                                                        type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                        title="Editar forma de pagamento"
+                                                        @click="iniciarEdicaoCampo('formaPagamento')">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
                                                 </div>
-                                                <div class="col-lg border rounded p-3">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <strong>Entrega</strong>
-                                                        <button
-                                                            v-if="podeEditarCabecalho && campoEdicao.campo !== 'prazoEntrega'"
-                                                            type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                            title="Editar prazo de entrega"
-                                                            @click="iniciarEdicaoCampo('prazoEntrega')">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                    </div>
-                                                    <div v-if="campoEdicao.campo === 'prazoEntrega'"
-                                                        class="input-group input-group-sm">
-                                                        <input v-model="campoEdicao.valor" type="text" maxlength="60"
-                                                            class="form-control" @keyup.enter="salvarCampo"
-                                                            @keyup.esc="cancelarEdicaoCampo" />
-                                                        <button type="button" class="btn btn-success"
-                                                            :disabled="state.isProcessing" @click="salvarCampo">
-                                                            <i class="bi bi-check-lg"></i></button>
-                                                        <button type="button" class="btn btn-outline-secondary"
-                                                            @click="cancelarEdicaoCampo">
-                                                            <i class="bi bi-x-lg"></i></button>
-                                                    </div>
-                                                    <div v-else class="small">Prazo:
-                                                        {{ state.venda.prazoEntrega || '—' }}</div>
+                                                <div v-if="campoEdicao.campo === 'formaPagamento'"
+                                                    class="input-group input-group-sm">
+                                                    <input v-model="campoEdicao.valor" type="text" maxlength="120"
+                                                        class="form-control" @keyup.enter="salvarCampo"
+                                                        @keyup.esc="cancelarEdicaoCampo" />
+                                                    <button type="button" class="btn btn-success"
+                                                        :disabled="state.isProcessing" @click="salvarCampo">
+                                                        <i class="bi bi-check-lg"></i></button>
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        @click="cancelarEdicaoCampo">
+                                                        <i class="bi bi-x-lg"></i></button>
                                                 </div>
-                                                <div class="col-lg border rounded p-3">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <strong>Observações</strong>
-                                                        <button
-                                                            v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
-                                                            type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                            title="Editar observações"
-                                                            @click="iniciarEdicaoCampo('observacoes')">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                    </div>
-                                                    <template v-if="campoEdicao.campo === 'observacoes'">
-                                                        <textarea v-model="campoEdicao.valor" maxlength="1000" rows="2"
-                                                            class="form-control form-control-sm"
-                                                            @keyup.esc="cancelarEdicaoCampo"></textarea>
-                                                        <div class="text-end mt-1">
-                                                            <button type="button" class="btn btn-success btn-sm me-1"
-                                                                :disabled="state.isProcessing" @click="salvarCampo">
-                                                                <i class="bi bi-check-lg"></i></button>
-                                                            <button type="button"
-                                                                class="btn btn-outline-secondary btn-sm"
-                                                                @click="cancelarEdicaoCampo">
-                                                                <i class="bi bi-x-lg"></i></button>
-                                                        </div>
-                                                    </template>
-                                                    <div v-else class="small" style="white-space: pre-wrap;">{{
-                                                        state.venda.observacoes || '—' }}</div>
+                                                <div v-else class="small">{{ state.venda.formaPagamento || '—' }}
                                                 </div>
                                             </div>
+                                            <div class="col-lg border rounded p-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <strong>Entrega</strong>
+                                                    <button
+                                                        v-if="podeEditarCabecalho && campoEdicao.campo !== 'prazoEntrega'"
+                                                        type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                        title="Editar prazo de entrega"
+                                                        @click="iniciarEdicaoCampo('prazoEntrega')">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                                <div v-if="campoEdicao.campo === 'prazoEntrega'"
+                                                    class="input-group input-group-sm">
+                                                    <input v-model="campoEdicao.valor" type="text" maxlength="60"
+                                                        class="form-control" @keyup.enter="salvarCampo"
+                                                        @keyup.esc="cancelarEdicaoCampo" />
+                                                    <button type="button" class="btn btn-success"
+                                                        :disabled="state.isProcessing" @click="salvarCampo">
+                                                        <i class="bi bi-check-lg"></i></button>
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        @click="cancelarEdicaoCampo">
+                                                        <i class="bi bi-x-lg"></i></button>
+                                                </div>
+                                                <div v-else class="small">Prazo:
+                                                    {{ state.venda.prazoEntrega || '—' }}</div>
+                                            </div>
+                                            <div class="col-lg border rounded p-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <strong>Observações</strong>
+                                                    <button
+                                                        v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
+                                                        type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                        title="Editar observações"
+                                                        @click="iniciarEdicaoCampo('observacoes')">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                                <template v-if="campoEdicao.campo === 'observacoes'">
+                                                    <textarea v-model="campoEdicao.valor" maxlength="1000" rows="2"
+                                                        class="form-control form-control-sm"
+                                                        @keyup.esc="cancelarEdicaoCampo"></textarea>
+                                                    <div class="text-end mt-1">
+                                                        <button type="button" class="btn btn-success btn-sm me-1"
+                                                            :disabled="state.isProcessing" @click="salvarCampo">
+                                                            <i class="bi bi-check-lg"></i></button>
+                                                        <button type="button"
+                                                            class="btn btn-outline-secondary btn-sm"
+                                                            @click="cancelarEdicaoCampo">
+                                                            <i class="bi bi-x-lg"></i></button>
+                                                    </div>
+                                                </template>
+                                                <div v-else class="small"
+                                                    style="white-space: pre-wrap;">{{ state.venda.observacoes || '—' }}</div>
+                                            </div>
                                         </div>
-                                        <div class="card-footer text-center">
-                                            <!-- Ação principal do status em cor sólida; secundárias em outline;
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <!-- Ação principal do status em cor sólida; secundárias em outline;
                                              destrutivas agrupadas; janela de 1h desabilita em vez de sumir. -->
-                                            <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                                class="btn btn-success button-medium m-2" @click="converter">
-                                                <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS
+                                        <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
+                                            class="btn btn-success button-medium m-2" @click="converter">
+                                            <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS
+                                        </button>
+                                        <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
+                                            class="btn btn-outline-warning button-medium m-2" @click="recalcular">
+                                            <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
+                                        </button>
+                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
+                                            class="button-medium m-2"
+                                            :class="state.venda.status === 'ORDEM_SERVICO' ? 'btn btn-success' : 'btn btn-outline-secondary'"
+                                            @click="router.push({ name: 'venda-imprimir', params: { vendaId: route.params.vendaId } })">
+                                            <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
+                                        </button>
+                                        <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
+                                            <button type="button" class="btn btn-outline-primary button-medium m-2"
+                                                :disabled="!state.venda.editavel" @click="editarVenda">
+                                                <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
                                             </button>
-                                            <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                                class="btn btn-outline-warning button-medium m-2" @click="recalcular">
-                                                <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
+                                        </span>
+                                        <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
+                                            <button type="button" class="btn btn-outline-danger button-medium m-2"
+                                                :disabled="!state.venda.editavel" @click="excluirVenda">
+                                                <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
                                             </button>
-                                            <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                                class="button-medium m-2"
-                                                :class="state.venda.status === 'ORDEM_SERVICO' ? 'btn btn-success' : 'btn btn-outline-secondary'"
-                                                @click="router.push({ name: 'venda-imprimir', params: { vendaId: route.params.vendaId } })">
-                                                <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
-                                            </button>
-                                            <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
-                                                <button type="button" class="btn btn-outline-primary button-medium m-2"
-                                                    :disabled="!state.venda.editavel" @click="editarVenda">
-                                                    <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
-                                                </button>
-                                            </span>
-                                            <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
-                                                <button type="button" class="btn btn-outline-danger button-medium m-2"
-                                                    :disabled="!state.venda.editavel" @click="excluirVenda">
-                                                    <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
-                                                </button>
-                                            </span>
-                                            <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                                class="btn btn-outline-danger button-medium m-2" @click="cancelar">
-                                                <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
-                                            </button>
-                                            <button type="button" class="btn btn-primary button-medium m-2"
-                                                @click="voltarParaLista">
-                                                <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
-                                            </button>
-                                            <div v-if="janelaEdicao" class="text-muted small mt-1">{{ janelaEdicao }}
-                                            </div>
-                                        </div>
+                                        </span>
+                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
+                                            class="btn btn-outline-danger button-medium m-2" @click="cancelar">
+                                            <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
+                                        </button>
+                                        <button type="button" class="btn btn-primary button-medium m-2"
+                                            @click="voltarParaLista">
+                                            <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
+                                        </button>
+                                        <div v-if="janelaEdicao" class="text-muted small mt-1">{{ janelaEdicao }}</div>
+                                    </div>
                                 </template>
                             </div>
                         </div>
