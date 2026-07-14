@@ -21,6 +21,7 @@ const state = reactive({
         clienteId: '',
         referencia: '',
         formaPagamento: '',
+        condicaoPagamento: '',
         formaEntrega: '',
         prazoEntrega: '',
         observacoes: '',
@@ -117,6 +118,7 @@ const preencherFormularioParaEdicao = (venda) => {
     state.form.clienteId = venda.clienteId;
     state.form.referencia = venda.referencia || '';
     state.form.formaPagamento = venda.formaPagamento || '';
+    state.form.condicaoPagamento = venda.condicaoPagamento || '';
     state.form.formaEntrega = venda.formaEntrega || '';
     state.form.prazoEntrega = venda.prazoEntrega || '';
     state.form.observacoes = venda.observacoes || '';
@@ -294,6 +296,7 @@ const salvar = async () => {
         status: state.form.status,
         referencia: state.form.referencia,
         formaPagamento: state.form.formaPagamento,
+        condicaoPagamento: state.form.condicaoPagamento,
         formaEntrega: state.form.formaEntrega,
         prazoEntrega: state.form.prazoEntrega,
         observacoes: state.form.observacoes,
@@ -347,15 +350,26 @@ const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || [
 // Campos livres do cabeçalho (referência/pagamento/prazo/observações): não
 // mexem em preço, então são editáveis fora da janela de 1h. Cada bloco tem
 // seu lápis; tudo bate no mesmo PUT /cabecalho.
-const CAMPOS_CABECALHO = ['referencia', 'formaPagamento', 'formaEntrega', 'prazoEntrega', 'observacoes'];
-// O pseudo-campo 'entrega' edita forma+prazo juntos (valor + valorPrazo).
-const campoEdicao = reactive({ campo: null, valor: '', valorPrazo: '' });
+const CAMPOS_CABECALHO = [
+    'referencia',
+    'formaPagamento',
+    'condicaoPagamento',
+    'formaEntrega',
+    'prazoEntrega',
+    'observacoes',
+];
+// Pseudo-campos de par: 'pagamento' edita forma+condição; 'entrega' edita
+// forma+prazo (valor + valorExtra).
+const campoEdicao = reactive({ campo: null, valor: '', valorExtra: '' });
 const podeEditarCabecalho = computed(() => state.venda && state.venda.status !== 'CANCELADO');
 const iniciarEdicaoCampo = (campo) => {
     campoEdicao.campo = campo;
-    if (campo === 'entrega') {
+    if (campo === 'pagamento') {
+        campoEdicao.valor = state.venda.formaPagamento || '';
+        campoEdicao.valorExtra = state.venda.condicaoPagamento || '';
+    } else if (campo === 'entrega') {
         campoEdicao.valor = state.venda.formaEntrega || '';
-        campoEdicao.valorPrazo = state.venda.prazoEntrega || '';
+        campoEdicao.valorExtra = state.venda.prazoEntrega || '';
     } else {
         campoEdicao.valor = state.venda[campo] || '';
     }
@@ -363,15 +377,18 @@ const iniciarEdicaoCampo = (campo) => {
 const cancelarEdicaoCampo = () => {
     campoEdicao.campo = null;
     campoEdicao.valor = '';
-    campoEdicao.valorPrazo = '';
+    campoEdicao.valorExtra = '';
 };
 const salvarCampo = async () => {
     try {
         state.isProcessing = true;
         const payload = Object.fromEntries(CAMPOS_CABECALHO.map((campo) => [campo, state.venda[campo]]));
-        if (campoEdicao.campo === 'entrega') {
+        if (campoEdicao.campo === 'pagamento') {
+            payload.formaPagamento = campoEdicao.valor;
+            payload.condicaoPagamento = campoEdicao.valorExtra;
+        } else if (campoEdicao.campo === 'entrega') {
             payload.formaEntrega = campoEdicao.valor;
-            payload.prazoEntrega = campoEdicao.valorPrazo;
+            payload.prazoEntrega = campoEdicao.valorExtra;
         } else {
             payload[campoEdicao.campo] = campoEdicao.valor;
         }
@@ -634,7 +651,17 @@ onMounted(async () => {
                                                     type="text"
                                                     maxlength="120"
                                                     class="form-control"
-                                                    placeholder="ex.: PIX, 50% entrada + 50%"
+                                                    placeholder="ex.: PIX, dinheiro, cartão"
+                                                />
+                                            </div>
+                                            <div class="col-lg-3">
+                                                <label class="form-label">Condição de pagamento</label>
+                                                <input
+                                                    v-model="state.form.condicaoPagamento"
+                                                    type="text"
+                                                    maxlength="120"
+                                                    class="form-control"
+                                                    placeholder="ex.: à vista, 50% + 50% na retirada"
                                                 />
                                             </div>
                                             <div class="col-lg-3">
@@ -647,7 +674,7 @@ onMounted(async () => {
                                                     placeholder="ex.: retirada, entrega, instalação"
                                                 />
                                             </div>
-                                            <div class="col-lg-2">
+                                            <div class="col-lg-3">
                                                 <label class="form-label">Prazo de entrega</label>
                                                 <input
                                                     v-model="state.form.prazoEntrega"
@@ -657,7 +684,10 @@ onMounted(async () => {
                                                     placeholder="ex.: 5 dias úteis"
                                                 />
                                             </div>
-                                            <div class="col-lg-4">
+                                        </div>
+
+                                        <div class="row g-3 p-2 pt-0">
+                                            <div class="col-12">
                                                 <label class="form-label">Observações</label>
                                                 <textarea
                                                     v-model="state.form.observacoes"
@@ -1138,60 +1168,77 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <!-- 4 · Pagamento (3) / Entrega (6, campos na horizontal) / Total (3):
-                                             mesma altura em todos — título + uma linha de conteúdo -->
+                                        <!-- 4 · Pagamento (4) / Entrega (5) / Total (3): pares Forma+Condição e
+                                             Forma+Prazo na horizontal — mesma altura em todos -->
                                         <div class="row g-2 m-2">
-                                            <div class="col-lg-3">
+                                            <div class="col-lg-4">
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                         <strong>Pagamento</strong>
                                                         <button
                                                             v-if="
-                                                                podeEditarCabecalho &&
-                                                                campoEdicao.campo !== 'formaPagamento'
+                                                                podeEditarCabecalho && campoEdicao.campo !== 'pagamento'
                                                             "
                                                             type="button"
                                                             class="btn btn-outline-secondary btn-sm py-0"
-                                                            title="Editar forma de pagamento"
-                                                            @click="iniciarEdicaoCampo('formaPagamento')"
+                                                            title="Editar forma e condição de pagamento"
+                                                            @click="iniciarEdicaoCampo('pagamento')"
                                                         >
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
                                                     </div>
-                                                    <div
-                                                        v-if="campoEdicao.campo === 'formaPagamento'"
-                                                        class="input-group input-group-sm"
-                                                    >
-                                                        <input
-                                                            v-model="campoEdicao.valor"
-                                                            type="text"
-                                                            maxlength="120"
-                                                            class="form-control"
-                                                            @keyup.enter="salvarCampo"
-                                                            @keyup.esc="cancelarEdicaoCampo"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-success"
-                                                            :disabled="state.isProcessing"
-                                                            @click="salvarCampo"
-                                                        >
-                                                            <i class="bi bi-check-lg"></i>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-outline-secondary"
-                                                            @click="cancelarEdicaoCampo"
-                                                        >
-                                                            <i class="bi bi-x-lg"></i>
-                                                        </button>
+                                                    <div v-if="campoEdicao.campo === 'pagamento'" class="row g-2">
+                                                        <div class="col-lg-5">
+                                                            <input
+                                                                v-model="campoEdicao.valor"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="forma: PIX, dinheiro..."
+                                                                @keyup.enter="salvarCampo"
+                                                                @keyup.esc="cancelarEdicaoCampo"
+                                                            />
+                                                        </div>
+                                                        <div class="col-lg-4">
+                                                            <input
+                                                                v-model="campoEdicao.valorExtra"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="condição"
+                                                                @keyup.enter="salvarCampo"
+                                                                @keyup.esc="cancelarEdicaoCampo"
+                                                            />
+                                                        </div>
+                                                        <div class="col-lg-3 text-end">
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-success btn-sm me-1"
+                                                                :disabled="state.isProcessing"
+                                                                @click="salvarCampo"
+                                                            >
+                                                                <i class="bi bi-check-lg"></i>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-outline-secondary btn-sm"
+                                                                @click="cancelarEdicaoCampo"
+                                                            >
+                                                                <i class="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <div v-else class="small">
-                                                        {{ state.venda.formaPagamento || '—' }}
+                                                    <div v-else class="row">
+                                                        <div class="col-lg-5 small">
+                                                            Forma: {{ state.venda.formaPagamento || '—' }}
+                                                        </div>
+                                                        <div class="col-lg-7 small">
+                                                            Condição: {{ state.venda.condicaoPagamento || '—' }}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-6">
+                                            <div class="col-lg-5">
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                         <strong>Entrega</strong>
@@ -1221,7 +1268,7 @@ onMounted(async () => {
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <input
-                                                                v-model="campoEdicao.valorPrazo"
+                                                                v-model="campoEdicao.valorExtra"
                                                                 type="text"
                                                                 maxlength="60"
                                                                 class="form-control form-control-sm"

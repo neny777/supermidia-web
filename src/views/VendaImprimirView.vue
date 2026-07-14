@@ -173,13 +173,22 @@ onBeforeUnmount(() => {
             <!-- Condições: valor digitado quando existe; na OS, campo vazio vira lacuna p/ caneta -->
             <section
                 v-if="
-                    !isOrcamento || state.venda.formaPagamento || state.venda.formaEntrega || state.venda.prazoEntrega
+                    !isOrcamento ||
+                    state.venda.formaPagamento ||
+                    state.venda.condicaoPagamento ||
+                    state.venda.formaEntrega ||
+                    state.venda.prazoEntrega
                 "
                 class="bloco linha-preencher"
             >
                 <div v-if="!isOrcamento || state.venda.formaPagamento">
                     Pagamento:
                     <strong v-if="state.venda.formaPagamento">{{ state.venda.formaPagamento }}</strong>
+                    <span v-else class="lacuna"></span>
+                </div>
+                <div v-if="!isOrcamento || state.venda.condicaoPagamento">
+                    Condição:
+                    <strong v-if="state.venda.condicaoPagamento">{{ state.venda.condicaoPagamento }}</strong>
                     <span v-else class="lacuna"></span>
                 </div>
                 <div v-if="!isOrcamento || state.venda.formaEntrega">
