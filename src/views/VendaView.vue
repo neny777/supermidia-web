@@ -76,7 +76,7 @@ const tituloVenda = computed(() => {
     const numero = state.venda.numero ? ` nº ${state.venda.numero}` : '';
     switch (state.venda.status) {
         case 'ORCAMENTO': return `Orçamento${numero}`;
-        case 'ORDEM_SERVICO': return `Ordem de Serviço${numero}`;
+        case 'ORDEM_SERVICO': return `OS${numero}`; // curto: cabe na coluna do título
         case 'CANCELADO': return `Venda${numero}`;
         default: return '-';
     }
@@ -600,17 +600,17 @@ onMounted(async () => {
                                 <!-- ===================== DETALHE ===================== -->
                                 <template v-if="state.isReady && isDetail && state.venda">
                                     <div class="card-header">
-                                        <!-- Identidade em linha única: título+situação+referência à esquerda,
-                                             datas/atendente à direita; flex-wrap quebra bem em tela estreita. -->
-                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 w-100">
-                                            <div class="d-flex flex-wrap align-items-center gap-2">
-                                                <h5 class="mb-0">
-                                                    {{ tituloVenda }}
-                                                    <span v-if="badgeSituacao" class="badge ms-1"
-                                                        :class="badgeSituacao.classe">{{ badgeSituacao.texto }}</span>
-                                                </h5>
+                                        <!-- Identidade em grade: título 2 / referência 6 / data 2 / validade 2 -->
+                                        <div class="row g-2 w-100 align-items-center">
+                                            <div class="col-lg-2">
+                                                <h5 class="mb-0">{{ tituloVenda }}</h5>
+                                                <span v-if="badgeSituacao" class="badge"
+                                                    :class="badgeSituacao.classe">{{ badgeSituacao.texto }}</span>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="text-muted small">Referência</div>
                                                 <template v-if="campoEdicao.campo === 'referencia'">
-                                                    <div class="input-group input-group-sm" style="max-width: 22rem;">
+                                                    <div class="input-group input-group-sm" style="max-width: 26rem;">
                                                         <input v-model="campoEdicao.valor" type="text" maxlength="120"
                                                             class="form-control" placeholder="referência do trabalho"
                                                             @keyup.enter="salvarCampo"
@@ -625,22 +625,31 @@ onMounted(async () => {
                                                         </button>
                                                     </div>
                                                 </template>
-                                                <span v-else class="text-muted fw-semibold">
-                                                    · {{ state.venda.referencia || 'sem referência' }}
+                                                <div v-else class="fw-semibold">
+                                                    {{ state.venda.referencia || '—' }}
                                                     <button v-if="podeEditarCabecalho" type="button"
                                                         class="btn btn-outline-secondary btn-sm ms-1 py-0"
                                                         title="Editar referência"
                                                         @click="iniciarEdicaoCampo('referencia')">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                </span>
+                                                </div>
                                             </div>
-                                            <div class="text-muted small">
-                                                Data: {{ formatData(state.venda.dataCriacao) }}
-                                                <template v-if="state.venda.status === 'ORCAMENTO'"> · Válido até:
-                                                    {{ formatDia(state.venda.validoAte) }}</template>
-                                                <template v-if="state.venda.atendenteNome"> · Atendente:
-                                                    {{ state.venda.atendenteNome }}</template>
+                                            <div class="col-lg-2">
+                                                <div class="text-muted small">Data</div>
+                                                <div>{{ formatData(state.venda.dataCriacao) }}</div>
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <template v-if="state.venda.status === 'ORCAMENTO'">
+                                                    <div class="text-muted small">Válido até</div>
+                                                    <div>{{ formatDia(state.venda.validoAte) }}</div>
+                                                    <div v-if="state.venda.atendenteNome" class="text-muted small">
+                                                        Atend.: {{ state.venda.atendenteNome }}</div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="text-muted small">Atendente</div>
+                                                    <div>{{ state.venda.atendenteNome || '—' }}</div>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
