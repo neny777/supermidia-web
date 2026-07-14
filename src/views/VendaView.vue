@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, computed, onMounted } from 'vue';
+import { reactive, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axiosInstance from '@/axiosInstance';
 import { showModal } from '@/composables/modalUtils';
@@ -73,11 +73,11 @@ const aoTrocarProduto = (item) => {
 // porque o tipo original não é mais relevante.
 const tituloVenda = computed(() => {
     if (!state.venda) return '-';
-    const numero = state.venda.numero ? ` nº ${state.venda.numero}` : '';
+    const numero = state.venda.numero ? ` ${String(state.venda.numero).padStart(4, '0')}`  : '';
     switch (state.venda.status) {
-        case 'ORCAMENTO': return `Orçamento${numero}`;
+        case 'ORCAMENTO': return `ORÇAMENTO${numero}`;
         case 'ORDEM_SERVICO': return `OS${numero}`; // curto: cabe na coluna do título
-        case 'CANCELADO': return `Venda${numero}`;
+        case 'CANCELADO': return `VENDA${numero}`;
         default: return '-';
     }
 });
@@ -146,6 +146,86 @@ const preencherFormularioParaEdicao = (venda) => {
         state.form.itens = [novoItem()];
     }
 };
+
+// ---- preço ao vivo: o motor calcula enquanto o vendedor preenche ----
+const previews = reactive({});
+let previewTimer = null;
+let previewRun = 0;
+
+const clienteFormulario = computed(() =>
+    state.clientes.find((c) => c.id === state.form.clienteId) || null);
+
+const itemCompleto = (item) => {
+    if (!item.produtoId) return false;
+    if (!(Number(item.altura) > 0) || !(Number(item.largura) > 0) || !(Number(item.quantidade) > 0)) return false;
+    for (const medida of medidasDe(item)) {
+        const valor = item.medidas[medida.nome];
+        if (medida.obrigatoria && (valor === '' || valor == null)) return false;
+    }
+    for (const slot of slotsDe(item)) {
+        if (!item.escolhasMateria[slot.id]) return false;
+    }
+    for (const grupo of gruposDe(item)) {
+        if (grupo.obrigatorio && !item.escolhasOpcao[grupo.id]) return false;
+    }
+    return true;
+};
+
+const montarPayloadCalculo = (item) => ({
+    altura: Number(item.altura),
+    largura: Number(item.largura),
+    quantidade: Number(item.quantidade),
+    categoria: clienteFormulario.value?.categoria || null,
+    medidas: Object.fromEntries(
+        Object.entries(item.medidas)
+            .filter(([, valor]) => valor !== '' && valor != null)
+            .map(([nome, valor]) => [nome, Number(valor)])
+    ),
+    escolhasMateria: Object.entries(item.escolhasMateria)
+        .filter(([, materiaId]) => materiaId)
+        .map(([componenteId, materiaId]) => ({ componenteId, materiaId })),
+    escolhasOpcao: Object.values(item.escolhasOpcao).filter((opcaoId) => opcaoId),
+});
+
+const calcularPrevias = async () => {
+    const run = ++previewRun;
+    for (const [index, item] of state.form.itens.entries()) {
+        if (!itemCompleto(item)) {
+            previews[index] = null;
+            continue;
+        }
+        previews[index] = { ...(previews[index] || {}), carregando: true };
+        try {
+            const { data } = await axiosInstance.post(
+                `/produtos/${item.produtoId}/calcular`, montarPayloadCalculo(item));
+            if (run !== previewRun) return; // veio edição nova no meio: descarta
+            previews[index] = {
+                preco: data.precoSugerido, atacado: data.precoAtacado, varejo: data.precoVarejo, erro: null,
+            };
+        } catch (error) {
+            if (run !== previewRun) return;
+            previews[index] = { preco: null, erro: getErrorMessage(error, 'Não foi possível calcular.') };
+        }
+    }
+    Object.keys(previews).forEach((chave) => {
+        if (Number(chave) >= state.form.itens.length) delete previews[chave];
+    });
+};
+
+// Debounce: recalcula meio segundo após a última digitação.
+watch(() => [state.form.itens, state.form.clienteId], () => {
+    if (isDetail.value) return;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(calcularPrevias, 500);
+}, { deep: true });
+
+// Total corrente do formulário (só quando há cliente: o preço certo depende da categoria).
+const totalPrevisto = computed(() => {
+    if (!clienteFormulario.value || !state.form.itens.length) return null;
+    const valores = state.form.itens.map((item, index) => previews[index]?.preco);
+    if (valores.some((valor) => valor == null)) return null;
+    return valores.reduce((soma, valor) => soma + Number(valor), 0);
+});
 
 const adicionarItem = () => state.form.itens.push(novoItem());
 const removerItem = (index) => {
@@ -342,19 +422,19 @@ const editarVenda = () => {
 const excluirVenda = () => {
     const modal = showModal('Excluir venda',
         'Excluir definitivamente esta venda? (permitido apenas na primeira hora após a criação)', async () => {
-        try {
-            state.isProcessing = true;
-            const destino = state.venda.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos';
-            await axiosInstance.delete(`/vendas/${route.params.vendaId}`);
-            showToast('sucesso', 'Venda excluída.');
-            router.push(destino);
-        } catch (error) {
-            showToast('erro', getErrorMessage(error, 'Não foi possível excluir a venda.'));
-        } finally {
-            state.isProcessing = false;
-            modal.hide();
-        }
-    });
+            try {
+                state.isProcessing = true;
+                const destino = state.venda.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos';
+                await axiosInstance.delete(`/vendas/${route.params.vendaId}`);
+                showToast('sucesso', 'Venda excluída.');
+                router.push(destino);
+            } catch (error) {
+                showToast('erro', getErrorMessage(error, 'Não foi possível excluir a venda.'));
+            } finally {
+                state.isProcessing = false;
+                modal.hide();
+            }
+        });
 };
 
 const executarAcao = (titulo, mensagem, acao, sucesso) => {
@@ -452,7 +532,8 @@ onMounted(async () => {
                                 <template v-if="state.isReady && !isDetail">
                                     <div class="card-header">
                                         <div class="card-title">
-                                            <h5>{{ isEditVenda ? 'Editar Venda' : (state.form.status === 'ORDEM_SERVICO' ? 'Nova Ordem de Serviço' : 'Novo Orçamento') }}</h5>
+                                            <h5>{{ isEditVenda ? 'Editar Venda' : (state.form.status === 'ORDEM_SERVICO'
+                                                ? 'Nova Ordem de Serviço' : 'Novo Orçamento') }}</h5>
                                         </div>
                                     </div>
                                     <div class="card-body my-3">
@@ -461,7 +542,8 @@ onMounted(async () => {
                                                 <label class="form-label"><strong>Tipo</strong></label>
                                                 <select v-model="state.form.status" class="form-select">
                                                     <option value="ORCAMENTO">Orçamento</option>
-                                                    <option value="ORDEM_SERVICO">Ordem de Serviço (venda direta)</option>
+                                                    <option value="ORDEM_SERVICO">Ordem de Serviço (venda direta)
+                                                    </option>
                                                 </select>
                                             </div>
                                             <div class="col-lg-5">
@@ -483,7 +565,8 @@ onMounted(async () => {
                                             <div class="col-lg-4">
                                                 <label class="form-label">Forma de pagamento</label>
                                                 <input v-model="state.form.formaPagamento" type="text" maxlength="120"
-                                                    class="form-control" placeholder="ex.: PIX, 50% entrada + 50% na entrega" />
+                                                    class="form-control"
+                                                    placeholder="ex.: PIX, 50% entrada + 50% na entrega" />
                                             </div>
                                             <div class="col-lg-4">
                                                 <label class="form-label">Prazo de entrega</label>
@@ -493,12 +576,15 @@ onMounted(async () => {
                                             <div class="col-lg-4">
                                                 <label class="form-label">Observações</label>
                                                 <textarea v-model="state.form.observacoes" maxlength="1000" rows="1"
-                                                    class="form-control" placeholder="instruções de produção, detalhes combinados..."></textarea>
+                                                    class="form-control"
+                                                    placeholder="instruções de produção, detalhes combinados..."></textarea>
                                             </div>
                                         </div>
 
                                         <div class="row p-2 mt-2 align-items-center">
-                                            <div class="col-6"><h6 class="mb-0">Itens</h6></div>
+                                            <div class="col-6">
+                                                <h6 class="mb-0">Itens</h6>
+                                            </div>
                                             <div class="col-6 text-end">
                                                 <button type="button" class="btn btn-primary button-medium"
                                                     @click="adicionarItem">
@@ -531,8 +617,8 @@ onMounted(async () => {
                                                 </div>
                                                 <div class="col-lg-2">
                                                     <label class="form-label">Qtde</label>
-                                                    <input v-model="item.quantidade" type="number" step="0.01" min="0.01"
-                                                        class="form-control" />
+                                                    <input v-model="item.quantidade" type="number" step="0.01"
+                                                        min="0.01" class="form-control" />
                                                 </div>
                                                 <div class="col-lg-2 text-end">
                                                     <button type="button" class="btn btn-danger"
@@ -550,6 +636,10 @@ onMounted(async () => {
                                                         {{ medida.nome }}
                                                         <span v-if="medida.unidade">({{ medida.unidade }})</span>
                                                         <span v-if="medida.obrigatoria" class="text-danger">*</span>
+                                                        <small v-if="medida.minimo != null || medida.maximo != null"
+                                                            class="text-muted">
+                                                            [{{ medida.minimo ?? '…' }} a {{ medida.maximo ?? '…' }}]
+                                                        </small>
                                                     </label>
                                                     <input v-model="item.medidas[medida.nome]" type="number" step="0.01"
                                                         class="form-control" />
@@ -565,7 +655,8 @@ onMounted(async () => {
                                                         <option value="">Selecione</option>
                                                         <option v-for="materia in materiasDoGrupo(slot.grupoSlot)"
                                                             :key="materia.id" :value="materia.id">
-                                                            {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{ materia.unidade }}
+                                                            {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{
+                                                                materia.unidade }}
                                                         </option>
                                                     </select>
                                                 </div>
@@ -575,7 +666,8 @@ onMounted(async () => {
                                             <div v-if="gruposDe(item).length" class="row g-2 mt-1">
                                                 <div v-for="grupo in gruposDe(item)" :key="grupo.id" class="col-lg-3">
                                                     <label class="form-label">{{ grupo.nome }}
-                                                        <span v-if="grupo.obrigatorio" class="text-danger">*</span></label>
+                                                        <span v-if="grupo.obrigatorio"
+                                                            class="text-danger">*</span></label>
                                                     <select v-model="item.escolhasOpcao[grupo.id]" class="form-select">
                                                         <option v-if="!grupo.obrigatorio" value="">Nenhum</option>
                                                         <option v-else value="" disabled>Selecione</option>
@@ -583,6 +675,30 @@ onMounted(async () => {
                                                             :value="opcao.id">{{ opcao.nome }}</option>
                                                     </select>
                                                 </div>
+                                            </div>
+
+                                            <!-- Preço ao vivo do item -->
+                                            <div class="row mt-2">
+                                                <div class="col text-end">
+                                                    <span v-if="previews[index]?.carregando"
+                                                        class="text-muted small">calculando…</span>
+                                                    <span v-else-if="previews[index]?.erro"
+                                                        class="text-danger small">{{ previews[index].erro }}</span>
+                                                    <strong v-else-if="previews[index]?.preco != null">
+                                                        {{ formatBRL(previews[index].preco) }}</strong>
+                                                    <span v-else-if="previews[index]?.varejo != null" class="small">
+                                                        Varejo <strong>{{ formatBRL(previews[index].varejo) }}</strong>
+                                                        · Atacado <strong>{{ formatBRL(previews[index].atacado) }}</strong>
+                                                        <span class="text-muted">(escolha o cliente)</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Total corrente -->
+                                        <div v-if="totalPrevisto != null" class="row p-2">
+                                            <div class="col text-end fs-5">
+                                                <strong>Total: {{ formatBRL(totalPrevisto) }}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -635,21 +751,20 @@ onMounted(async () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-2">
+                                            <div class="col-lg-1">
                                                 <div class="text-muted small">Data</div>
                                                 <div>{{ formatData(state.venda.dataCriacao) }}</div>
                                             </div>
-                                            <div class="col-lg-2">
+                                            <div class="col-lg-1">
                                                 <template v-if="state.venda.status === 'ORCAMENTO'">
                                                     <div class="text-muted small">Válido até</div>
                                                     <div>{{ formatDia(state.venda.validoAte) }}</div>
-                                                    <div v-if="state.venda.atendenteNome" class="text-muted small">
-                                                        Atend.: {{ state.venda.atendenteNome }}</div>
                                                 </template>
-                                                <template v-else>
-                                                    <div class="text-muted small">Atendente</div>
-                                                    <div>{{ state.venda.atendenteNome || '—' }}</div>
-                                                </template>
+                                            </div>
+                                            <div class="col-lg-2">
+                                                <div class="text-muted small">Atendente</div>
+                                                <div v-if="state.venda.atendenteNome" class="text-muted small">
+                                                    {{ state.venda.atendenteNome }}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -663,12 +778,12 @@ onMounted(async () => {
                                         <div class="border rounded p-3 m-2">
                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                 <strong>Cliente</strong>
-                                                <span v-if="categoriaClienteLabel"
-                                                    class="badge text-bg-light border">{{ categoriaClienteLabel }}</span>
+                                                <span v-if="categoriaClienteLabel" class="badge text-bg-light border">{{
+                                                    categoriaClienteLabel }}</span>
                                             </div>
                                             <div>
-                                                <a v-if="clienteVenda" href="#"
-                                                    @click.prevent="abrirFichaCliente">{{ clienteVenda.nome }}</a>
+                                                <a v-if="clienteVenda" href="#" @click.prevent="abrirFichaCliente">{{
+                                                    clienteVenda.nome }}</a>
                                                 <span v-else>{{ nomeCliente(state.venda.clienteId) }}</span>
                                             </div>
                                             <div v-if="clienteVenda" class="text-muted small">
@@ -687,7 +802,8 @@ onMounted(async () => {
                                         <div v-for="(item, index) in state.venda.itens" :key="index"
                                             class="border rounded p-3 m-2">
                                             <div class="row">
-                                                <div class="col-lg-9"><strong>{{ item.descricao || item.produtoNome }}</strong></div>
+                                                <div class="col-lg-9"><strong>{{ item.descricao || item.produtoNome
+                                                        }}</strong></div>
                                                 <div class="col-lg-3 text-end">
                                                     <template v-if="precoEdicao.index === index">
                                                         <div class="input-group input-group-sm justify-content-end">
@@ -726,7 +842,8 @@ onMounted(async () => {
                                                     <button v-if="temDadosDeCusto(item)" type="button"
                                                         class="btn btn-outline-secondary btn-sm ms-2 py-0"
                                                         @click="toggleDetalhes(index)">
-                                                        <i class="bi" :class="detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'"></i>
+                                                        <i class="bi"
+                                                            :class="detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'"></i>
                                                         {{ detalhesAbertos[index] ? 'Ocultar detalhes' : 'Detalhes' }}
                                                     </button>
                                                 </div>
@@ -736,7 +853,8 @@ onMounted(async () => {
                                                 <div class="col">Custo: {{ formatBRL(item.custoTotal) }} ·
                                                     Margem: {{ item.markupAplicado }}%</div>
                                             </div>
-                                            <div v-if="detalhesAbertos[index] && item.detalhes?.length" class="table-responsive">
+                                            <div v-if="detalhesAbertos[index] && item.detalhes?.length"
+                                                class="table-responsive">
                                                 <table class="table table-sm table-bordered mb-0">
                                                     <thead>
                                                         <tr>
@@ -771,131 +889,136 @@ onMounted(async () => {
                                                 {{ formatBRL(resumoFinanceiro.sugerido) }}</div>
                                             <div v-if="resumoFinanceiro.ajuste !== 0" class="small"
                                                 :class="resumoFinanceiro.ajuste < 0 ? 'text-success' : 'text-danger'">
-                                                {{ resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo' }}:
-                                                {{ formatBRL(Math.abs(resumoFinanceiro.ajuste)) }}
+                                                {{ resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo' }}: {{
+                                                    formatBRL(Math.abs(resumoFinanceiro.ajuste)) }} </div>
+                                                    <div class="fs-5"><strong>Total:
+                                                            {{ formatBRL(state.venda.total) }}</strong></div>
                                             </div>
-                                            <div class="fs-5"><strong>Total:
-                                                {{ formatBRL(state.venda.total) }}</strong></div>
-                                        </div>
 
-                                        <!-- 5 · Pagamento / 6 · Entrega / Observações -->
-                                        <div class="row g-0 m-2 gap-2 flex-lg-nowrap">
-                                            <div class="col-lg border rounded p-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <strong>Pagamento</strong>
-                                                    <button v-if="podeEditarCabecalho && campoEdicao.campo !== 'formaPagamento'"
-                                                        type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                        title="Editar forma de pagamento"
-                                                        @click="iniciarEdicaoCampo('formaPagamento')">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                </div>
-                                                <div v-if="campoEdicao.campo === 'formaPagamento'"
-                                                    class="input-group input-group-sm">
-                                                    <input v-model="campoEdicao.valor" type="text" maxlength="120"
-                                                        class="form-control" @keyup.enter="salvarCampo"
-                                                        @keyup.esc="cancelarEdicaoCampo" />
-                                                    <button type="button" class="btn btn-success"
-                                                        :disabled="state.isProcessing" @click="salvarCampo">
-                                                        <i class="bi bi-check-lg"></i></button>
-                                                    <button type="button" class="btn btn-outline-secondary"
-                                                        @click="cancelarEdicaoCampo">
-                                                        <i class="bi bi-x-lg"></i></button>
-                                                </div>
-                                                <div v-else class="small">{{ state.venda.formaPagamento || '—' }}</div>
-                                            </div>
-                                            <div class="col-lg border rounded p-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <strong>Entrega</strong>
-                                                    <button v-if="podeEditarCabecalho && campoEdicao.campo !== 'prazoEntrega'"
-                                                        type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                        title="Editar prazo de entrega"
-                                                        @click="iniciarEdicaoCampo('prazoEntrega')">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                </div>
-                                                <div v-if="campoEdicao.campo === 'prazoEntrega'"
-                                                    class="input-group input-group-sm">
-                                                    <input v-model="campoEdicao.valor" type="text" maxlength="60"
-                                                        class="form-control" @keyup.enter="salvarCampo"
-                                                        @keyup.esc="cancelarEdicaoCampo" />
-                                                    <button type="button" class="btn btn-success"
-                                                        :disabled="state.isProcessing" @click="salvarCampo">
-                                                        <i class="bi bi-check-lg"></i></button>
-                                                    <button type="button" class="btn btn-outline-secondary"
-                                                        @click="cancelarEdicaoCampo">
-                                                        <i class="bi bi-x-lg"></i></button>
-                                                </div>
-                                                <div v-else class="small">Prazo:
-                                                    {{ state.venda.prazoEntrega || '—' }}</div>
-                                            </div>
-                                            <div class="col-lg border rounded p-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <strong>Observações</strong>
-                                                    <button v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
-                                                        type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                        title="Editar observações"
-                                                        @click="iniciarEdicaoCampo('observacoes')">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                </div>
-                                                <template v-if="campoEdicao.campo === 'observacoes'">
-                                                    <textarea v-model="campoEdicao.valor" maxlength="1000" rows="2"
-                                                        class="form-control form-control-sm"
-                                                        @keyup.esc="cancelarEdicaoCampo"></textarea>
-                                                    <div class="text-end mt-1">
-                                                        <button type="button" class="btn btn-success btn-sm me-1"
+                                            <!-- 5 · Pagamento / 6 · Entrega / Observações -->
+                                            <div class="row g-0 m-2 gap-2 flex-lg-nowrap">
+                                                <div class="col-lg border rounded p-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <strong>Pagamento</strong>
+                                                        <button
+                                                            v-if="podeEditarCabecalho && campoEdicao.campo !== 'formaPagamento'"
+                                                            type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                            title="Editar forma de pagamento"
+                                                            @click="iniciarEdicaoCampo('formaPagamento')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div v-if="campoEdicao.campo === 'formaPagamento'"
+                                                        class="input-group input-group-sm">
+                                                        <input v-model="campoEdicao.valor" type="text" maxlength="120"
+                                                            class="form-control" @keyup.enter="salvarCampo"
+                                                            @keyup.esc="cancelarEdicaoCampo" />
+                                                        <button type="button" class="btn btn-success"
                                                             :disabled="state.isProcessing" @click="salvarCampo">
                                                             <i class="bi bi-check-lg"></i></button>
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                        <button type="button" class="btn btn-outline-secondary"
                                                             @click="cancelarEdicaoCampo">
                                                             <i class="bi bi-x-lg"></i></button>
                                                     </div>
-                                                </template>
-                                                <div v-else class="small" style="white-space: pre-wrap;">{{
-                                                    state.venda.observacoes || '—' }}</div>
+                                                    <div v-else class="small">{{ state.venda.formaPagamento || '—' }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg border rounded p-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <strong>Entrega</strong>
+                                                        <button
+                                                            v-if="podeEditarCabecalho && campoEdicao.campo !== 'prazoEntrega'"
+                                                            type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                            title="Editar prazo de entrega"
+                                                            @click="iniciarEdicaoCampo('prazoEntrega')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div v-if="campoEdicao.campo === 'prazoEntrega'"
+                                                        class="input-group input-group-sm">
+                                                        <input v-model="campoEdicao.valor" type="text" maxlength="60"
+                                                            class="form-control" @keyup.enter="salvarCampo"
+                                                            @keyup.esc="cancelarEdicaoCampo" />
+                                                        <button type="button" class="btn btn-success"
+                                                            :disabled="state.isProcessing" @click="salvarCampo">
+                                                            <i class="bi bi-check-lg"></i></button>
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            @click="cancelarEdicaoCampo">
+                                                            <i class="bi bi-x-lg"></i></button>
+                                                    </div>
+                                                    <div v-else class="small">Prazo:
+                                                        {{ state.venda.prazoEntrega || '—' }}</div>
+                                                </div>
+                                                <div class="col-lg border rounded p-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <strong>Observações</strong>
+                                                        <button
+                                                            v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
+                                                            type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                            title="Editar observações"
+                                                            @click="iniciarEdicaoCampo('observacoes')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    </div>
+                                                    <template v-if="campoEdicao.campo === 'observacoes'">
+                                                        <textarea v-model="campoEdicao.valor" maxlength="1000" rows="2"
+                                                            class="form-control form-control-sm"
+                                                            @keyup.esc="cancelarEdicaoCampo"></textarea>
+                                                        <div class="text-end mt-1">
+                                                            <button type="button" class="btn btn-success btn-sm me-1"
+                                                                :disabled="state.isProcessing" @click="salvarCampo">
+                                                                <i class="bi bi-check-lg"></i></button>
+                                                            <button type="button"
+                                                                class="btn btn-outline-secondary btn-sm"
+                                                                @click="cancelarEdicaoCampo">
+                                                                <i class="bi bi-x-lg"></i></button>
+                                                        </div>
+                                                    </template>
+                                                    <div v-else class="small" style="white-space: pre-wrap;">{{
+                                                        state.venda.observacoes || '—' }}</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="card-footer text-center">
-                                        <!-- Ação principal do status em cor sólida; secundárias em outline;
+                                        <div class="card-footer text-center">
+                                            <!-- Ação principal do status em cor sólida; secundárias em outline;
                                              destrutivas agrupadas; janela de 1h desabilita em vez de sumir. -->
-                                        <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                            class="btn btn-success button-medium m-2" @click="converter">
-                                            <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS
-                                        </button>
-                                        <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                            class="btn btn-outline-warning button-medium m-2" @click="recalcular">
-                                            <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
-                                        </button>
-                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                            class="button-medium m-2"
-                                            :class="state.venda.status === 'ORDEM_SERVICO' ? 'btn btn-success' : 'btn btn-outline-secondary'"
-                                            @click="router.push({ name: 'venda-imprimir', params: { vendaId: route.params.vendaId } })">
-                                            <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
-                                        </button>
-                                        <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
-                                            <button type="button" class="btn btn-outline-primary button-medium m-2"
-                                                :disabled="!state.venda.editavel" @click="editarVenda">
-                                                <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
+                                            <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
+                                                class="btn btn-success button-medium m-2" @click="converter">
+                                                <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS
                                             </button>
-                                        </span>
-                                        <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
-                                            <button type="button" class="btn btn-outline-danger button-medium m-2"
-                                                :disabled="!state.venda.editavel" @click="excluirVenda">
-                                                <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
+                                            <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
+                                                class="btn btn-outline-warning button-medium m-2" @click="recalcular">
+                                                <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
                                             </button>
-                                        </span>
-                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                            class="btn btn-outline-danger button-medium m-2" @click="cancelar">
-                                            <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
-                                        </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="voltarParaLista">
-                                            <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
-                                        </button>
-                                        <div v-if="janelaEdicao" class="text-muted small mt-1">{{ janelaEdicao }}</div>
-                                    </div>
+                                            <button v-if="state.venda.status !== 'CANCELADO'" type="button"
+                                                class="button-medium m-2"
+                                                :class="state.venda.status === 'ORDEM_SERVICO' ? 'btn btn-success' : 'btn btn-outline-secondary'"
+                                                @click="router.push({ name: 'venda-imprimir', params: { vendaId: route.params.vendaId } })">
+                                                <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
+                                            </button>
+                                            <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
+                                                <button type="button" class="btn btn-outline-primary button-medium m-2"
+                                                    :disabled="!state.venda.editavel" @click="editarVenda">
+                                                    <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
+                                                </button>
+                                            </span>
+                                            <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
+                                                <button type="button" class="btn btn-outline-danger button-medium m-2"
+                                                    :disabled="!state.venda.editavel" @click="excluirVenda">
+                                                    <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
+                                                </button>
+                                            </span>
+                                            <button v-if="state.venda.status !== 'CANCELADO'" type="button"
+                                                class="btn btn-outline-danger button-medium m-2" @click="cancelar">
+                                                <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
+                                            </button>
+                                            <button type="button" class="btn btn-primary button-medium m-2"
+                                                @click="voltarParaLista">
+                                                <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
+                                            </button>
+                                            <div v-if="janelaEdicao" class="text-muted small mt-1">{{ janelaEdicao }}
+                                            </div>
+                                        </div>
                                 </template>
                             </div>
                         </div>
