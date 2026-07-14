@@ -1,0 +1,8 @@
+# Compilados e dependências
+dist
+node_modules
+
+# Bibliotecas vendorizadas (AdminLTE, Bootstrap...) — não reformatar
+src/assets
+
+public
