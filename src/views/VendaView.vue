@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axiosInstance from '@/axiosInstance';
 import { showModal } from '@/composables/modalUtils';
 import { showToast } from '@/composables/toastUtils';
+import BuscaSelect from '@/components/BuscaSelect.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -547,12 +548,9 @@ onMounted(async () => {
                                                 </select>
                                             </div>
                                             <div class="col-lg-5">
-                                                <label for="cliente" class="form-label"><strong>Cliente</strong></label>
-                                                <select id="cliente" v-model="state.form.clienteId" class="form-select">
-                                                    <option value="">Selecione</option>
-                                                    <option v-for="cliente in state.clientes" :key="cliente.id"
-                                                        :value="cliente.id">{{ cliente.nome }}</option>
-                                                </select>
+                                                <label class="form-label"><strong>Cliente</strong></label>
+                                                <BuscaSelect v-model="state.form.clienteId" :opcoes="state.clientes"
+                                                    placeholder="Digite para buscar o cliente..." />
                                             </div>
                                             <div class="col-lg-4">
                                                 <label class="form-label">Referência</label>
@@ -598,12 +596,9 @@ onMounted(async () => {
                                             <div class="row g-2 align-items-end">
                                                 <div class="col-lg-4">
                                                     <label class="form-label">Produto</label>
-                                                    <select v-model="item.produtoId" class="form-select"
-                                                        @change="aoTrocarProduto(item)">
-                                                        <option value="">Selecione</option>
-                                                        <option v-for="produto in state.produtos" :key="produto.id"
-                                                            :value="produto.id">{{ produto.nome }}</option>
-                                                    </select>
+                                                    <BuscaSelect :model-value="item.produtoId" :opcoes="state.produtos"
+                                                        placeholder="Digite para buscar o produto..."
+                                                        @update:model-value="(valor) => { item.produtoId = valor; aoTrocarProduto(item); }" />
                                                 </div>
                                                 <div class="col-lg-2">
                                                     <label class="form-label">Altura (cm)</label>
