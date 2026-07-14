@@ -69,22 +69,42 @@ const aoTrocarProduto = (item) => {
     });
 };
 
-const statusLabel = computed(() => {
-    switch (state.venda?.status) {
-        case 'ORCAMENTO': return 'Orçamento';
-        case 'ORDEM_SERVICO': return 'Ordem de Serviço';
-        case 'CANCELADO': return 'Cancelado';
+// Título = tipo + nº ("Ordem de Serviço nº 12"); cancelada vira "Venda nº 12"
+// porque o tipo original não é mais relevante.
+const tituloVenda = computed(() => {
+    if (!state.venda) return '-';
+    const numero = state.venda.numero ? ` nº ${state.venda.numero}` : '';
+    switch (state.venda.status) {
+        case 'ORCAMENTO': return `Orçamento${numero}`;
+        case 'ORDEM_SERVICO': return `Ordem de Serviço${numero}`;
+        case 'CANCELADO': return `Venda${numero}`;
         default: return '-';
     }
 });
-const statusBadgeClass = computed(() => {
-    switch (state.venda?.status) {
-        case 'ORCAMENTO': return 'text-bg-primary';
-        case 'ORDEM_SERVICO': return 'text-bg-success';
-        case 'CANCELADO': return 'text-bg-secondary';
-        default: return 'text-bg-light';
+// Badge informa a SITUAÇÃO (o título já diz o tipo).
+const badgeSituacao = computed(() => {
+    if (!state.venda) return null;
+    if (state.venda.status === 'CANCELADO') return { texto: 'Cancelada', classe: 'text-bg-secondary' };
+    if (state.venda.status === 'ORCAMENTO') {
+        return state.venda.vencido
+            ? { texto: 'Vencido', classe: 'text-bg-warning' }
+            : { texto: 'Vigente', classe: 'text-bg-success' };
     }
+    return null;
 });
+// Comunica a janela de edição em vez de sumir com os botões.
+const janelaEdicao = computed(() => {
+    if (!state.venda || state.venda.status === 'CANCELADO') return null;
+    if (state.venda.editavel) {
+        const limite = state.venda.editavelAte
+            ? new Date(state.venda.editavelAte).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+            : null;
+        return limite ? `Edição e exclusão disponíveis até ${limite}.` : null;
+    }
+    return 'A janela de edição/exclusão expirou — itens e cliente estão congelados.';
+});
+const voltarParaLista = () =>
+    router.push(state.venda?.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos');
 
 // Reconstrói o formulário a partir do snapshot (entradaJson) para a edição na janela de 1h.
 const preencherFormularioParaEdicao = (venda) => {
@@ -553,11 +573,13 @@ onMounted(async () => {
                                 <template v-if="state.isReady && isDetail && state.venda">
                                     <div class="card-header">
                                         <div class="card-title">
-                                            <h5>
-                                                {{ statusLabel }}<template v-if="state.venda.numero"> nº
-                                                    {{ state.venda.numero }}</template>
-                                                <span class="badge ms-2" :class="statusBadgeClass">{{ statusLabel }}</span>
+                                            <h5 class="mb-0">
+                                                {{ tituloVenda }}
+                                                <span v-if="badgeSituacao" class="badge ms-2"
+                                                    :class="badgeSituacao.classe">{{ badgeSituacao.texto }}</span>
                                             </h5>
+                                            <div v-if="state.venda.referencia" class="text-muted fw-semibold mt-1">
+                                                {{ state.venda.referencia }}</div>
                                         </div>
                                     </div>
                                     <div class="card-body my-3">
@@ -566,10 +588,6 @@ onMounted(async () => {
                                             Orçamento vencido. Recalcule (para usar os preços atuais) ou cancele.
                                         </div>
 
-                                        <div v-if="state.venda.referencia" class="row px-2 pt-2">
-                                            <div class="col"><strong>Referência:</strong>
-                                                {{ state.venda.referencia }}</div>
-                                        </div>
                                         <div class="row p-2">
                                             <div class="col-lg-4"><strong>Cliente:</strong>
                                                 {{ nomeCliente(state.venda.clienteId) }}</div>
@@ -584,19 +602,17 @@ onMounted(async () => {
                                                 <strong>Condições</strong>
                                                 <button v-if="state.venda.status !== 'CANCELADO' && !cabecalho.editando"
                                                     type="button" class="btn btn-outline-secondary btn-sm py-0"
-                                                    title="Editar condições" @click="editarCabecalho">
+                                                    title="Editar referência e condições" @click="editarCabecalho">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                             </div>
                                             <template v-if="!cabecalho.editando">
                                                 <div class="row small">
-                                                    <div class="col-lg-3"><strong>Referência:</strong>
-                                                        {{ state.venda.referencia || '—' }}</div>
-                                                    <div class="col-lg-3"><strong>Forma de pagamento:</strong>
+                                                    <div class="col-lg-4"><strong>Forma de pagamento:</strong>
                                                         {{ state.venda.formaPagamento || '—' }}</div>
-                                                    <div class="col-lg-3"><strong>Prazo de entrega:</strong>
+                                                    <div class="col-lg-4"><strong>Prazo de entrega:</strong>
                                                         {{ state.venda.prazoEntrega || '—' }}</div>
-                                                    <div class="col-lg-3"><strong>Observações:</strong>
+                                                    <div class="col-lg-4"><strong>Observações:</strong>
                                                         {{ state.venda.observacoes || '—' }}</div>
                                                 </div>
                                             </template>
@@ -718,35 +734,43 @@ onMounted(async () => {
                                         </div>
                                     </div>
                                     <div class="card-footer text-center">
-                                        <button v-if="state.venda.editavel" type="button"
-                                            class="btn btn-primary button-medium m-2" @click="editarVenda">
-                                            <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
-                                        </button>
-                                        <button v-if="state.venda.editavel" type="button"
-                                            class="btn btn-danger button-medium m-2" @click="excluirVenda">
-                                            <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
-                                        </button>
+                                        <!-- Ação principal do status em cor sólida; secundárias em outline;
+                                             destrutivas agrupadas; janela de 1h desabilita em vez de sumir. -->
                                         <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
                                             class="btn btn-success button-medium m-2" @click="converter">
                                             <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS
                                         </button>
                                         <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                            class="btn btn-warning button-medium m-2" @click="recalcular">
+                                            class="btn btn-outline-warning button-medium m-2" @click="recalcular">
                                             <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
                                         </button>
                                         <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                            class="btn btn-danger button-medium m-2" @click="cancelar">
-                                            <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
-                                        </button>
-                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                            class="btn btn-secondary button-medium m-2"
+                                            class="button-medium m-2"
+                                            :class="state.venda.status === 'ORDEM_SERVICO' ? 'btn btn-success' : 'btn btn-outline-secondary'"
                                             @click="router.push({ name: 'venda-imprimir', params: { vendaId: route.params.vendaId } })">
                                             <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
                                         </button>
+                                        <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
+                                            <button type="button" class="btn btn-outline-primary button-medium m-2"
+                                                :disabled="!state.venda.editavel" @click="editarVenda">
+                                                <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
+                                            </button>
+                                        </span>
+                                        <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
+                                            <button type="button" class="btn btn-outline-danger button-medium m-2"
+                                                :disabled="!state.venda.editavel" @click="excluirVenda">
+                                                <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
+                                            </button>
+                                        </span>
+                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
+                                            class="btn btn-outline-danger button-medium m-2" @click="cancelar">
+                                            <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
+                                        </button>
                                         <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="router.push('/orcamentos')">
+                                            @click="voltarParaLista">
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
+                                        <div v-if="janelaEdicao" class="text-muted small mt-1">{{ janelaEdicao }}</div>
                                     </div>
                                 </template>
                             </div>
