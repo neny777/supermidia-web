@@ -91,6 +91,7 @@ onBeforeUnmount(() => {
                 <div class="documento-info">
                     <div class="documento-titulo">{{ tituloDocumento }}</div>
                     <div class="documento-numero">Nº {{ numeroFormatado }}</div>
+                    <div v-if="state.venda.referencia"><strong>Ref.: {{ state.venda.referencia }}</strong></div>
                     <div>Data: {{ formatData(state.venda.dataCriacao) }}</div>
                     <div v-if="isOrcamento">Válido até: {{ formatDia(state.venda.validoAte) }}</div>
                     <div v-if="isCancelado" class="documento-cancelado">CANCELADO</div>

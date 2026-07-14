@@ -12,6 +12,7 @@ const router = useRouter();
 const state = reactive({
     vendas: [],
     clientesById: {},
+    filtro: '',
     isProcessing: false,
 });
 
@@ -22,6 +23,16 @@ const formatBRL = (valor) =>
     valor == null ? '-' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatData = (valor) => (valor ? new Date(valor).toLocaleDateString('pt-BR') : '-');
 const nomeCliente = (id) => state.clientesById[id] || '-';
+
+// Busca local por nº, cliente ou referência (o apelido do trabalho).
+const vendasFiltradas = computed(() => {
+    const termo = state.filtro.trim().toLowerCase();
+    if (!termo) return state.vendas;
+    return state.vendas.filter((venda) =>
+        String(venda.numero || '').includes(termo)
+        || nomeCliente(venda.clienteId).toLowerCase().includes(termo)
+        || (venda.referencia || '').toLowerCase().includes(termo));
+});
 
 const fetchVendas = async () => {
     try {
@@ -86,8 +97,19 @@ watch(() => props.status, fetchVendas);
                                     </div>
                                 </div>
 
+                                <div v-if="state.vendas.length" class="p-2 pb-0" style="max-width: 420px;">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input v-model="state.filtro" type="text" class="form-control"
+                                            placeholder="Buscar por nº, cliente ou referência..." />
+                                    </div>
+                                </div>
+
                                 <div v-if="!state.vendas.length" class="text-muted p-2">
                                     Nenhum registro encontrado.
+                                </div>
+                                <div v-else-if="!vendasFiltradas.length" class="text-muted p-2">
+                                    Nenhum registro corresponde à busca.
                                 </div>
                                 <div v-else class="table-responsive p-2">
                                     <table class="table table-bordered table-striped mb-0">
@@ -96,16 +118,18 @@ watch(() => props.status, fetchVendas);
                                                 <th style="width: 70px;">Nº</th>
                                                 <th>Data</th>
                                                 <th>Cliente</th>
+                                                <th>Referência</th>
                                                 <th class="text-end">Total</th>
                                                 <th v-if="isOrcamento" class="text-center">Situação</th>
                                                 <th class="text-center" style="width: 120px;">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-for="venda in state.vendas" :key="venda.id">
+                                            <tr v-for="venda in vendasFiltradas" :key="venda.id">
                                                 <td>{{ venda.numero ?? '—' }}</td>
                                                 <td>{{ formatData(venda.dataCriacao) }}</td>
                                                 <td>{{ nomeCliente(venda.clienteId) }}</td>
+                                                <td>{{ venda.referencia || '—' }}</td>
                                                 <td class="text-end">{{ formatBRL(venda.total) }}</td>
                                                 <td v-if="isOrcamento" class="text-center">
                                                     <span v-if="venda.vencido" class="badge text-bg-warning">Vencido</span>
