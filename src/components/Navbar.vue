@@ -75,11 +75,7 @@ function mapUserProfile(usuarioData) {
 }
 
 function resolvePhotoUrl(usuarioData) {
-    return usuarioData?.fotoUrl
-        || usuarioData?.foto
-        || usuarioData?.avatarUrl
-        || usuarioData?.imagem
-        || '';
+    return usuarioData?.fotoUrl || usuarioData?.foto || usuarioData?.avatarUrl || usuarioData?.imagem || '';
 }
 
 function formatDisplayName(name) {
@@ -107,10 +103,7 @@ function formatDisplayName(name) {
 }
 
 function extractInitials(name) {
-    const parts = (name || '')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
 
     if (parts.length === 0) {
         return 'US';
@@ -124,17 +117,25 @@ function extractInitials(name) {
 }
 </script>
 <template>
-    <nav class="app-header navbar navbar-expand bg-body"> <!--begin::Container-->
+    <nav class="app-header navbar navbar-expand bg-body">
+        <!--begin::Container-->
         <!--<nav class="app-header navbar navbar-expand bg-white"> begin::Container-->
-        <div class="container-fluid"> <!--begin::Start Navbar Links-->
+        <div class="container-fluid">
+            <!--begin::Start Navbar Links-->
             <ul class="navbar-nav">
-                <li class="nav-item"> <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button" @click.prevent="toggleSidebar"> <i
-                            class="bi bi-list"></i> </a> </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button" @click.prevent="toggleSidebar">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
                 <li class="nav-item d-none d-md-block">
                     <RouterLink to="/home" class="nav-link">Home</RouterLink>
                 </li>
-            </ul> <!--end::Start Navbar Links--> <!--begin::End Navbar Links-->
-            <ul class="navbar-nav ms-auto"><!--begin::Notifications Dropdown Menu-->
+            </ul>
+            <!--end::Start Navbar Links-->
+            <!--begin::End Navbar Links-->
+            <ul class="navbar-nav ms-auto">
+                <!--begin::Notifications Dropdown Menu-->
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-bs-toggle="dropdown" href="#">
                         <i class="bi bi-bell-fill"></i>
@@ -162,40 +163,66 @@ function extractInitials(name) {
                     </div>
                 </li>
                 <!--end::Notifications Dropdown Menu--><!--begin::Fullscreen Toggle-->
-                <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i
-                            data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize"
-                            class="bi bi-fullscreen-exit" style="display: none;"></i> </a>
-                </li> <!--end::Fullscreen Toggle-->
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-lte-toggle="fullscreen">
+                        <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i>
+                        <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none"></i>
+                    </a>
+                </li>
+                <!--end::Fullscreen Toggle-->
                 <!--begin::Color Mode Menu Dropdown-->
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
                         <button
                             class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center"
-                            id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown"
-                            data-bs-display="static">
+                            id="bd-theme"
+                            type="button"
+                            aria-expanded="false"
+                            data-bs-toggle="dropdown"
+                            data-bs-display="static"
+                        >
                             <span class="theme-icon-active">
                                 <i
-                                    :class="theme === 'light' ? 'bi bi-sun' : theme === 'dark' ? 'bi bi-moon' : 'bi bi-circle-half'"></i>
+                                    :class="
+                                        theme === 'light'
+                                            ? 'bi bi-sun'
+                                            : theme === 'dark'
+                                              ? 'bi bi-moon'
+                                              : 'bi bi-circle-half'
+                                    "
+                                ></i>
                             </span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme-text">
                             <li>
-                                <button type="button" class="dropdown-item d-flex align-items-center"
-                                    :class="{ active: theme === 'light' }" @click="setTheme('light')">
+                                <button
+                                    type="button"
+                                    class="dropdown-item d-flex align-items-center"
+                                    :class="{ active: theme === 'light' }"
+                                    @click="setTheme('light')"
+                                >
                                     <i class="bi bi-sun me-2"></i>
                                     Light
                                 </button>
                             </li>
                             <li>
-                                <button type="button" class="dropdown-item d-flex align-items-center"
-                                    :class="{ active: theme === 'dark' }" @click="setTheme('dark')">
+                                <button
+                                    type="button"
+                                    class="dropdown-item d-flex align-items-center"
+                                    :class="{ active: theme === 'dark' }"
+                                    @click="setTheme('dark')"
+                                >
                                     <i class="bi bi-moon me-2"></i>
                                     Dark
                                 </button>
                             </li>
                             <li>
-                                <button type="button" class="dropdown-item d-flex align-items-center"
-                                    :class="{ active: theme === 'auto' }" @click="setTheme('auto')">
+                                <button
+                                    type="button"
+                                    class="dropdown-item d-flex align-items-center"
+                                    :class="{ active: theme === 'auto' }"
+                                    @click="setTheme('auto')"
+                                >
                                     <i class="bi bi-circle-half me-2"></i>
                                     Auto
                                 </button>
@@ -204,22 +231,32 @@ function extractInitials(name) {
                     </li>
                 </ul>
 
-                <li class="nav-item"> <a class="nav-link" href="#" @click="logout"><i class="bi bi-door-closed-fill"></i></a>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" @click="logout"><i class="bi bi-door-closed-fill"></i></a>
                 </li>
                 <!--end::Color Mode Menu Dropdown--><!--begin::User Menu Dropdown-->
-                <li class="nav-item dropdown user-menu"> <a href="#" class="nav-link dropdown-toggle"
-                        data-bs-toggle="dropdown">
-                        <img v-if="avatarUrl" :src="avatarUrl" class="user-image rounded-circle shadow"
-                            alt="Foto do colaborador">
+                <li class="nav-item dropdown user-menu">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                        <img
+                            v-if="avatarUrl"
+                            :src="avatarUrl"
+                            class="user-image rounded-circle shadow"
+                            alt="Foto do colaborador"
+                        />
                         <div v-else class="user-image user-initials rounded-circle shadow">
                             {{ userInitials }}
                         </div>
                         <span class="d-none d-md-inline">{{ displayName }}</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end"> <!--begin::User Image-->
+                    <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                        <!--begin::User Image-->
                         <li class="user-header text-bg-primary">
-                            <img v-if="avatarUrl" :src="avatarUrl" class="rounded-circle shadow"
-                                alt="Foto do colaborador">
+                            <img
+                                v-if="avatarUrl"
+                                :src="avatarUrl"
+                                class="rounded-circle shadow"
+                                alt="Foto do colaborador"
+                            />
                             <div v-else class="user-header-initials rounded-circle shadow">
                                 {{ userInitials }}
                             </div>
@@ -227,16 +264,23 @@ function extractInitials(name) {
                                 {{ displayName }}
                                 <small>{{ displayEmail }}</small>
                             </p>
-                        </li> <!--end::User Image--> <!--begin::Menu Body-->
+                        </li>
+                        <!--end::User Image-->
+                        <!--begin::Menu Body-->
                         <li class="user-footer">
                             <a href="#" class="btn btn-default btn-flat float-end" @click.prevent="logout">Sair</a>
                         </li>
                         <!--end::Menu Footer-->
                     </ul>
-                </li> <!--end::User Menu Dropdown-->
-            </ul> <!--end::End Navbar Links-->
-        </div> <!--end::Container-->
-    </nav> <!--end::Header--> <!--begin::Sidebar-->
+                </li>
+                <!--end::User Menu Dropdown-->
+            </ul>
+            <!--end::End Navbar Links-->
+        </div>
+        <!--end::Container-->
+    </nav>
+    <!--end::Header-->
+    <!--begin::Sidebar-->
 </template>
 <style scoped>
 .user-initials,

@@ -13,8 +13,7 @@ const emit = defineEmits(['update:modelValue']);
 const aberto = ref(false);
 const filtro = ref('');
 
-const nomeSelecionado = computed(() =>
-    props.opcoes.find((opcao) => opcao.id === props.modelValue)?.nome || '');
+const nomeSelecionado = computed(() => props.opcoes.find((opcao) => opcao.id === props.modelValue)?.nome || '');
 
 const filtradas = computed(() => {
     const termo = filtro.value.trim().toLowerCase();
@@ -45,16 +44,28 @@ const aoEnter = () => {
 
 <template>
     <div class="position-relative">
-        <input type="text" class="form-control" :value="aberto ? filtro : nomeSelecionado"
-            :placeholder="nomeSelecionado || placeholder" @focus="abrir"
-            @input="filtro = $event.target.value" @blur="aoBlur" @keyup.enter="aoEnter"
-            @keyup.esc="fechar" />
+        <input
+            type="text"
+            class="form-control"
+            :value="aberto ? filtro : nomeSelecionado"
+            :placeholder="nomeSelecionado || placeholder"
+            @focus="abrir"
+            @input="filtro = $event.target.value"
+            @blur="aoBlur"
+            @keyup.enter="aoEnter"
+            @keyup.esc="fechar"
+        />
         <ul v-if="aberto" class="dropdown-menu show w-100 busca-select-lista">
             <li v-if="!filtradas.length" class="dropdown-item text-muted">Nenhum resultado</li>
             <li v-for="opcao in filtradas" :key="opcao.id">
-                <button type="button" class="dropdown-item text-wrap"
+                <button
+                    type="button"
+                    class="dropdown-item text-wrap"
                     :class="{ active: opcao.id === modelValue }"
-                    @mousedown.prevent="selecionar(opcao)">{{ opcao.nome }}</button>
+                    @mousedown.prevent="selecionar(opcao)"
+                >
+                    {{ opcao.nome }}
+                </button>
             </li>
         </ul>
     </div>

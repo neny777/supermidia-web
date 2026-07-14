@@ -5,51 +5,56 @@ import { ref, onMounted, computed } from 'vue';
 // Configuração do menu
 const menuConfig = [
     {
-        name: "Cadastros",
-        icon: "bi bi-pencil-square",
+        name: 'Cadastros',
+        icon: 'bi bi-pencil-square',
         children: [
             {
-                name: "Pessoas",
-                icon: "bi bi-people",
+                name: 'Pessoas',
+                icon: 'bi bi-people',
                 children: [
-                    { name: "Clientes", path: "/clientes", permission: "clientes", icon: "bi bi-people" },
-                    { name: "Fornecedores", path: "/fornecedores", permission: "fornecedores", icon: "bi bi-people" },
-                    { name: "Parceiros", path: "/parceiros", permission: "parceiros", icon: "bi bi-people" },
-                    { name: "Colaboradores", path: "/colaboradores", permission: "colaboradores", icon: "bi bi-people" },
-                    { name: "Usuários", path: "/usuarios", permission: "usuarios", icon: "bi bi-people" },
+                    { name: 'Clientes', path: '/clientes', permission: 'clientes', icon: 'bi bi-people' },
+                    { name: 'Fornecedores', path: '/fornecedores', permission: 'fornecedores', icon: 'bi bi-people' },
+                    { name: 'Parceiros', path: '/parceiros', permission: 'parceiros', icon: 'bi bi-people' },
+                    {
+                        name: 'Colaboradores',
+                        path: '/colaboradores',
+                        permission: 'colaboradores',
+                        icon: 'bi bi-people',
+                    },
+                    { name: 'Usuários', path: '/usuarios', permission: 'usuarios', icon: 'bi bi-people' },
                 ],
             },
             {
-                name: "Insumos",
-                icon: "bi bi-columns-gap",
+                name: 'Insumos',
+                icon: 'bi bi-columns-gap',
                 children: [
-                    { name: "Matérias", path: "/materias", permission: "materias", icon: "bi bi-box2" },
-                    { name: "Serviços", path: "/servicos", permission: "servicos", icon: "bi bi-tools" },
-                ]
+                    { name: 'Matérias', path: '/materias', permission: 'materias', icon: 'bi bi-box2' },
+                    { name: 'Serviços', path: '/servicos', permission: 'servicos', icon: 'bi bi-tools' },
+                ],
             },
             {
-                name: "Produtos",
-                icon: "bi bi-box-seam",
+                name: 'Produtos',
+                icon: 'bi bi-box-seam',
                 children: [
-                    { name: "Produtos Base", path: "/produtos", permission: "produtos", icon: "bi bi-box2-heart" },
-                    { name: "Cálculos", path: "/calculos", permission: "produtos", icon: "bi bi-calculator" },
-                ]
+                    { name: 'Produtos Base', path: '/produtos', permission: 'produtos', icon: 'bi bi-box2-heart' },
+                    { name: 'Cálculos', path: '/calculos', permission: 'produtos', icon: 'bi bi-calculator' },
+                ],
             },
         ],
     },
     {
-        name: "Vendas",
-        icon: "bi bi-cart",
+        name: 'Vendas',
+        icon: 'bi bi-cart',
         children: [
-            { name: "Orçamentos", path: "/orcamentos", permission: "vendas", icon: "bi bi-file-earmark-text" },
-            { name: "Ordens de Serviço", path: "/ordens-servico", permission: "vendas", icon: "bi bi-clipboard-check" },
+            { name: 'Orçamentos', path: '/orcamentos', permission: 'vendas', icon: 'bi bi-file-earmark-text' },
+            { name: 'Ordens de Serviço', path: '/ordens-servico', permission: 'vendas', icon: 'bi bi-clipboard-check' },
         ],
     },
     {
-        name: "Sistema",
-        icon: "bi bi-gear",
+        name: 'Sistema',
+        icon: 'bi bi-gear',
         children: [
-            { name: "Configurações", path: "/configuracoes", permission: "configuracoes", icon: "bi bi-sliders" },
+            { name: 'Configurações', path: '/configuracoes', permission: 'configuracoes', icon: 'bi bi-sliders' },
         ],
     },
 ];
@@ -116,31 +121,46 @@ onMounted(() => {
     const storedPermissions = localStorage.getItem('permissions');
     if (storedPermissions) {
         const rawPermissions = JSON.parse(storedPermissions);
-        userPermissions.value = (rawPermissions || [])
-            .map((permission) => String(permission).replace(/^ROLE_/i, '').toLowerCase());
+        userPermissions.value = (rawPermissions || []).map((permission) =>
+            String(permission)
+                .replace(/^ROLE_/i, '')
+                .toLowerCase()
+        );
     }
 });
 </script>
 <template>
     <!--begin::Sidebar-->
-    <aside class="app-sidebar bg-body"> <!--begin::Sidebar Brand-->
-        <div class="sidebar-brand"> <!--begin::Brand Link-->
+    <aside class="app-sidebar bg-body">
+        <!--begin::Sidebar Brand-->
+        <div class="sidebar-brand">
+            <!--begin::Brand Link-->
             <RouterLink to="/home" class="text-decoration-none text-reset">
-                <!--begin::Brand Image--> <img :src="logo" alt="SuperMídia Logo" class="supermidia-logo-bar">
-                <!--end::Brand Image--> <!--begin::Brand Text--> <span class="super-bar">SUPER</span><span
-                    class="midia-bar">MÍDIA</span>
+                <!--begin::Brand Image-->
+                <img :src="logo" alt="SuperMídia Logo" class="supermidia-logo-bar" />
+                <!--end::Brand Image-->
+                <!--begin::Brand Text-->
+                <span class="super-bar">SUPER</span><span class="midia-bar">MÍDIA</span>
                 <!--end::Brand Text-->
-            </RouterLink> <!--end::Brand Link-->
-        </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
+            </RouterLink>
+            <!--end::Brand Link-->
+        </div>
+        <!--end::Sidebar Brand-->
+        <!--begin::Sidebar Wrapper-->
         <div class="sidebar-wrapper">
-            <nav class="mt-2"> <!--begin::Sidebar Menu-->
+            <nav class="mt-2">
+                <!--begin::Sidebar Menu-->
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
                     <li class="nav-header text-center">
                         <h5>MENU</h5>
                     </li>
                     <!-- Renderizar menus dinamicamente -->
-                    <li v-for="menu in filteredMenu" :key="menu.name" class="nav-item"
-                        :class="{ 'menu-open': isMenuOpen(menu.name) }">
+                    <li
+                        v-for="menu in filteredMenu"
+                        :key="menu.name"
+                        class="nav-item"
+                        :class="{ 'menu-open': isMenuOpen(menu.name) }"
+                    >
                         <!-- Menu principal -->
                         <a v-if="!menu.children || menu.children.length === 0" href="#" class="nav-link">
                             <i :class="menu.icon"></i>
@@ -155,26 +175,40 @@ onMounted(() => {
                             </p>
                         </a>
                         <!-- Submenus -->
-                        <ul v-if="menu.children && menu.children.length > 0" class="nav nav-treeview ms-3"
-                            :style="{ display: isMenuOpen(menu.name) ? 'block' : 'none' }">
-                            <li v-for="submenu in menu.children" :key="submenu.name" class="nav-item"
-                                :class="{ 'menu-open': isSubMenuOpen(menu.name, submenu.name) }">
+                        <ul
+                            v-if="menu.children && menu.children.length > 0"
+                            class="nav nav-treeview ms-3"
+                            :style="{ display: isMenuOpen(menu.name) ? 'block' : 'none' }"
+                        >
+                            <li
+                                v-for="submenu in menu.children"
+                                :key="submenu.name"
+                                class="nav-item"
+                                :class="{ 'menu-open': isSubMenuOpen(menu.name, submenu.name) }"
+                            >
                                 <!-- Submenu sem filhos -->
                                 <RouterLink v-if="submenu.path" :to="submenu.path" class="nav-link">
                                     <i :class="submenu.icon"></i>
                                     <p>{{ submenu.name }}</p>
                                 </RouterLink>
                                 <!-- Submenu com filhos -->
-                                <a v-else href="#" class="nav-link" @click.prevent="toggleSubMenu(menu.name, submenu.name)">
+                                <a
+                                    v-else
+                                    href="#"
+                                    class="nav-link"
+                                    @click.prevent="toggleSubMenu(menu.name, submenu.name)"
+                                >
                                     <i :class="submenu.icon"></i>
                                     <p>
                                         {{ submenu.name }}
                                         <i class="nav-arrow bi bi-chevron-right"></i>
                                     </p>
                                 </a>
-                                <ul v-if="submenu.children && submenu.children.length > 0"
+                                <ul
+                                    v-if="submenu.children && submenu.children.length > 0"
                                     class="nav nav-treeview ms-3"
-                                    :style="{ display: isSubMenuOpen(menu.name, submenu.name) ? 'block' : 'none' }">
+                                    :style="{ display: isSubMenuOpen(menu.name, submenu.name) ? 'block' : 'none' }"
+                                >
                                     <li v-for="child in submenu.children" :key="child.name" class="nav-item">
                                         <RouterLink :to="child.path" class="nav-link">
                                             <i :class="child.icon"></i>
@@ -185,8 +219,11 @@ onMounted(() => {
                             </li>
                         </ul>
                     </li>
-                </ul> <!--end::Sidebar Menu-->
+                </ul>
+                <!--end::Sidebar Menu-->
             </nav>
-        </div> <!--end::Sidebar Wrapper-->
-    </aside> <!--end::Sidebar-->
+        </div>
+        <!--end::Sidebar Wrapper-->
+    </aside>
+    <!--end::Sidebar-->
 </template>

@@ -90,9 +90,11 @@ const salvar = async () => {
                                 </div>
                             </div>
                             <div class="card-body my-3 position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
                                     </div>
@@ -101,33 +103,65 @@ const salvar = async () => {
                                 <div v-if="state.isReady" class="row g-4 p-2">
                                     <div class="col-lg-6">
                                         <label class="form-label"><strong>Validade do orçamento (dias)</strong></label>
-                                        <input v-model="state.form.validadeOrcamentoDias" type="number" min="1"
-                                            max="365" step="1" class="form-control" />
-                                        <div class="form-text">Depois desse prazo o orçamento fica vencido: só é
-                                            possível recalcular (preços atuais) ou cancelar.</div>
+                                        <input
+                                            v-model="state.form.validadeOrcamentoDias"
+                                            type="number"
+                                            min="1"
+                                            max="365"
+                                            step="1"
+                                            class="form-control"
+                                        />
+                                        <div class="form-text">
+                                            Depois desse prazo o orçamento fica vencido: só é possível recalcular
+                                            (preços atuais) ou cancelar.
+                                        </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <label class="form-label"><strong>Janela de edição (horas)</strong></label>
-                                        <input v-model="state.form.edicaoHoras" type="number" min="0" max="720"
-                                            step="1" class="form-control" />
-                                        <div class="form-text">Tempo após a criação em que orçamentos e ordens de
-                                            serviço podem ser editados ou excluídos. Zero desliga a edição.</div>
+                                        <input
+                                            v-model="state.form.edicaoHoras"
+                                            type="number"
+                                            min="0"
+                                            max="720"
+                                            step="1"
+                                            class="form-control"
+                                        />
+                                        <div class="form-text">
+                                            Tempo após a criação em que orçamentos e ordens de serviço podem ser
+                                            editados ou excluídos. Zero desliga a edição.
+                                        </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <label class="form-label"><strong>Piso de margem (%)</strong></label>
-                                        <input v-model="state.form.pisoMargemPercentual" type="number" min="0" max="95"
-                                            step="0.01" class="form-control" />
-                                        <div class="form-text">Margem mínima do preço de atacado. Também é a margem
-                                            usada quando o produto não tem material próprio.</div>
+                                        <input
+                                            v-model="state.form.pisoMargemPercentual"
+                                            type="number"
+                                            min="0"
+                                            max="95"
+                                            step="0.01"
+                                            class="form-control"
+                                        />
+                                        <div class="form-text">
+                                            Margem mínima do preço de atacado. Também é a margem usada quando o produto
+                                            não tem material próprio.
+                                        </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <label class="form-label"><strong>Fator de varejo</strong></label>
-                                        <input v-model="state.form.fatorVarejo" type="number" min="1" max="10"
-                                            step="0.0001" class="form-control" />
+                                        <input
+                                            v-model="state.form.fatorVarejo"
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            step="0.0001"
+                                            class="form-control"
+                                        />
                                         <div class="form-text">
                                             Varejo = atacado × fator.
-                                            <template v-if="acrescimoVarejo"> Com o valor atual, o varejo fica
-                                                <strong>{{ acrescimoVarejo }}%</strong> acima do atacado.</template>
+                                            <template v-if="acrescimoVarejo">
+                                                Com o valor atual, o varejo fica
+                                                <strong>{{ acrescimoVarejo }}%</strong> acima do atacado.</template
+                                            >
                                         </div>
                                     </div>
                                     <div class="col-12">
@@ -141,12 +175,19 @@ const salvar = async () => {
                                 </div>
                             </div>
                             <div class="card-footer text-center">
-                                <button type="button" class="btn btn-primary button-medium m-2"
-                                    :disabled="state.isProcessing || !state.isReady" @click="salvar">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium m-2"
+                                    :disabled="state.isProcessing || !state.isReady"
+                                    @click="salvar"
+                                >
                                     <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                 </button>
-                                <button type="button" class="btn btn-primary button-medium m-2"
-                                    @click="router.push('/home')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium m-2"
+                                    @click="router.push('/home')"
+                                >
                                     <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                 </button>
                             </div>

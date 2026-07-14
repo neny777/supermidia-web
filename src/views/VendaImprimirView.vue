@@ -37,7 +37,8 @@ const isOrcamento = computed(() => state.venda?.status === 'ORCAMENTO');
 const isCancelado = computed(() => state.venda?.status === 'CANCELADO');
 const tituloDocumento = computed(() => (isOrcamento.value ? 'ORÇAMENTO' : 'ORDEM DE SERVIÇO'));
 const numeroFormatado = computed(() =>
-    state.venda?.numero != null ? String(state.venda.numero).padStart(4, '0') : 's/nº');
+    state.venda?.numero != null ? String(state.venda.numero).padStart(4, '0') : 's/nº'
+);
 
 const formatBRL = (valor) =>
     valor == null ? '-' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -46,10 +47,10 @@ const formatDia = (valor) => (valor ? new Date(`${valor}T00:00:00`).toLocaleDate
 
 // Apresentação comercial: itens ao preço SUGERIDO; os ajustes de preço final
 // aparecem como linha de DESCONTO (ou acréscimo) antes do total.
-const subtotalSugerido = computed(() => (state.venda?.itens || [])
-    .reduce((soma, item) => soma + Number(item.precoSugerido ?? item.precoFinal ?? 0), 0));
-const ajusteTotal = computed(() =>
-    Math.round((Number(state.venda?.total || 0) - subtotalSugerido.value) * 100) / 100);
+const subtotalSugerido = computed(() =>
+    (state.venda?.itens || []).reduce((soma, item) => soma + Number(item.precoSugerido ?? item.precoFinal ?? 0), 0)
+);
+const ajusteTotal = computed(() => Math.round((Number(state.venda?.total || 0) - subtotalSugerido.value) * 100) / 100);
 
 // A descrição estruturada ("2 × LONA · BRILHO · 100 × 150 cm · ...") vira
 // título (1ª parte) + linha de características (restante).
@@ -100,13 +101,16 @@ onBeforeUnmount(() => {
                         <div class="empresa-nome">{{ EMPRESA.nome }}</div>
                         <div class="empresa-ramo">{{ EMPRESA.ramo }}</div>
                         <div v-for="(linha, index) in EMPRESA.linhas" :key="index" class="empresa-contato">
-                            {{ linha }}</div>
+                            {{ linha }}
+                        </div>
                     </div>
                 </div>
                 <div class="documento-info">
                     <div class="documento-titulo">{{ tituloDocumento }}</div>
                     <div class="documento-numero">Nº {{ numeroFormatado }}</div>
-                    <div v-if="state.venda.referencia"><strong>Ref.: {{ state.venda.referencia }}</strong></div>
+                    <div v-if="state.venda.referencia">
+                        <strong>Ref.: {{ state.venda.referencia }}</strong>
+                    </div>
                     <div>Data: {{ formatData(state.venda.dataCriacao) }}</div>
                     <div v-if="state.venda.atendenteNome">Atendente: {{ state.venda.atendenteNome }}</div>
                     <div v-if="isOrcamento">Válido até: {{ formatDia(state.venda.validoAte) }}</div>
@@ -120,8 +124,10 @@ onBeforeUnmount(() => {
                 <div class="cliente-contato">
                     <span v-if="state.cliente?.telefone">Telefone: {{ state.cliente.telefone }}</span>
                     <span v-if="state.cliente?.email">E-mail: {{ state.cliente.email }}</span>
-                    <span v-if="state.cliente?.municipio">{{ state.cliente.municipio }}<template
-                            v-if="state.cliente?.uf">/{{ state.cliente.uf }}</template></span>
+                    <span v-if="state.cliente?.municipio"
+                        >{{ state.cliente.municipio
+                        }}<template v-if="state.cliente?.uf">/{{ state.cliente.uf }}</template></span
+                    >
                 </div>
             </section>
 
@@ -141,7 +147,8 @@ onBeforeUnmount(() => {
                             <td>
                                 <div class="item-titulo">{{ tituloItem(item) }}</div>
                                 <div v-if="caracteristicasItem(item)" class="item-caracteristicas">
-                                    {{ caracteristicasItem(item) }}</div>
+                                    {{ caracteristicasItem(item) }}
+                                </div>
                             </td>
                             <td class="col-valor">{{ formatBRL(item.precoSugerido ?? item.precoFinal) }}</td>
                         </tr>
@@ -164,13 +171,17 @@ onBeforeUnmount(() => {
             </section>
 
             <!-- Condições: valor digitado quando existe; na OS, campo vazio vira lacuna p/ caneta -->
-            <section v-if="!isOrcamento || state.venda.formaPagamento || state.venda.prazoEntrega"
-                class="bloco linha-preencher">
-                <div v-if="!isOrcamento || state.venda.formaPagamento">Forma de pagamento:
+            <section
+                v-if="!isOrcamento || state.venda.formaPagamento || state.venda.prazoEntrega"
+                class="bloco linha-preencher"
+            >
+                <div v-if="!isOrcamento || state.venda.formaPagamento">
+                    Forma de pagamento:
                     <strong v-if="state.venda.formaPagamento">{{ state.venda.formaPagamento }}</strong>
                     <span v-else class="lacuna"></span>
                 </div>
-                <div v-if="!isOrcamento || state.venda.prazoEntrega">Prazo de entrega:
+                <div v-if="!isOrcamento || state.venda.prazoEntrega">
+                    Prazo de entrega:
                     <strong v-if="state.venda.prazoEntrega">{{ state.venda.prazoEntrega }}</strong>
                     <span v-else class="lacuna"></span>
                 </div>
@@ -195,8 +206,9 @@ onBeforeUnmount(() => {
                 <ul class="miudinhas">
                     <li v-for="(clausula, index) in MIUDINHAS" :key="index">{{ clausula }}</li>
                 </ul>
-                <div class="cta">PARA APROVAR: chame no WhatsApp {{ EMPRESA.whatsapp }} informando o nº
-                    {{ numeroFormatado }}.</div>
+                <div class="cta">
+                    PARA APROVAR: chame no WhatsApp {{ EMPRESA.whatsapp }} informando o nº {{ numeroFormatado }}.
+                </div>
             </section>
         </div>
     </div>
@@ -216,7 +228,7 @@ onBeforeUnmount(() => {
     min-height: 250px;
     margin: 0 auto;
     padding: 14mm 16mm;
-    box-shadow: 0 0 8px rgba(0, 0, 0, .25);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
     font-size: 11pt;
     line-height: 1.35;
 }
@@ -359,7 +371,7 @@ onBeforeUnmount(() => {
     gap: 24px;
 }
 
-.linha-preencher>div {
+.linha-preencher > div {
     flex: 1;
 }
 

@@ -16,7 +16,8 @@ const schema = yup.object({
     nome: yup.string().required('Informe o nome da matéria.').max(140, 'Máximo de 140 caracteres.'),
     grupo: yup.string().max(40, 'Máximo de 40 caracteres.'),
     unidade: yup.string().required('Selecione a unidade.'),
-    preco: yup.number()
+    preco: yup
+        .number()
         .typeError('Informe um preço válido.')
         .required('Informe o preço.')
         .moreThan(0, 'O preço deve ser maior que zero.'),
@@ -36,10 +37,12 @@ const state = reactive({
 
 const unidades = ['UN', 'M', 'M2', 'M3'];
 
-const hasChanges = (newValues) => JSON.stringify(newValues) !== JSON.stringify({
-    ...state.materia,
-    grupo: state.materia.grupo ? state.materia.grupo.toUpperCase() : null,
-});
+const hasChanges = (newValues) =>
+    JSON.stringify(newValues) !==
+    JSON.stringify({
+        ...state.materia,
+        grupo: state.materia.grupo ? state.materia.grupo.toUpperCase() : null,
+    });
 
 onMounted(async () => {
     try {
@@ -65,7 +68,7 @@ onMounted(async () => {
         };
         state.isReady = true;
     } catch (error) {
-        showToast("erro", "Erro ao carregar matéria.");
+        showToast('erro', 'Erro ao carregar matéria.');
         router.push('/materias');
     } finally {
         state.isProcessing = false;
@@ -83,18 +86,18 @@ const onSubmit = async (values, { resetForm }) => {
     try {
         if (isEditMode.value) {
             if (!hasChanges(payload)) {
-                showToast("info", "Não houve alterações na matéria.");
+                showToast('info', 'Não houve alterações na matéria.');
                 return;
             }
 
-            const modal = showModal("Editar matéria", "Confirma a edição da matéria?", async () => {
+            const modal = showModal('Editar matéria', 'Confirma a edição da matéria?', async () => {
                 try {
                     state.isProcessing = true;
                     await axiosInstance.put(`/materias/${route.params.materiaId}`, payload);
-                    showToast("sucesso", "Matéria editada com sucesso!");
+                    showToast('sucesso', 'Matéria editada com sucesso!');
                     router.push('/materias');
                 } catch (error) {
-                    showToast("erro", "Erro ao salvar matéria.");
+                    showToast('erro', 'Erro ao salvar matéria.');
                 } finally {
                     state.isProcessing = false;
                     modal.hide();
@@ -105,11 +108,11 @@ const onSubmit = async (values, { resetForm }) => {
 
         state.isProcessing = true;
         await axiosInstance.post('/materias', payload);
-        showToast("sucesso", "Matéria criada com sucesso!");
+        showToast('sucesso', 'Matéria criada com sucesso!');
         resetForm();
         router.push('/materias');
     } catch (error) {
-        showToast("erro", "Erro ao salvar matéria.");
+        showToast('erro', 'Erro ao salvar matéria.');
     } finally {
         state.isProcessing = false;
     }
@@ -148,14 +151,21 @@ const onSubmit = async (values, { resetForm }) => {
                             </div>
 
                             <div class="position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
                                     </div>
                                 </div>
-                                <Form v-if="state.isReady" @submit="onSubmit" :validation-schema="schema" :initial-values="state.materia">
+                                <Form
+                                    v-if="state.isReady"
+                                    @submit="onSubmit"
+                                    :validation-schema="schema"
+                                    :initial-values="state.materia"
+                                >
                                     <div class="card-body my-4">
                                         <div class="row g-3 p-3">
                                             <div class="col-lg-6">
@@ -171,10 +181,20 @@ const onSubmit = async (values, { resetForm }) => {
                                                 <div class="row p-2">
                                                     <label for="grupo" class="col-form-label col-lg-3">Grupo</label>
                                                     <div class="col-lg-9">
-                                                        <Field id="grupo" name="grupo" type="text" class="form-control"
-                                                            list="grupos-existentes" placeholder="Ex.: LONAS, ADESIVOS (opcional)" />
+                                                        <Field
+                                                            id="grupo"
+                                                            name="grupo"
+                                                            type="text"
+                                                            class="form-control"
+                                                            list="grupos-existentes"
+                                                            placeholder="Ex.: LONAS, ADESIVOS (opcional)"
+                                                        />
                                                         <datalist id="grupos-existentes">
-                                                            <option v-for="grupo in state.grupos" :key="grupo" :value="grupo" />
+                                                            <option
+                                                                v-for="grupo in state.grupos"
+                                                                :key="grupo"
+                                                                :value="grupo"
+                                                            />
                                                         </datalist>
                                                         <ErrorMessage name="grupo" class="text-danger" />
                                                     </div>
@@ -184,9 +204,18 @@ const onSubmit = async (values, { resetForm }) => {
                                                 <div class="row p-2">
                                                     <label for="unidade" class="col-form-label col-lg-3">Unidade</label>
                                                     <div class="col-lg-9">
-                                                        <Field as="select" id="unidade" name="unidade" class="form-select">
+                                                        <Field
+                                                            as="select"
+                                                            id="unidade"
+                                                            name="unidade"
+                                                            class="form-select"
+                                                        >
                                                             <option value="">Selecione</option>
-                                                            <option v-for="unidade in unidades" :key="unidade" :value="unidade">
+                                                            <option
+                                                                v-for="unidade in unidades"
+                                                                :key="unidade"
+                                                                :value="unidade"
+                                                            >
                                                                 {{ unidade }}
                                                             </option>
                                                         </Field>
@@ -198,8 +227,14 @@ const onSubmit = async (values, { resetForm }) => {
                                                 <div class="row p-2">
                                                     <label for="preco" class="col-form-label col-lg-3">Preço</label>
                                                     <div class="col-lg-9">
-                                                        <Field id="preco" name="preco" type="number" step="0.01" min="0.01"
-                                                            class="form-control" />
+                                                        <Field
+                                                            id="preco"
+                                                            name="preco"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
                                                         <ErrorMessage name="preco" class="text-danger" />
                                                     </div>
                                                 </div>
@@ -211,8 +246,11 @@ const onSubmit = async (values, { resetForm }) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="router.push('/materias')">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="router.push('/materias')"
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

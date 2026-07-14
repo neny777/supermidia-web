@@ -30,7 +30,10 @@ const originalSnapshot = ref(null);
 
 const schema = yup.object({
     codigo: yup.string().required('Selecione o parâmetro.'),
-    valor: yup.number().typeError('Informe um valor válido.').required('Informe o valor.')
+    valor: yup
+        .number()
+        .typeError('Informe um valor válido.')
+        .required('Informe o valor.')
         .test('valor-valido', function (value) {
             const codigo = this.parent.codigo;
             if (value == null || value === '') {
@@ -66,7 +69,10 @@ onMounted(async () => {
             const parametro = item.parametros?.[Number(route.params.parametroIndex)];
             if (!parametro) {
                 showToast('erro', 'Parâmetro não encontrado.');
-                router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex } });
+                router.push({
+                    name: 'produto-servico-editar',
+                    params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex },
+                });
                 return;
             }
             state.parametro = { ...parametro };
@@ -111,12 +117,18 @@ const onSubmit = async (values) => {
 
         const salvar = async () => {
             state.isProcessing = true;
-            await axiosInstance.put(`/produtos/${route.params.produtoId}`, normalizeProdutoPayload({
-                ...state.produto,
-                servicosCalculo,
-            }));
+            await axiosInstance.put(
+                `/produtos/${route.params.produtoId}`,
+                normalizeProdutoPayload({
+                    ...state.produto,
+                    servicosCalculo,
+                })
+            );
             showToast('sucesso', isEditMode.value ? 'Parâmetro editado com sucesso!' : 'Parâmetro criado com sucesso!');
-            router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex } });
+            router.push({
+                name: 'produto-servico-editar',
+                params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex },
+            });
         };
 
         if (isEditMode.value) {
@@ -174,11 +186,21 @@ const onSubmit = async (values) => {
                                 </div>
                             </div>
                             <div class="position-relative">
-                                <div v-if="state.isProcessing" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 10;">
+                                <div
+                                    v-if="state.isProcessing"
+                                    class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status"></div>
                                 </div>
 
-                                <Form v-if="state.formReady" @submit="onSubmit" :validation-schema="schema" :initial-values="state.parametro" v-slot="{ values }">
+                                <Form
+                                    v-if="state.formReady"
+                                    @submit="onSubmit"
+                                    :validation-schema="schema"
+                                    :initial-values="state.parametro"
+                                    v-slot="{ values }"
+                                >
                                     <div class="card-body my-4">
                                         <div class="row g-3 p-3">
                                             <div class="col-lg-6">
@@ -187,7 +209,13 @@ const onSubmit = async (values) => {
                                                     <div class="col-lg-9">
                                                         <Field name="codigo" as="select" class="form-select">
                                                             <option value="">Selecione</option>
-                                                            <option v-for="codigo in codigosParametro" :key="codigo" :value="codigo">{{ codigo }}</option>
+                                                            <option
+                                                                v-for="codigo in codigosParametro"
+                                                                :key="codigo"
+                                                                :value="codigo"
+                                                            >
+                                                                {{ codigo }}
+                                                            </option>
                                                         </Field>
                                                         <ErrorMessage name="codigo" class="text-danger d-block mt-1" />
                                                     </div>
@@ -197,10 +225,27 @@ const onSubmit = async (values) => {
                                                 <div class="row p-2">
                                                     <label class="col-form-label col-lg-3">Valor</label>
                                                     <div class="col-lg-9">
-                                                        <div :class="metadataParametro[values.codigo]?.unidade ? 'input-group' : ''">
-                                                            <Field name="valor" type="number" step="0.0001" class="form-control"
-                                                                :placeholder="metadataParametro[values.codigo]?.placeholder || 'Informe o valor'" />
-                                                            <span v-if="metadataParametro[values.codigo]?.unidade" class="input-group-text">
+                                                        <div
+                                                            :class="
+                                                                metadataParametro[values.codigo]?.unidade
+                                                                    ? 'input-group'
+                                                                    : ''
+                                                            "
+                                                        >
+                                                            <Field
+                                                                name="valor"
+                                                                type="number"
+                                                                step="0.0001"
+                                                                class="form-control"
+                                                                :placeholder="
+                                                                    metadataParametro[values.codigo]?.placeholder ||
+                                                                    'Informe o valor'
+                                                                "
+                                                            />
+                                                            <span
+                                                                v-if="metadataParametro[values.codigo]?.unidade"
+                                                                class="input-group-text"
+                                                            >
                                                                 {{ metadataParametro[values.codigo]?.unidade }}
                                                             </span>
                                                         </div>
@@ -215,7 +260,19 @@ const onSubmit = async (values) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: route.params.itemIndex } })">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="
+                                                router.push({
+                                                    name: 'produto-servico-editar',
+                                                    params: {
+                                                        produtoId: route.params.produtoId,
+                                                        itemIndex: route.params.itemIndex,
+                                                    },
+                                                })
+                                            "
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

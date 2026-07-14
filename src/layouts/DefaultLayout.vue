@@ -7,13 +7,15 @@ import Footer from '@/components/Footer.vue';
 import { RouterView } from 'vue-router';
 </script>
 <template>
-  <div class="app-wrapper"> <!--begin::Header-->    
-    <Navbar />
-    <Sidebar />
-    <!-- key por fullPath: força remontagem quando só os params mudam (evita telas "presas") -->
-    <RouterView :key="$route.fullPath" />
-    <ConfirmationModal />
-    <ToastManager />
-    <Footer></Footer>
-  </div> <!--end::App Wrapper-->
+    <div class="app-wrapper">
+        <!--begin::Header-->
+        <Navbar />
+        <Sidebar />
+        <!-- key por fullPath: força remontagem quando só os params mudam (evita telas "presas") -->
+        <RouterView :key="$route.fullPath" />
+        <ConfirmationModal />
+        <ToastManager />
+        <Footer></Footer>
+    </div>
+    <!--end::App Wrapper-->
 </template>

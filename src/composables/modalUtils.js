@@ -11,7 +11,7 @@ export const showModal = (modalTitle, modalMessage, action) => {
     const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
     modal.show();
 
-    return modal; 
+    return modal;
 };
 
 export { title, message, confirmAction };

@@ -2,5 +2,5 @@
 import Content from '@/components/Content.vue';
 </script>
 <template>
-  <Content />
+    <Content />
 </template>

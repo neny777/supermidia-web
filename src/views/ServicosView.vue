@@ -27,22 +27,22 @@ const fetchServicos = async () => {
         const response = await axiosInstance.get('/servicos');
         state.servicos = response.data;
     } catch (error) {
-        showToast("erro", "Erro ao carregar serviços.");
+        showToast('erro', 'Erro ao carregar serviços.');
     } finally {
         state.isProcessing = false;
     }
 };
 
 const deleteServico = async (id) => {
-    const modal = showModal("Excluir serviço", "Confirma a exclusão do serviço?", async () => {
+    const modal = showModal('Excluir serviço', 'Confirma a exclusão do serviço?', async () => {
         try {
             state.isProcessing = true;
             await axiosInstance.delete(`/servicos/${id}`);
             state.servicos = state.servicos.filter((servico) => servico.id !== id);
             redrawTable('list-servicos');
-            showToast("sucesso", "Serviço excluído com sucesso.");
+            showToast('sucesso', 'Serviço excluído com sucesso.');
         } catch (error) {
-            showToast("erro", "Não foi possível excluir o serviço.");
+            showToast('erro', 'Não foi possível excluir o serviço.');
         } finally {
             state.isProcessing = false;
             modal.hide();
@@ -83,8 +83,11 @@ onMounted(async () => {
                                 <div class="card-title">
                                     <h5>Serviços</h5>
                                 </div>
-                                <button type="button" class="btn btn-primary button-medium float-end"
-                                    @click="router.push('/servico')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium float-end"
+                                    @click="router.push('/servico')"
+                                >
                                     <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
                                 </button>
                             </div>
@@ -93,8 +96,11 @@ onMounted(async () => {
                                     <div class="col-md-12">
                                         <div class="table-responsive p-2">
                                             <div v-if="state.isProcessing" class="text-center">
-                                                <DataTables id="list-servicos" :options="options"
-                                                    class="display table table-bordered table-striped">
+                                                <DataTables
+                                                    id="list-servicos"
+                                                    :options="options"
+                                                    class="display table table-bordered table-striped"
+                                                >
                                                     <thead>
                                                         <tr>
                                                             <th>Processando ...</th>
@@ -112,8 +118,11 @@ onMounted(async () => {
                                                 </DataTables>
                                             </div>
                                             <div v-else>
-                                                <DataTables id="list-servicos" :options="options"
-                                                    class="display table table-bordered table-striped">
+                                                <DataTables
+                                                    id="list-servicos"
+                                                    :options="options"
+                                                    class="display table table-bordered table-striped"
+                                                >
                                                     <thead>
                                                         <tr>
                                                             <th class="d-none">id</th>
@@ -130,12 +139,21 @@ onMounted(async () => {
                                                             <td>{{ servico.unidade }}</td>
                                                             <td>R$ {{ Number(servico.preco).toFixed(2) }}</td>
                                                             <td class="text-center">
-                                                                <button class="btn btn-primary btn-sm mx-2"
-                                                                    @click="router.push({ name: 'servico', params: { servicoId: servico.id } })">
+                                                                <button
+                                                                    class="btn btn-primary btn-sm mx-2"
+                                                                    @click="
+                                                                        router.push({
+                                                                            name: 'servico',
+                                                                            params: { servicoId: servico.id },
+                                                                        })
+                                                                    "
+                                                                >
                                                                     <i class="bi bi-pen"></i>
                                                                 </button>
-                                                                <button class="btn btn-danger btn-sm mx-2"
-                                                                    @click="deleteServico(servico.id)">
+                                                                <button
+                                                                    class="btn btn-danger btn-sm mx-2"
+                                                                    @click="deleteServico(servico.id)"
+                                                                >
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </td>
@@ -148,8 +166,11 @@ onMounted(async () => {
                                 </div>
                             </div>
                             <div class="card-footer text-center">
-                                <button type="button" class="btn btn-primary button-medium m-2"
-                                    @click="router.push('/home')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium m-2"
+                                    @click="router.push('/home')"
+                                >
                                     <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                 </button>
                             </div>

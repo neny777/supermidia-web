@@ -24,9 +24,10 @@ const grupoIndex = route.params.grupoIndex !== undefined ? Number(route.params.g
 const opcaoIndex = route.params.opcaoIndex !== undefined ? Number(route.params.opcaoIndex) : null;
 const isOpcaoContext = grupoIndex !== null;
 
-const getLista = (produto) => (isOpcaoContext
-    ? produto?.gruposOpcoes?.[grupoIndex]?.opcoes?.[opcaoIndex]?.servicosCalculo
-    : produto?.servicosCalculo) || [];
+const getLista = (produto) =>
+    (isOpcaoContext
+        ? produto?.gruposOpcoes?.[grupoIndex]?.opcoes?.[opcaoIndex]?.servicosCalculo
+        : produto?.servicosCalculo) || [];
 
 const voltar = () => {
     if (isOpcaoContext) {
@@ -62,22 +63,23 @@ const schema = computed(() => buildItemSchema('servico', state.calculos));
 const getErrorMessage = (error, fallback) => error?.response?.data?.message || fallback;
 const parametroLabel = (codigo) => codigo.replaceAll('_', ' ');
 const parametroMeta = (codigo) => metadataParametro[codigo] || { unidade: '', placeholder: '' };
-const normalizeParametrosForSave = (values) => syncRequiredParametros(values.calculoId, state.calculos, values.parametros)
-    .map((parametro) => ({
+const normalizeParametrosForSave = (values) =>
+    syncRequiredParametros(values.calculoId, state.calculos, values.parametros).map((parametro) => ({
         codigo: parametro.codigo,
         valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
         vinculos: parametro.vinculos || [],
     }));
 
-const snapshotItem = (item) => JSON.stringify({
-    servicoId: item.servicoId || '',
-    calculoId: item.calculoId || '',
-    parametros: (item.parametros || []).map((parametro) => ({
-        codigo: parametro.codigo,
-        valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
-        vinculos: parametro.vinculos || [],
-    })),
-});
+const snapshotItem = (item) =>
+    JSON.stringify({
+        servicoId: item.servicoId || '',
+        calculoId: item.calculoId || '',
+        parametros: (item.parametros || []).map((parametro) => ({
+            codigo: parametro.codigo,
+            valor: parametro.valor === '' || parametro.valor == null ? '' : Number(parametro.valor),
+            vinculos: parametro.vinculos || [],
+        })),
+    });
 
 const loadForm = async () => {
     try {
@@ -122,7 +124,7 @@ watch(
     () => {
         loadForm();
     },
-    { immediate: true },
+    { immediate: true }
 );
 
 const onSubmit = async (values) => {
@@ -158,25 +160,34 @@ const onSubmit = async (values) => {
                 lista.push(novoItem);
             }
 
-            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`,
-                normalizeProdutoPayload(produtoAtualizado));
+            const response = await axiosInstance.put(
+                `/produtos/${route.params.produtoId}`,
+                normalizeProdutoPayload(produtoAtualizado)
+            );
 
-            showToast('sucesso', isEditMode.value ? 'Serviço do produto editado com sucesso!' : 'Serviço do produto criado com sucesso!');
+            showToast(
+                'sucesso',
+                isEditMode.value ? 'Serviço do produto editado com sucesso!' : 'Serviço do produto criado com sucesso!'
+            );
             // Salvar conclui a tarefa: volta para a página-pai (produto ou grupo de opções).
             voltar();
         };
 
         if (isEditMode.value) {
-            const modal = showModal('Editar serviço do produto', 'Confirma a edição deste serviço do produto?', async () => {
-                try {
-                    await salvar();
-                } catch (error) {
-                    showToast('erro', getErrorMessage(error, 'Erro ao salvar serviço do produto.'));
-                } finally {
-                    state.isProcessing = false;
-                    modal.hide();
+            const modal = showModal(
+                'Editar serviço do produto',
+                'Confirma a edição deste serviço do produto?',
+                async () => {
+                    try {
+                        await salvar();
+                    } catch (error) {
+                        showToast('erro', getErrorMessage(error, 'Erro ao salvar serviço do produto.'));
+                    } finally {
+                        state.isProcessing = false;
+                        modal.hide();
+                    }
                 }
-            });
+            );
             return;
         }
 
@@ -221,11 +232,21 @@ const onSubmit = async (values) => {
                             </div>
 
                             <div class="position-relative">
-                                <div v-if="state.isProcessing" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 10;">
+                                <div
+                                    v-if="state.isProcessing"
+                                    class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status"></div>
                                 </div>
 
-                                <Form v-if="state.formReady" @submit="onSubmit" :validation-schema="schema" :initial-values="state.item" v-slot="{ values, setFieldValue }">
+                                <Form
+                                    v-if="state.formReady"
+                                    @submit="onSubmit"
+                                    :validation-schema="schema"
+                                    :initial-values="state.item"
+                                    v-slot="{ values, setFieldValue }"
+                                >
                                     <div class="card-body my-4">
                                         <div class="row g-3 p-3">
                                             <div class="col-lg-6">
@@ -234,11 +255,18 @@ const onSubmit = async (values) => {
                                                     <div class="col-lg-9">
                                                         <Field name="servicoId" as="select" class="form-select">
                                                             <option value="">Selecione</option>
-                                                            <option v-for="servico in state.servicos" :key="servico.id" :value="servico.id">
+                                                            <option
+                                                                v-for="servico in state.servicos"
+                                                                :key="servico.id"
+                                                                :value="servico.id"
+                                                            >
                                                                 {{ servico.nome }}
                                                             </option>
                                                         </Field>
-                                                        <ErrorMessage name="servicoId" class="text-danger d-block mt-1" />
+                                                        <ErrorMessage
+                                                            name="servicoId"
+                                                            class="text-danger d-block mt-1"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -251,18 +279,34 @@ const onSubmit = async (values) => {
                                                             <select
                                                                 v-bind="field"
                                                                 class="form-select"
-                                                                @change="(event) => {
-                                                                    field.onChange(event);
-                                                                    setFieldValue('parametros', syncRequiredParametros(event.target.value, state.calculos, values.parametros));
-                                                                }"
+                                                                @change="
+                                                                    (event) => {
+                                                                        field.onChange(event);
+                                                                        setFieldValue(
+                                                                            'parametros',
+                                                                            syncRequiredParametros(
+                                                                                event.target.value,
+                                                                                state.calculos,
+                                                                                values.parametros
+                                                                            )
+                                                                        );
+                                                                    }
+                                                                "
                                                             >
                                                                 <option value="">Selecione</option>
-                                                                <option v-for="calculo in state.calculos" :key="calculo.id" :value="calculo.id">
+                                                                <option
+                                                                    v-for="calculo in state.calculos"
+                                                                    :key="calculo.id"
+                                                                    :value="calculo.id"
+                                                                >
                                                                     {{ calculo.nome }}
                                                                 </option>
                                                             </select>
                                                         </Field>
-                                                        <ErrorMessage name="calculoId" class="text-danger d-block mt-1" />
+                                                        <ErrorMessage
+                                                            name="calculoId"
+                                                            class="text-danger d-block mt-1"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -272,53 +316,127 @@ const onSubmit = async (values) => {
                                                     <div class="col-12">
                                                         <h6 class="mb-3">Parâmetros</h6>
                                                         <div v-if="!values.calculoId" class="text-muted">
-                                                            Selecione o cálculo para informar os parâmetros obrigatórios.
+                                                            Selecione o cálculo para informar os parâmetros
+                                                            obrigatórios.
                                                         </div>
                                                         <div v-else-if="!values.parametros?.length" class="text-muted">
                                                             Este cálculo não exige parâmetros.
                                                         </div>
                                                         <div v-else class="row g-3">
-                                                            <div v-for="(parametro, parametroIndex) in values.parametros" :key="parametro.codigo" class="col-lg-6">
+                                                            <div
+                                                                v-for="(parametro, parametroIndex) in values.parametros"
+                                                                :key="parametro.codigo"
+                                                                class="col-lg-6"
+                                                            >
                                                                 <div class="row p-2">
-                                                                    <label class="col-form-label col-lg-4">{{ parametroLabel(parametro.codigo) }}</label>
+                                                                    <label class="col-form-label col-lg-4">{{
+                                                                        parametroLabel(parametro.codigo)
+                                                                    }}</label>
                                                                     <div class="col-lg-8">
                                                                         <div class="input-group">
-                                                                            <Field :name="`parametros[${parametroIndex}].valor`" type="number" step="0.01" class="form-control"
-                                                                                :placeholder="parametroMeta(parametro.codigo).placeholder" />
-                                                                            <span v-if="parametroMeta(parametro.codigo).unidade" class="input-group-text">
-                                                                                {{ parametroMeta(parametro.codigo).unidade }}
+                                                                            <Field
+                                                                                :name="`parametros[${parametroIndex}].valor`"
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                class="form-control"
+                                                                                :placeholder="
+                                                                                    parametroMeta(parametro.codigo)
+                                                                                        .placeholder
+                                                                                "
+                                                                            />
+                                                                            <span
+                                                                                v-if="
+                                                                                    parametroMeta(parametro.codigo)
+                                                                                        .unidade
+                                                                                "
+                                                                                class="input-group-text"
+                                                                            >
+                                                                                {{
+                                                                                    parametroMeta(parametro.codigo)
+                                                                                        .unidade
+                                                                                }}
                                                                             </span>
                                                                         </div>
-                                                                        <Field :name="`parametros[${parametroIndex}].codigo`" type="hidden" :value="parametro.codigo" />
-                                                                        <ErrorMessage :name="`parametros[${parametroIndex}].valor`" class="text-danger d-block mt-1" />
+                                                                        <Field
+                                                                            :name="`parametros[${parametroIndex}].codigo`"
+                                                                            type="hidden"
+                                                                            :value="parametro.codigo"
+                                                                        />
+                                                                        <ErrorMessage
+                                                                            :name="`parametros[${parametroIndex}].valor`"
+                                                                            class="text-danger d-block mt-1"
+                                                                        />
 
                                                                         <!-- Vínculos: soma medidas do orçamento ao parâmetro -->
-                                                                        <div v-for="(vinculo, vinculoIndex) in (parametro.vinculos || [])" :key="vinculoIndex"
-                                                                            class="input-group input-group-sm mt-1">
-                                                                            <span class="input-group-text">+ medida</span>
-                                                                            <Field :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].medidaNome`"
-                                                                                as="select" class="form-select">
+                                                                        <div
+                                                                            v-for="(
+                                                                                vinculo, vinculoIndex
+                                                                            ) in parametro.vinculos || []"
+                                                                            :key="vinculoIndex"
+                                                                            class="input-group input-group-sm mt-1"
+                                                                        >
+                                                                            <span class="input-group-text"
+                                                                                >+ medida</span
+                                                                            >
+                                                                            <Field
+                                                                                :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].medidaNome`"
+                                                                                as="select"
+                                                                                class="form-select"
+                                                                            >
                                                                                 <option value="">Selecione</option>
-                                                                                <option v-for="medida in state.produto?.medidas || []" :key="medida.nome"
-                                                                                    :value="medida.nome">{{ medida.nome }}</option>
+                                                                                <option
+                                                                                    v-for="medida in state.produto
+                                                                                        ?.medidas || []"
+                                                                                    :key="medida.nome"
+                                                                                    :value="medida.nome"
+                                                                                >
+                                                                                    {{ medida.nome }}
+                                                                                </option>
                                                                             </Field>
                                                                             <span class="input-group-text">×</span>
-                                                                            <Field :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].multiplicador`"
-                                                                                type="number" step="0.0001" class="form-control" />
-                                                                            <button type="button" class="btn btn-outline-danger"
-                                                                                @click="removerVinculo(values, setFieldValue, parametroIndex, vinculoIndex)">
+                                                                            <Field
+                                                                                :name="`parametros[${parametroIndex}].vinculos[${vinculoIndex}].multiplicador`"
+                                                                                type="number"
+                                                                                step="0.0001"
+                                                                                class="form-control"
+                                                                            />
+                                                                            <button
+                                                                                type="button"
+                                                                                class="btn btn-outline-danger"
+                                                                                @click="
+                                                                                    removerVinculo(
+                                                                                        values,
+                                                                                        setFieldValue,
+                                                                                        parametroIndex,
+                                                                                        vinculoIndex
+                                                                                    )
+                                                                                "
+                                                                            >
                                                                                 <i class="bi bi-x"></i>
                                                                             </button>
                                                                         </div>
-                                                                        <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
-                                                                            @click="adicionarVinculo(values, setFieldValue, parametroIndex)">
-                                                                            <i class="bi bi-link-45deg"></i> Vincular medida
+                                                                        <button
+                                                                            type="button"
+                                                                            class="btn btn-outline-secondary btn-sm mt-1"
+                                                                            @click="
+                                                                                adicionarVinculo(
+                                                                                    values,
+                                                                                    setFieldValue,
+                                                                                    parametroIndex
+                                                                                )
+                                                                            "
+                                                                        >
+                                                                            <i class="bi bi-link-45deg"></i> Vincular
+                                                                            medida
                                                                         </button>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <ErrorMessage name="parametros" class="text-danger d-block mt-2" />
+                                                        <ErrorMessage
+                                                            name="parametros"
+                                                            class="text-danger d-block mt-2"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -329,7 +447,11 @@ const onSubmit = async (values) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="voltar()">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="voltar()"
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

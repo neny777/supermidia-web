@@ -64,7 +64,8 @@ const normalizePayload = (values) => ({
     permiteOverrideResultado: Boolean(values.permiteOverrideResultado),
 });
 
-const hasChanges = (newValues) => JSON.stringify(normalizePayload(newValues)) !== JSON.stringify(originalCalculoSnapshot.value);
+const hasChanges = (newValues) =>
+    JSON.stringify(normalizePayload(newValues)) !== JSON.stringify(originalCalculoSnapshot.value);
 
 onMounted(async () => {
     if (!isEditMode.value) {
@@ -85,7 +86,7 @@ onMounted(async () => {
         originalCalculoSnapshot.value = normalizePayload(state.calculo);
         state.formReady = true;
     } catch (error) {
-        showToast("erro", "Erro ao carregar cálculo.");
+        showToast('erro', 'Erro ao carregar cálculo.');
         router.push('/calculos');
     } finally {
         state.isProcessing = false;
@@ -98,19 +99,19 @@ const onSubmit = async (values, { resetForm }) => {
     try {
         if (isEditMode.value) {
             if (!hasChanges(payload)) {
-                showToast("info", "Não houve alterações no cálculo.");
+                showToast('info', 'Não houve alterações no cálculo.');
                 return;
             }
 
-            const modal = showModal("Editar cálculo", "Confirma a edição do cálculo?", async () => {
+            const modal = showModal('Editar cálculo', 'Confirma a edição do cálculo?', async () => {
                 try {
                     state.isProcessing = true;
                     await axiosInstance.put(`/calculos/${route.params.calculoId}`, payload);
-                    showToast("sucesso", "Cálculo editado com sucesso!");
+                    showToast('sucesso', 'Cálculo editado com sucesso!');
                     router.push('/calculos');
                 } catch (error) {
                     if (!error?.response) {
-                        showToast("erro", "Erro ao salvar cálculo.");
+                        showToast('erro', 'Erro ao salvar cálculo.');
                     }
                 } finally {
                     state.isProcessing = false;
@@ -122,12 +123,12 @@ const onSubmit = async (values, { resetForm }) => {
 
         state.isProcessing = true;
         await axiosInstance.post('/calculos', payload);
-        showToast("sucesso", "Cálculo criado com sucesso!");
+        showToast('sucesso', 'Cálculo criado com sucesso!');
         resetForm();
         router.push('/calculos');
     } catch (error) {
         if (!error?.response) {
-            showToast("erro", "Erro ao salvar cálculo.");
+            showToast('erro', 'Erro ao salvar cálculo.');
         }
     } finally {
         state.isProcessing = false;
@@ -167,14 +168,21 @@ const onSubmit = async (values, { resetForm }) => {
                             </div>
 
                             <div class="position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
                                     </div>
                                 </div>
-                                <Form v-if="state.formReady" @submit="onSubmit" :validation-schema="schema" :initial-values="state.calculo">
+                                <Form
+                                    v-if="state.formReady"
+                                    @submit="onSubmit"
+                                    :validation-schema="schema"
+                                    :initial-values="state.calculo"
+                                >
                                     <div class="card-body my-4">
                                         <div class="row g-3 p-3">
                                             <div class="col-lg-6">
@@ -189,11 +197,22 @@ const onSubmit = async (values, { resetForm }) => {
 
                                             <div class="col-lg-6">
                                                 <div class="row p-2">
-                                                    <label for="tipoCalculo" class="col-form-label col-lg-3">Tipo</label>
+                                                    <label for="tipoCalculo" class="col-form-label col-lg-3"
+                                                        >Tipo</label
+                                                    >
                                                     <div class="col-lg-9">
-                                                        <Field as="select" id="tipoCalculo" name="tipoCalculo" class="form-select">
+                                                        <Field
+                                                            as="select"
+                                                            id="tipoCalculo"
+                                                            name="tipoCalculo"
+                                                            class="form-select"
+                                                        >
                                                             <option value="">Selecione</option>
-                                                            <option v-for="tipo in tiposCalculo" :key="tipo" :value="tipo">
+                                                            <option
+                                                                v-for="tipo in tiposCalculo"
+                                                                :key="tipo"
+                                                                :value="tipo"
+                                                            >
                                                                 {{ tipo }}
                                                             </option>
                                                         </Field>
@@ -204,11 +223,22 @@ const onSubmit = async (values, { resetForm }) => {
 
                                             <div class="col-lg-6">
                                                 <div class="row p-2">
-                                                    <label for="baseOperacional" class="col-form-label col-lg-3">Base</label>
+                                                    <label for="baseOperacional" class="col-form-label col-lg-3"
+                                                        >Base</label
+                                                    >
                                                     <div class="col-lg-9">
-                                                        <Field as="select" id="baseOperacional" name="baseOperacional" class="form-select">
+                                                        <Field
+                                                            as="select"
+                                                            id="baseOperacional"
+                                                            name="baseOperacional"
+                                                            class="form-select"
+                                                        >
                                                             <option value="">Selecione</option>
-                                                            <option v-for="base in basesOperacionais" :key="base" :value="base">
+                                                            <option
+                                                                v-for="base in basesOperacionais"
+                                                                :key="base"
+                                                                :value="base"
+                                                            >
                                                                 {{ base }}
                                                             </option>
                                                         </Field>
@@ -221,27 +251,42 @@ const onSubmit = async (values, { resetForm }) => {
                                                 <div class="row p-2">
                                                     <div class="col-lg-6">
                                                         <div class="form-check mt-2">
-                                                            <Field id="permiteOverrideParametro" name="permiteOverrideParametro"
-                                                                type="checkbox" :value="true" :unchecked-value="false"
-                                                                class="form-check-input" />
-                                                            <label class="form-check-label ms-2" for="permiteOverrideParametro">
+                                                            <Field
+                                                                id="permiteOverrideParametro"
+                                                                name="permiteOverrideParametro"
+                                                                type="checkbox"
+                                                                :value="true"
+                                                                :unchecked-value="false"
+                                                                class="form-check-input"
+                                                            />
+                                                            <label
+                                                                class="form-check-label ms-2"
+                                                                for="permiteOverrideParametro"
+                                                            >
                                                                 Override parâmetro
                                                             </label>
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-6">
                                                         <div class="form-check mt-2">
-                                                            <Field id="permiteOverrideResultado" name="permiteOverrideResultado"
-                                                                type="checkbox" :value="true" :unchecked-value="false"
-                                                                class="form-check-input" />
-                                                            <label class="form-check-label ms-2" for="permiteOverrideResultado">
+                                                            <Field
+                                                                id="permiteOverrideResultado"
+                                                                name="permiteOverrideResultado"
+                                                                type="checkbox"
+                                                                :value="true"
+                                                                :unchecked-value="false"
+                                                                class="form-check-input"
+                                                            />
+                                                            <label
+                                                                class="form-check-label ms-2"
+                                                                for="permiteOverrideResultado"
+                                                            >
                                                                 Override resultado
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </div>
 
@@ -249,8 +294,11 @@ const onSubmit = async (values, { resetForm }) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="router.push('/calculos')">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="router.push('/calculos')"
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

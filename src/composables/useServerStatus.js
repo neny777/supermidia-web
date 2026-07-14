@@ -2,13 +2,13 @@ import { onMounted } from 'vue';
 import { useServerStatusStore } from '@/stores/serverStatusStore';
 
 export function useServerStatus() {
-  const serverStatusStore = useServerStatusStore();
+    const serverStatusStore = useServerStatusStore();
 
-  onMounted(() => {
-    serverStatusStore.checkServerStatus();
-  });
+    onMounted(() => {
+        serverStatusStore.checkServerStatus();
+    });
 
-  return {
-    isOffline: serverStatusStore.isOffline,
-  };
+    return {
+        isOffline: serverStatusStore.isOffline,
+    };
 }

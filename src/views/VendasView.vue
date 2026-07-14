@@ -28,10 +28,12 @@ const nomeCliente = (id) => state.clientesById[id] || '-';
 const vendasFiltradas = computed(() => {
     const termo = state.filtro.trim().toLowerCase();
     if (!termo) return state.vendas;
-    return state.vendas.filter((venda) =>
-        String(venda.numero || '').includes(termo)
-        || nomeCliente(venda.clienteId).toLowerCase().includes(termo)
-        || (venda.referencia || '').toLowerCase().includes(termo));
+    return state.vendas.filter(
+        (venda) =>
+            String(venda.numero || '').includes(termo) ||
+            nomeCliente(venda.clienteId).toLowerCase().includes(termo) ||
+            (venda.referencia || '').toLowerCase().includes(termo)
+    );
 });
 
 const fetchVendas = async () => {
@@ -83,25 +85,36 @@ watch(() => props.status, fetchVendas);
                                 <div class="card-title">
                                     <h5>{{ titulo }}</h5>
                                 </div>
-                                <button type="button" class="btn btn-primary button-medium float-end"
-                                    @click="router.push({ name: 'venda', query: isOrcamento ? {} : { tipo: 'os' } })">
-                                    <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;{{ isOrcamento ? 'Novo Orçamento' : 'Nova Ordem de Serviço' }}
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium float-end"
+                                    @click="router.push({ name: 'venda', query: isOrcamento ? {} : { tipo: 'os' } })"
+                                >
+                                    <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;{{
+                                        isOrcamento ? 'Novo Orçamento' : 'Nova Ordem de Serviço'
+                                    }}
                                 </button>
                             </div>
                             <div class="card-body position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
                                     </div>
                                 </div>
 
-                                <div v-if="state.vendas.length" class="p-2 pb-0" style="max-width: 420px;">
+                                <div v-if="state.vendas.length" class="p-2 pb-0" style="max-width: 420px">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input v-model="state.filtro" type="text" class="form-control"
-                                            placeholder="Buscar por nº, cliente ou referência..." />
+                                        <input
+                                            v-model="state.filtro"
+                                            type="text"
+                                            class="form-control"
+                                            placeholder="Buscar por nº, cliente ou referência..."
+                                        />
                                     </div>
                                 </div>
 
@@ -115,13 +128,13 @@ watch(() => props.status, fetchVendas);
                                     <table class="table table-bordered table-striped mb-0">
                                         <thead>
                                             <tr>
-                                                <th style="width: 70px;">Nº</th>
+                                                <th style="width: 70px">Nº</th>
                                                 <th>Data</th>
                                                 <th>Cliente</th>
                                                 <th>Referência</th>
                                                 <th class="text-end">Total</th>
                                                 <th v-if="isOrcamento" class="text-center">Situação</th>
-                                                <th class="text-center" style="width: 120px;">Ações</th>
+                                                <th class="text-center" style="width: 120px">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -132,12 +145,21 @@ watch(() => props.status, fetchVendas);
                                                 <td>{{ venda.referencia || '—' }}</td>
                                                 <td class="text-end">{{ formatBRL(venda.total) }}</td>
                                                 <td v-if="isOrcamento" class="text-center">
-                                                    <span v-if="venda.vencido" class="badge text-bg-warning">Vencido</span>
+                                                    <span v-if="venda.vencido" class="badge text-bg-warning"
+                                                        >Vencido</span
+                                                    >
                                                     <span v-else class="badge text-bg-success">Vigente</span>
                                                 </td>
                                                 <td class="text-center">
-                                                    <button class="btn btn-primary btn-sm"
-                                                        @click="router.push({ name: 'venda', params: { vendaId: venda.id } })">
+                                                    <button
+                                                        class="btn btn-primary btn-sm"
+                                                        @click="
+                                                            router.push({
+                                                                name: 'venda',
+                                                                params: { vendaId: venda.id },
+                                                            })
+                                                        "
+                                                    >
                                                         <i class="bi bi-box-arrow-up-right"></i>&nbsp; Abrir
                                                     </button>
                                                 </td>
@@ -147,8 +169,11 @@ watch(() => props.status, fetchVendas);
                                 </div>
                             </div>
                             <div class="card-footer text-center">
-                                <button type="button" class="btn btn-primary button-medium m-2"
-                                    @click="router.push('/home')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium m-2"
+                                    @click="router.push('/home')"
+                                >
                                     <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                 </button>
                             </div>

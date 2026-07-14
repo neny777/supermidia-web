@@ -44,24 +44,28 @@ const hasChanges = (values) =>
     JSON.stringify(buildSnapshot({ ...state.produto, nome: values.nome })) !== JSON.stringify(originalSnapshot.value);
 
 const removerGrupo = (index) => {
-    const modal = showModal('Excluir grupo de opções', 'Confirma a exclusão deste grupo de opções do produto?', async () => {
-        try {
-            state.isProcessing = true;
-            const payload = normalizeProdutoPayload({
-                ...state.produto,
-                gruposOpcoes: state.produto.gruposOpcoes.filter((_, itemIndex) => itemIndex !== index),
-            });
-            const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`, payload);
-            state.produto = response.data;
-            originalSnapshot.value = buildSnapshot(response.data);
-            showToast('sucesso', 'Grupo de opções excluído com sucesso!');
-        } catch (error) {
-            showToast('erro', getErrorMessage(error, 'Erro ao excluir o grupo de opções.'));
-        } finally {
-            state.isProcessing = false;
-            modal.hide();
+    const modal = showModal(
+        'Excluir grupo de opções',
+        'Confirma a exclusão deste grupo de opções do produto?',
+        async () => {
+            try {
+                state.isProcessing = true;
+                const payload = normalizeProdutoPayload({
+                    ...state.produto,
+                    gruposOpcoes: state.produto.gruposOpcoes.filter((_, itemIndex) => itemIndex !== index),
+                });
+                const response = await axiosInstance.put(`/produtos/${route.params.produtoId}`, payload);
+                state.produto = response.data;
+                originalSnapshot.value = buildSnapshot(response.data);
+                showToast('sucesso', 'Grupo de opções excluído com sucesso!');
+            } catch (error) {
+                showToast('erro', getErrorMessage(error, 'Erro ao excluir o grupo de opções.'));
+            } finally {
+                state.isProcessing = false;
+                modal.hide();
+            }
         }
-    });
+    );
 };
 
 const adicionarMedida = () => {
@@ -171,10 +175,13 @@ const onSubmit = async (values) => {
         }
 
         state.isProcessing = true;
-        const response = await axiosInstance.post('/produtos', normalizeProdutoPayload({
-            ...createProduto(),
-            nome: values.nome,
-        }));
+        const response = await axiosInstance.post(
+            '/produtos',
+            normalizeProdutoPayload({
+                ...createProduto(),
+                nome: values.nome,
+            })
+        );
         showToast('sucesso', 'Produto criado com sucesso!');
         router.push({ name: 'produto', params: { produtoId: response.data.id } });
     } catch (error) {
@@ -220,7 +227,7 @@ const onSubmit = async (values) => {
                                 <div
                                     v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;"
+                                    style="z-index: 10"
                                 >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
@@ -251,10 +258,17 @@ const onSubmit = async (values) => {
                                                 <div class="row p-2 align-items-center">
                                                     <div class="col-lg-6">
                                                         <h6 class="mb-0">Medidas do Orçamento</h6>
-                                                        <small class="text-muted">Altura, largura e quantidade são padrão; declare aqui as extras (ex.: BORDA). Salve com o botão Salvar.</small>
+                                                        <small class="text-muted"
+                                                            >Altura, largura e quantidade são padrão; declare aqui as
+                                                            extras (ex.: BORDA). Salve com o botão Salvar.</small
+                                                        >
                                                     </div>
                                                     <div class="col-lg-6 text-lg-end mt-2 mt-lg-0">
-                                                        <button type="button" class="btn btn-primary button-medium" @click="adicionarMedida">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-primary button-medium"
+                                                            @click="adicionarMedida"
+                                                        >
                                                             <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Nova Medida
                                                         </button>
                                                     </div>
@@ -269,24 +283,74 @@ const onSubmit = async (values) => {
                                                                 <thead>
                                                                     <tr>
                                                                         <th>Nome</th>
-                                                                        <th style="width: 12%;">Unidade</th>
-                                                                        <th class="text-center" style="width: 12%;">Obrigatória</th>
-                                                                        <th style="width: 14%;">Padrão</th>
-                                                                        <th style="width: 14%;">Mínimo</th>
-                                                                        <th style="width: 14%;">Máximo</th>
-                                                                        <th class="text-center" style="width: 8%;"></th>
+                                                                        <th style="width: 12%">Unidade</th>
+                                                                        <th class="text-center" style="width: 12%">
+                                                                            Obrigatória
+                                                                        </th>
+                                                                        <th style="width: 14%">Padrão</th>
+                                                                        <th style="width: 14%">Mínimo</th>
+                                                                        <th style="width: 14%">Máximo</th>
+                                                                        <th class="text-center" style="width: 8%"></th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <tr v-for="(medida, index) in state.produto.medidas" :key="index">
-                                                                        <td><input v-model="medida.nome" type="text" class="form-control" placeholder="Ex.: BORDA" /></td>
-                                                                        <td><input v-model="medida.unidade" type="text" class="form-control" placeholder="cm" /></td>
-                                                                        <td class="text-center"><input v-model="medida.obrigatoria" type="checkbox" class="form-check-input" /></td>
-                                                                        <td><input v-model="medida.valorPadrao" type="number" step="0.01" class="form-control" /></td>
-                                                                        <td><input v-model="medida.minimo" type="number" step="0.01" class="form-control" /></td>
-                                                                        <td><input v-model="medida.maximo" type="number" step="0.01" class="form-control" /></td>
+                                                                    <tr
+                                                                        v-for="(medida, index) in state.produto.medidas"
+                                                                        :key="index"
+                                                                    >
+                                                                        <td>
+                                                                            <input
+                                                                                v-model="medida.nome"
+                                                                                type="text"
+                                                                                class="form-control"
+                                                                                placeholder="Ex.: BORDA"
+                                                                            />
+                                                                        </td>
+                                                                        <td>
+                                                                            <input
+                                                                                v-model="medida.unidade"
+                                                                                type="text"
+                                                                                class="form-control"
+                                                                                placeholder="cm"
+                                                                            />
+                                                                        </td>
                                                                         <td class="text-center">
-                                                                            <button type="button" class="btn btn-danger btn-sm" @click="removerMedida(index)">
+                                                                            <input
+                                                                                v-model="medida.obrigatoria"
+                                                                                type="checkbox"
+                                                                                class="form-check-input"
+                                                                            />
+                                                                        </td>
+                                                                        <td>
+                                                                            <input
+                                                                                v-model="medida.valorPadrao"
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                class="form-control"
+                                                                            />
+                                                                        </td>
+                                                                        <td>
+                                                                            <input
+                                                                                v-model="medida.minimo"
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                class="form-control"
+                                                                            />
+                                                                        </td>
+                                                                        <td>
+                                                                            <input
+                                                                                v-model="medida.maximo"
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                class="form-control"
+                                                                            />
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            <button
+                                                                                type="button"
+                                                                                class="btn btn-danger btn-sm"
+                                                                                @click="removerMedida(index)"
+                                                                            >
                                                                                 <i class="bi bi-trash"></i>
                                                                             </button>
                                                                         </td>
@@ -307,7 +371,12 @@ const onSubmit = async (values) => {
                                                         <button
                                                             type="button"
                                                             class="btn btn-primary button-medium"
-                                                            @click="router.push({ name: 'produto-materia', params: { produtoId: route.params.produtoId } })"
+                                                            @click="
+                                                                router.push({
+                                                                    name: 'produto-materia',
+                                                                    params: { produtoId: route.params.produtoId },
+                                                                })
+                                                            "
                                                         >
                                                             <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
                                                         </button>
@@ -315,27 +384,65 @@ const onSubmit = async (values) => {
                                                 </div>
                                                 <div class="row p-2">
                                                     <div class="col-12">
-                                                        <div v-if="!state.produto.materiasCalculo?.length" class="text-muted">
+                                                        <div
+                                                            v-if="!state.produto.materiasCalculo?.length"
+                                                            class="text-muted"
+                                                        >
                                                             Nenhuma matéria vinculada.
                                                         </div>
                                                         <div v-else class="table-responsive">
-                                                            <table class="table table-bordered table-striped mb-0" style="table-layout: fixed;">
+                                                            <table
+                                                                class="table table-bordered table-striped mb-0"
+                                                                style="table-layout: fixed"
+                                                            >
                                                                 <thead>
                                                                     <tr>
-                                                                        <th style="width: 42.5%;">Matéria</th>
-                                                                        <th style="width: 42.5%;">Cálculo</th>
-                                                                        <th class="text-center" style="width: 15%;">Ações</th>
+                                                                        <th style="width: 42.5%">Matéria</th>
+                                                                        <th style="width: 42.5%">Cálculo</th>
+                                                                        <th class="text-center" style="width: 15%">
+                                                                            Ações
+                                                                        </th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <tr v-for="(item, index) in state.produto.materiasCalculo" :key="index">
-                                                                        <td>{{ item.grupoSlot ? 'SLOT: ' + item.grupoSlot : getNomeMateria(state.materiasCalculoApoio || [], item.materiaId) }}</td>
-                                                                        <td>{{ getNomeCalculo(state.calculosApoio || [], item.calculoId) }}</td>
+                                                                    <tr
+                                                                        v-for="(item, index) in state.produto
+                                                                            .materiasCalculo"
+                                                                        :key="index"
+                                                                    >
+                                                                        <td>
+                                                                            {{
+                                                                                item.grupoSlot
+                                                                                    ? 'SLOT: ' + item.grupoSlot
+                                                                                    : getNomeMateria(
+                                                                                          state.materiasCalculoApoio ||
+                                                                                              [],
+                                                                                          item.materiaId
+                                                                                      )
+                                                                            }}
+                                                                        </td>
+                                                                        <td>
+                                                                            {{
+                                                                                getNomeCalculo(
+                                                                                    state.calculosApoio || [],
+                                                                                    item.calculoId
+                                                                                )
+                                                                            }}
+                                                                        </td>
                                                                         <td class="text-center">
                                                                             <button
                                                                                 type="button"
                                                                                 class="btn btn-primary btn-sm mx-2"
-                                                                                @click="router.push({ name: 'produto-materia-editar', params: { produtoId: route.params.produtoId, itemIndex: index } })"
+                                                                                @click="
+                                                                                    router.push({
+                                                                                        name: 'produto-materia-editar',
+                                                                                        params: {
+                                                                                            produtoId:
+                                                                                                route.params.produtoId,
+                                                                                            itemIndex: index,
+                                                                                        },
+                                                                                    })
+                                                                                "
                                                                             >
                                                                                 <i class="bi bi-pen"></i>
                                                                             </button>
@@ -364,7 +471,12 @@ const onSubmit = async (values) => {
                                                         <button
                                                             type="button"
                                                             class="btn btn-primary button-medium"
-                                                            @click="router.push({ name: 'produto-servico', params: { produtoId: route.params.produtoId } })"
+                                                            @click="
+                                                                router.push({
+                                                                    name: 'produto-servico',
+                                                                    params: { produtoId: route.params.produtoId },
+                                                                })
+                                                            "
                                                         >
                                                             <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
                                                         </button>
@@ -372,27 +484,62 @@ const onSubmit = async (values) => {
                                                 </div>
                                                 <div class="row p-2">
                                                     <div class="col-12">
-                                                        <div v-if="!state.produto.servicosCalculo?.length" class="text-muted">
+                                                        <div
+                                                            v-if="!state.produto.servicosCalculo?.length"
+                                                            class="text-muted"
+                                                        >
                                                             Nenhum serviço vinculado.
                                                         </div>
                                                         <div v-else class="table-responsive">
-                                                            <table class="table table-bordered table-striped mb-0" style="table-layout: fixed;">
+                                                            <table
+                                                                class="table table-bordered table-striped mb-0"
+                                                                style="table-layout: fixed"
+                                                            >
                                                                 <thead>
                                                                     <tr>
-                                                                        <th style="width: 42.5%;">Serviço</th>
-                                                                        <th style="width: 42.5%;">Cálculo</th>
-                                                                        <th class="text-center" style="width: 15%;">Ações</th>
+                                                                        <th style="width: 42.5%">Serviço</th>
+                                                                        <th style="width: 42.5%">Cálculo</th>
+                                                                        <th class="text-center" style="width: 15%">
+                                                                            Ações
+                                                                        </th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <tr v-for="(item, index) in state.produto.servicosCalculo" :key="index">
-                                                                        <td>{{ getNomeServico(state.servicosApoio || [], item.servicoId) }}</td>
-                                                                        <td>{{ getNomeCalculo(state.calculosApoio || [], item.calculoId) }}</td>
+                                                                    <tr
+                                                                        v-for="(item, index) in state.produto
+                                                                            .servicosCalculo"
+                                                                        :key="index"
+                                                                    >
+                                                                        <td>
+                                                                            {{
+                                                                                getNomeServico(
+                                                                                    state.servicosApoio || [],
+                                                                                    item.servicoId
+                                                                                )
+                                                                            }}
+                                                                        </td>
+                                                                        <td>
+                                                                            {{
+                                                                                getNomeCalculo(
+                                                                                    state.calculosApoio || [],
+                                                                                    item.calculoId
+                                                                                )
+                                                                            }}
+                                                                        </td>
                                                                         <td class="text-center">
                                                                             <button
                                                                                 type="button"
                                                                                 class="btn btn-primary btn-sm mx-2"
-                                                                                @click="router.push({ name: 'produto-servico-editar', params: { produtoId: route.params.produtoId, itemIndex: index } })"
+                                                                                @click="
+                                                                                    router.push({
+                                                                                        name: 'produto-servico-editar',
+                                                                                        params: {
+                                                                                            produtoId:
+                                                                                                route.params.produtoId,
+                                                                                            itemIndex: index,
+                                                                                        },
+                                                                                    })
+                                                                                "
                                                                             >
                                                                                 <i class="bi bi-pen"></i>
                                                                             </button>
@@ -416,13 +563,21 @@ const onSubmit = async (values) => {
                                                 <div class="row p-2 align-items-center">
                                                     <div class="col-lg-6">
                                                         <h6 class="mb-0">Grupos de Opções</h6>
-                                                        <small class="text-muted">Acabamentos e seleções do orçamento (ex.: Ilhós, Recorte).</small>
+                                                        <small class="text-muted"
+                                                            >Acabamentos e seleções do orçamento (ex.: Ilhós,
+                                                            Recorte).</small
+                                                        >
                                                     </div>
                                                     <div class="col-lg-6 text-lg-end mt-2 mt-lg-0">
                                                         <button
                                                             type="button"
                                                             class="btn btn-primary button-medium"
-                                                            @click="router.push({ name: 'produto-grupo', params: { produtoId: route.params.produtoId } })"
+                                                            @click="
+                                                                router.push({
+                                                                    name: 'produto-grupo',
+                                                                    params: { produtoId: route.params.produtoId },
+                                                                })
+                                                            "
                                                         >
                                                             <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
                                                         </button>
@@ -430,29 +585,56 @@ const onSubmit = async (values) => {
                                                 </div>
                                                 <div class="row p-2">
                                                     <div class="col-12">
-                                                        <div v-if="!state.produto.gruposOpcoes?.length" class="text-muted">
+                                                        <div
+                                                            v-if="!state.produto.gruposOpcoes?.length"
+                                                            class="text-muted"
+                                                        >
                                                             Nenhum grupo de opções.
                                                         </div>
                                                         <div v-else class="table-responsive">
-                                                            <table class="table table-bordered table-striped mb-0" style="table-layout: fixed;">
+                                                            <table
+                                                                class="table table-bordered table-striped mb-0"
+                                                                style="table-layout: fixed"
+                                                            >
                                                                 <thead>
                                                                     <tr>
-                                                                        <th style="width: 35%;">Grupo</th>
-                                                                        <th style="width: 35%;">Opções</th>
-                                                                        <th style="width: 15%;">Obrigatório</th>
-                                                                        <th class="text-center" style="width: 15%;">Ações</th>
+                                                                        <th style="width: 35%">Grupo</th>
+                                                                        <th style="width: 35%">Opções</th>
+                                                                        <th style="width: 15%">Obrigatório</th>
+                                                                        <th class="text-center" style="width: 15%">
+                                                                            Ações
+                                                                        </th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <tr v-for="(grupo, index) in state.produto.gruposOpcoes" :key="index">
+                                                                    <tr
+                                                                        v-for="(grupo, index) in state.produto
+                                                                            .gruposOpcoes"
+                                                                        :key="index"
+                                                                    >
                                                                         <td>{{ grupo.nome }}</td>
-                                                                        <td>{{ (grupo.opcoes || []).map((opcao) => opcao.nome).join(', ') }}</td>
+                                                                        <td>
+                                                                            {{
+                                                                                (grupo.opcoes || [])
+                                                                                    .map((opcao) => opcao.nome)
+                                                                                    .join(', ')
+                                                                            }}
+                                                                        </td>
                                                                         <td>{{ grupo.obrigatorio ? 'Sim' : 'Não' }}</td>
                                                                         <td class="text-center">
                                                                             <button
                                                                                 type="button"
                                                                                 class="btn btn-primary btn-sm mx-2"
-                                                                                @click="router.push({ name: 'produto-grupo-editar', params: { produtoId: route.params.produtoId, grupoIndex: index } })"
+                                                                                @click="
+                                                                                    router.push({
+                                                                                        name: 'produto-grupo-editar',
+                                                                                        params: {
+                                                                                            produtoId:
+                                                                                                route.params.produtoId,
+                                                                                            grupoIndex: index,
+                                                                                        },
+                                                                                    })
+                                                                                "
                                                                             >
                                                                                 <i class="bi bi-pen"></i>
                                                                             </button>
@@ -478,7 +660,11 @@ const onSubmit = async (values) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="router.push('/produtos')">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="router.push('/produtos')"
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

@@ -27,22 +27,22 @@ const fetchMaterias = async () => {
         const response = await axiosInstance.get('/materias');
         state.materias = response.data;
     } catch (error) {
-        showToast("erro", "Erro ao carregar matérias.");
+        showToast('erro', 'Erro ao carregar matérias.');
     } finally {
         state.isProcessing = false;
     }
 };
 
 const deleteMateria = async (id) => {
-    const modal = showModal("Excluir matéria", "Confirma a exclusão da matéria?", async () => {
+    const modal = showModal('Excluir matéria', 'Confirma a exclusão da matéria?', async () => {
         try {
             state.isProcessing = true;
             await axiosInstance.delete(`/materias/${id}`);
             state.materias = state.materias.filter((materia) => materia.id !== id);
             redrawTable('list-materias');
-            showToast("sucesso", "Matéria excluída com sucesso.");
+            showToast('sucesso', 'Matéria excluída com sucesso.');
         } catch (error) {
-            showToast("erro", "Não foi possível excluir a matéria.");
+            showToast('erro', 'Não foi possível excluir a matéria.');
         } finally {
             state.isProcessing = false;
             modal.hide();
@@ -83,8 +83,11 @@ onMounted(async () => {
                                 <div class="card-title">
                                     <h5>Matérias</h5>
                                 </div>
-                                <button type="button" class="btn btn-primary button-medium float-end"
-                                    @click="router.push('/materia')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium float-end"
+                                    @click="router.push('/materia')"
+                                >
                                     <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
                                 </button>
                             </div>
@@ -93,8 +96,11 @@ onMounted(async () => {
                                     <div class="col-md-12">
                                         <div class="table-responsive p-2">
                                             <div v-if="state.isProcessing" class="text-center">
-                                                <DataTables id="list-materias" :options="options"
-                                                    class="display table table-bordered table-striped">
+                                                <DataTables
+                                                    id="list-materias"
+                                                    :options="options"
+                                                    class="display table table-bordered table-striped"
+                                                >
                                                     <thead>
                                                         <tr>
                                                             <th>Processando ...</th>
@@ -112,8 +118,11 @@ onMounted(async () => {
                                                 </DataTables>
                                             </div>
                                             <div v-else>
-                                                <DataTables id="list-materias" :options="options"
-                                                    class="display table table-bordered table-striped">
+                                                <DataTables
+                                                    id="list-materias"
+                                                    :options="options"
+                                                    class="display table table-bordered table-striped"
+                                                >
                                                     <thead>
                                                         <tr>
                                                             <th class="d-none">id</th>
@@ -132,12 +141,21 @@ onMounted(async () => {
                                                             <td>{{ materia.unidade }}</td>
                                                             <td>R$ {{ Number(materia.preco).toFixed(2) }}</td>
                                                             <td class="text-center">
-                                                                <button class="btn btn-primary btn-sm mx-2"
-                                                                    @click="router.push({ name: 'materia', params: { materiaId: materia.id } })">
+                                                                <button
+                                                                    class="btn btn-primary btn-sm mx-2"
+                                                                    @click="
+                                                                        router.push({
+                                                                            name: 'materia',
+                                                                            params: { materiaId: materia.id },
+                                                                        })
+                                                                    "
+                                                                >
                                                                     <i class="bi bi-pen"></i>
                                                                 </button>
-                                                                <button class="btn btn-danger btn-sm mx-2"
-                                                                    @click="deleteMateria(materia.id)">
+                                                                <button
+                                                                    class="btn btn-danger btn-sm mx-2"
+                                                                    @click="deleteMateria(materia.id)"
+                                                                >
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </td>
@@ -150,8 +168,11 @@ onMounted(async () => {
                                 </div>
                             </div>
                             <div class="card-footer text-center">
-                                <button type="button" class="btn btn-primary button-medium m-2"
-                                    @click="router.push('/home')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary button-medium m-2"
+                                    @click="router.push('/home')"
+                                >
                                     <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                 </button>
                             </div>

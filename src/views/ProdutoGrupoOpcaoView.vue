@@ -78,8 +78,10 @@ const salvar = async () => {
         } else {
             grupos.push(state.grupo);
         }
-        await axiosInstance.put(`/produtos/${route.params.produtoId}`,
-            normalizeProdutoPayload({ ...state.produto, gruposOpcoes: grupos }));
+        await axiosInstance.put(
+            `/produtos/${route.params.produtoId}`,
+            normalizeProdutoPayload({ ...state.produto, gruposOpcoes: grupos })
+        );
         showToast('sucesso', 'Grupo de opções salvo com sucesso!');
         // Salvar conclui a tarefa: volta para o produto.
         router.push({ name: 'produto', params: { produtoId: route.params.produtoId } });
@@ -161,16 +163,21 @@ onMounted(async () => {
                         <div class="card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <h5>{{ isEditMode ? 'Editar Grupo de Opções' : 'Novo Grupo de Opções' }}
-                                        <small class="text-muted" v-if="state.produto"> — {{ state.produto.nome }}</small>
+                                    <h5>
+                                        {{ isEditMode ? 'Editar Grupo de Opções' : 'Novo Grupo de Opções' }}
+                                        <small class="text-muted" v-if="state.produto">
+                                            — {{ state.produto.nome }}</small
+                                        >
                                     </h5>
                                 </div>
                             </div>
 
                             <div class="position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status"></div>
                                 </div>
 
@@ -179,17 +186,30 @@ onMounted(async () => {
                                         <div class="row g-3 p-2 align-items-center">
                                             <div class="col-lg-5">
                                                 <label class="form-label"><strong>Nome do grupo</strong></label>
-                                                <input v-model="state.grupo.nome" type="text" class="form-control"
-                                                    placeholder="Ex.: ILHÓS, RECORTE, REFILE" />
+                                                <input
+                                                    v-model="state.grupo.nome"
+                                                    type="text"
+                                                    class="form-control"
+                                                    placeholder="Ex.: ILHÓS, RECORTE, REFILE"
+                                                />
                                             </div>
                                             <div class="col-lg-4 pt-4">
-                                                <input id="obrigatorio" v-model="state.grupo.obrigatorio" type="checkbox"
-                                                    class="form-check-input mx-2" />
+                                                <input
+                                                    id="obrigatorio"
+                                                    v-model="state.grupo.obrigatorio"
+                                                    type="checkbox"
+                                                    class="form-check-input mx-2"
+                                                />
                                                 <label for="obrigatorio" class="form-check-label">
-                                                    Obrigatório (sem a alternativa "Nenhum")</label>
+                                                    Obrigatório (sem a alternativa "Nenhum")</label
+                                                >
                                             </div>
                                             <div class="col-lg-3 text-lg-end pt-4">
-                                                <button type="button" class="btn btn-primary button-medium" @click="adicionarOpcao">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-primary button-medium"
+                                                    @click="adicionarOpcao"
+                                                >
                                                     <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Nova opção
                                                 </button>
                                             </div>
@@ -199,29 +219,50 @@ onMounted(async () => {
                                             Nenhuma opção ainda — clique em "Nova opção".
                                         </div>
 
-                                        <div v-for="(opcao, opcaoIndex) in state.grupo.opcoes" :key="opcaoIndex"
-                                            class="border rounded p-3 m-2">
+                                        <div
+                                            v-for="(opcao, opcaoIndex) in state.grupo.opcoes"
+                                            :key="opcaoIndex"
+                                            class="border rounded p-3 m-2"
+                                        >
                                             <div class="row g-2 align-items-end">
                                                 <div class="col-lg-5">
                                                     <label class="form-label"><strong>Opção</strong></label>
-                                                    <input v-model="opcao.nome" type="text" class="form-control"
-                                                        placeholder="Ex.: COM ILHÓS, RETO, CONTORNO" />
+                                                    <input
+                                                        v-model="opcao.nome"
+                                                        type="text"
+                                                        class="form-control"
+                                                        placeholder="Ex.: COM ILHÓS, RETO, CONTORNO"
+                                                    />
                                                 </div>
                                                 <div class="col-lg-7 text-end">
-                                                    <button type="button" class="btn btn-outline-secondary btn-sm m-1"
-                                                        @click="adicionarContribuicao(opcao)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-secondary btn-sm m-1"
+                                                        @click="adicionarContribuicao(opcao)"
+                                                    >
                                                         <i class="bi bi-plus-slash-minus"></i> Contribuição
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-primary btn-sm m-1"
-                                                        :disabled="!isEditMode" @click="irParaComponente('materia', opcaoIndex)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-primary btn-sm m-1"
+                                                        :disabled="!isEditMode"
+                                                        @click="irParaComponente('materia', opcaoIndex)"
+                                                    >
                                                         <i class="bi bi-box2"></i> Nova matéria
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-primary btn-sm m-1"
-                                                        :disabled="!isEditMode" @click="irParaComponente('servico', opcaoIndex)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-primary btn-sm m-1"
+                                                        :disabled="!isEditMode"
+                                                        @click="irParaComponente('servico', opcaoIndex)"
+                                                    >
                                                         <i class="bi bi-tools"></i> Novo serviço
                                                     </button>
-                                                    <button type="button" class="btn btn-danger btn-sm m-1"
-                                                        @click="removerOpcao(opcaoIndex)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-danger btn-sm m-1"
+                                                        @click="removerOpcao(opcaoIndex)"
+                                                    >
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -232,70 +273,129 @@ onMounted(async () => {
 
                                             <!-- Contribuições: somam nos parâmetros dos componentes BASE (ex.: bainha +6cm) -->
                                             <div v-if="opcao.contribuicoes?.length" class="mt-2">
-                                                <label class="form-label"><strong>Contribuições nos parâmetros da base</strong></label>
-                                                <div v-for="(contribuicao, ci) in opcao.contribuicoes" :key="ci"
-                                                    class="input-group input-group-sm mb-1" style="max-width: 480px;">
+                                                <label class="form-label"
+                                                    ><strong>Contribuições nos parâmetros da base</strong></label
+                                                >
+                                                <div
+                                                    v-for="(contribuicao, ci) in opcao.contribuicoes"
+                                                    :key="ci"
+                                                    class="input-group input-group-sm mb-1"
+                                                    style="max-width: 480px"
+                                                >
                                                     <select v-model="contribuicao.codigo" class="form-select">
                                                         <option value="">Parâmetro</option>
-                                                        <option v-for="codigo in codigosParametro" :key="codigo" :value="codigo">
-                                                            {{ codigo.replaceAll('_', ' ') }}</option>
+                                                        <option
+                                                            v-for="codigo in codigosParametro"
+                                                            :key="codigo"
+                                                            :value="codigo"
+                                                        >
+                                                            {{ codigo.replaceAll('_', ' ') }}
+                                                        </option>
                                                     </select>
                                                     <span class="input-group-text">+</span>
-                                                    <input v-model="contribuicao.valor" type="number" step="0.01"
-                                                        class="form-control" placeholder="valor" />
-                                                    <button type="button" class="btn btn-outline-danger"
-                                                        @click="removerContribuicao(opcao, ci)">
+                                                    <input
+                                                        v-model="contribuicao.valor"
+                                                        type="number"
+                                                        step="0.01"
+                                                        class="form-control"
+                                                        placeholder="valor"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-danger"
+                                                        @click="removerContribuicao(opcao, ci)"
+                                                    >
                                                         <i class="bi bi-x"></i>
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <!-- Opção vazia não altera o preço: avisar -->
-                                            <div v-if="!(opcao.materiasCalculo?.length || opcao.servicosCalculo?.length || opcao.contribuicoes?.length)"
-                                                class="alert alert-warning py-1 px-2 mt-2 mb-0">
-                                                <small><i class="bi bi-exclamation-triangle"></i>
-                                                    Opção vazia: sem componentes nem contribuições, ela <strong>não altera o preço</strong> do orçamento.</small>
+                                            <div
+                                                v-if="
+                                                    !(
+                                                        opcao.materiasCalculo?.length ||
+                                                        opcao.servicosCalculo?.length ||
+                                                        opcao.contribuicoes?.length
+                                                    )
+                                                "
+                                                class="alert alert-warning py-1 px-2 mt-2 mb-0"
+                                            >
+                                                <small
+                                                    ><i class="bi bi-exclamation-triangle"></i> Opção vazia: sem
+                                                    componentes nem contribuições, ela
+                                                    <strong>não altera o preço</strong> do orçamento.</small
+                                                >
                                             </div>
 
                                             <!-- Componentes da opção -->
-                                            <div v-if="opcao.materiasCalculo?.length || opcao.servicosCalculo?.length"
-                                                class="table-responsive mt-2">
+                                            <div
+                                                v-if="opcao.materiasCalculo?.length || opcao.servicosCalculo?.length"
+                                                class="table-responsive mt-2"
+                                            >
                                                 <table class="table table-sm table-bordered mb-0">
                                                     <thead>
                                                         <tr>
                                                             <th>Componente</th>
                                                             <th>Cálculo</th>
-                                                            <th class="text-center" style="width: 110px;">Ações</th>
+                                                            <th class="text-center" style="width: 110px">Ações</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <tr v-for="(item, mi) in opcao.materiasCalculo || []" :key="'m' + mi">
-                                                            <td><i class="bi bi-box2 text-muted"></i> {{ nomeInsumoMateria(item) }}</td>
-                                                            <td>{{ getNomeCalculo(state.calculos, item.calculoId) }}</td>
+                                                        <tr
+                                                            v-for="(item, mi) in opcao.materiasCalculo || []"
+                                                            :key="'m' + mi"
+                                                        >
+                                                            <td>
+                                                                <i class="bi bi-box2 text-muted"></i>
+                                                                {{ nomeInsumoMateria(item) }}
+                                                            </td>
+                                                            <td>
+                                                                {{ getNomeCalculo(state.calculos, item.calculoId) }}
+                                                            </td>
                                                             <td class="text-center">
-                                                                <button type="button" class="btn btn-primary btn-sm mx-1"
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-primary btn-sm mx-1"
                                                                     :disabled="!isEditMode"
-                                                                    @click="irParaComponente('materia', opcaoIndex, mi)">
+                                                                    @click="irParaComponente('materia', opcaoIndex, mi)"
+                                                                >
                                                                     <i class="bi bi-pen"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-danger btn-sm mx-1"
-                                                                    @click="removerComponente(opcao, 'materia', mi)">
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-danger btn-sm mx-1"
+                                                                    @click="removerComponente(opcao, 'materia', mi)"
+                                                                >
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </td>
                                                         </tr>
-                                                        <tr v-for="(item, si) in opcao.servicosCalculo || []" :key="'s' + si">
-                                                            <td><i class="bi bi-tools text-muted"></i>
-                                                                {{ getNomeServico(state.servicos, item.servicoId) }}</td>
-                                                            <td>{{ getNomeCalculo(state.calculos, item.calculoId) }}</td>
+                                                        <tr
+                                                            v-for="(item, si) in opcao.servicosCalculo || []"
+                                                            :key="'s' + si"
+                                                        >
+                                                            <td>
+                                                                <i class="bi bi-tools text-muted"></i>
+                                                                {{ getNomeServico(state.servicos, item.servicoId) }}
+                                                            </td>
+                                                            <td>
+                                                                {{ getNomeCalculo(state.calculos, item.calculoId) }}
+                                                            </td>
                                                             <td class="text-center">
-                                                                <button type="button" class="btn btn-primary btn-sm mx-1"
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-primary btn-sm mx-1"
                                                                     :disabled="!isEditMode"
-                                                                    @click="irParaComponente('servico', opcaoIndex, si)">
+                                                                    @click="irParaComponente('servico', opcaoIndex, si)"
+                                                                >
                                                                     <i class="bi bi-pen"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-danger btn-sm mx-1"
-                                                                    @click="removerComponente(opcao, 'servico', si)">
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-danger btn-sm mx-1"
+                                                                    @click="removerComponente(opcao, 'servico', si)"
+                                                                >
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </td>
@@ -310,8 +410,16 @@ onMounted(async () => {
                                         <button type="button" class="btn btn-primary button-medium m-2" @click="salvar">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="router.push({ name: 'produto', params: { produtoId: route.params.produtoId } })">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="
+                                                router.push({
+                                                    name: 'produto',
+                                                    params: { produtoId: route.params.produtoId },
+                                                })
+                                            "
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>

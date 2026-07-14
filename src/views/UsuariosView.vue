@@ -20,7 +20,7 @@ const fetchUsuarios = async () => {
     try {
         state.isProcessing = true;
         const response = await axiosInstance.get('/usuarios');
-        state.usuarios = response.data;        
+        state.usuarios = response.data;
     } catch (error) {
         console.error('Erro ao carregar usuários', error);
     } finally {
@@ -35,13 +35,13 @@ const deleteUsuario = async (id) => {
         try {
             state.isProcessing = true;
             await axiosInstance.delete(`/usuarios/${id}`);
-            state.usuarios = state.usuarios.filter(usuario => usuario.id !== id);
+            state.usuarios = state.usuarios.filter((usuario) => usuario.id !== id);
             redrawTable('list');
             // Mostrar toast de sucesso
-            showToast("sucesso", "Usuário excluído com sucesso.");
+            showToast('sucesso', 'Usuário excluído com sucesso.');
         } catch (error) {
             // Mostrar toast de erro
-            showToast("erro", "Não foi possível excluir o usuário.");
+            showToast('erro', 'Não foi possível excluir o usuário.');
         } finally {
             state.isProcessing = false;
             modal.hide(); // Fecha o modal após a confirmação
@@ -54,33 +54,44 @@ onMounted(async () => {
 </script>
 <template>
     <!--begin::App Main-->
-    <main class="app-main"> <!--begin::App Content Header-->
-        <div class="app-content-header"> <!--begin::Container-->
-            <div class="container-fluid"> <!--begin::Row-->
-                <div class="row"> <!--begin::Col-->
+    <main class="app-main">
+        <!--begin::App Content Header-->
+        <div class="app-content-header">
+            <!--begin::Container-->
+            <div class="container-fluid">
+                <!--begin::Row-->
+                <div class="row">
+                    <!--begin::Col-->
                     <div class="col-sm-6">
                         <h5 class="mb-0">Cadastro</h5>
-                    </div> <!--end::Col--> <!--begin::Col-->
+                    </div>
+                    <!--end::Col-->
+                    <!--begin::Col-->
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-end">
                             <li class="breadcrumb-item">Cadastros</li>
-                            <li class="breadcrumb-item active" aria-current="page">
-                                Pessoas
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">
-                                Usuários
-                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Pessoas</li>
+                            <li class="breadcrumb-item active" aria-current="page">Usuários</li>
                         </ol>
-                    </div> <!--end::Col-->
-                </div> <!--end::Row-->
-            </div> <!--end::Container-->
-        </div> <!--end::App Content Header-->
+                    </div>
+                    <!--end::Col-->
+                </div>
+                <!--end::Row-->
+            </div>
+            <!--end::Container-->
+        </div>
+        <!--end::App Content Header-->
         <!--begin::App Content-->
-        <div class="app-content"> <!--begin::Container-->
-            <div class="container-fluid"> <!--begin::Row-->
-                <div class="row"> <!--begin::Col-->
-                    <div class="col-12"> <!--begin::Card-->
-                        <div class="card"> <!--begin::Card Header-->
+        <div class="app-content">
+            <!--begin::Container-->
+            <div class="container-fluid">
+                <!--begin::Row-->
+                <div class="row">
+                    <!--begin::Col-->
+                    <div class="col-12">
+                        <!--begin::Card-->
+                        <div class="card">
+                            <!--begin::Card Header-->
                             <div class="card-header">
                                 <!--begin::Card Title-->
                                 <div class="card-title">
@@ -89,20 +100,28 @@ onMounted(async () => {
                                 <!--end::Card Title-->
                                 <!--begin::Add button-->
                                 <RouterLink to="/usuario">
-                                    <button type="button" class="btn btn-primary button-medium float-end"><i
-                                            class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo</button>
+                                    <button type="button" class="btn btn-primary button-medium float-end">
+                                        <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Novo
+                                    </button>
                                 </RouterLink>
                                 <!--end::Add button-->
-                            </div> <!--end::Card Header--> <!--begin::Card Body-->
-                            <div class="card-body"> <!--begin::Row-->
-                                <div class="row"> <!--begin::Col-->
+                            </div>
+                            <!--end::Card Header-->
+                            <!--begin::Card Body-->
+                            <div class="card-body">
+                                <!--begin::Row-->
+                                <div class="row">
+                                    <!--begin::Col-->
                                     <div class="col-md-12">
                                         <!-- Table for usuários -->
                                         <div class="table-responsive p-2">
                                             <!-- Show loading spinner while loading is true -->
                                             <div v-if="state.isProcessing" class="text-center">
-                                                <DataTables id="list" :options="options"
-                                                    class="display table table-bordered table-striped">
+                                                <DataTables
+                                                    id="list"
+                                                    :options="options"
+                                                    class="display table table-bordered table-striped"
+                                                >
                                                     <thead>
                                                         <tr>
                                                             <th>Processando ...</th>
@@ -121,8 +140,11 @@ onMounted(async () => {
                                             </div>
                                             <!-- Shoe usuário listing when done loading -->
                                             <div v-else>
-                                                <DataTables id="list" :options="options"
-                                                    class="display table table-bordered table-striped">
+                                                <DataTables
+                                                    id="list"
+                                                    :options="options"
+                                                    class="display table table-bordered table-striped"
+                                                >
                                                     <thead>
                                                         <tr>
                                                             <th class="d-none">id</th>
@@ -133,37 +155,64 @@ onMounted(async () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <tr v-for="(usuario, index) in state.usuarios"
-                                                            :key="usuario.id">
+                                                        <tr
+                                                            v-for="(usuario, index) in state.usuarios"
+                                                            :key="usuario.id"
+                                                        >
                                                             <td class="d-none">{{ usuario.id }}</td>
                                                             <td>{{ usuario.colaborador.nome }}</td>
                                                             <td>{{ usuario.colaborador.email }}</td>
                                                             <td>{{ usuario.colaborador.telefone }}</td>
                                                             <td class="text-center">
-                                                                <button class="btn btn-primary btn-sm mx-2"
-                                                                    @click="$router.push({ name: 'usuario', params: { usuarioId: usuario.id } })"><i
-                                                                        class="bi bi-key"></i></button>
-                                                                <button class="btn btn-danger btn-sm mx-2"><i
+                                                                <button
+                                                                    class="btn btn-primary btn-sm mx-2"
+                                                                    @click="
+                                                                        $router.push({
+                                                                            name: 'usuario',
+                                                                            params: { usuarioId: usuario.id },
+                                                                        })
+                                                                    "
+                                                                >
+                                                                    <i class="bi bi-key"></i>
+                                                                </button>
+                                                                <button class="btn btn-danger btn-sm mx-2">
+                                                                    <i
                                                                         class="bi bi-trash"
-                                                                        @click="deleteUsuario(usuario.id)"></i></button>
+                                                                        @click="deleteUsuario(usuario.id)"
+                                                                    ></i>
+                                                                </button>
                                                             </td>
-                                                        </tr>                                                        
+                                                        </tr>
                                                     </tbody>
                                                 </DataTables>
                                                 <!--<pre>{{ state.usuarios }}</pre>-->
                                             </div>
                                         </div>
-                                    </div> <!--end::Col-->
-                                </div> <!--end::Row-->
-                            </div> <!--end::Card Body--> <!--begin::Card Footer-->
+                                    </div>
+                                    <!--end::Col-->
+                                </div>
+                                <!--end::Row-->
+                            </div>
+                            <!--end::Card Body-->
+                            <!--begin::Card Footer-->
                             <div class="card-footer text-center">
-                                <button type="button" class="btn btn-primary button-medium m-2"><i
-                                        class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar</button>
-                            </div> <!--end::Card Footer-->
-                        </div> <!--end::Card--> <!--begin::Card-->
-                    </div> <!--end::Col-->
-                </div> <!--end::Row-->
-            </div> <!--end::Container-->
-        </div> <!--end::App Content-->
-    </main> <!--end::App Main--> <!--begin::Footer-->
+                                <button type="button" class="btn btn-primary button-medium m-2">
+                                    <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
+                                </button>
+                            </div>
+                            <!--end::Card Footer-->
+                        </div>
+                        <!--end::Card-->
+                        <!--begin::Card-->
+                    </div>
+                    <!--end::Col-->
+                </div>
+                <!--end::Row-->
+            </div>
+            <!--end::Container-->
+        </div>
+        <!--end::App Content-->
+    </main>
+    <!--end::App Main-->
+    <!--begin::Footer-->
 </template>

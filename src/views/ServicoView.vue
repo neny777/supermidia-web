@@ -15,7 +15,8 @@ const isEditMode = ref(!!route.params.servicoId);
 const schema = yup.object({
     nome: yup.string().required('Informe o nome do serviço.').max(140, 'Máximo de 140 caracteres.'),
     unidade: yup.string().required('Selecione a unidade.'),
-    preco: yup.number()
+    preco: yup
+        .number()
         .typeError('Informe um preço válido.')
         .required('Informe o preço.')
         .moreThan(0, 'O preço deve ser maior que zero.'),
@@ -51,7 +52,7 @@ onMounted(async () => {
         };
         state.isReady = true;
     } catch (error) {
-        showToast("erro", "Erro ao carregar serviço.");
+        showToast('erro', 'Erro ao carregar serviço.');
         router.push('/servicos');
     } finally {
         state.isProcessing = false;
@@ -68,18 +69,18 @@ const onSubmit = async (values, { resetForm }) => {
     try {
         if (isEditMode.value) {
             if (!hasChanges(payload)) {
-                showToast("info", "Não houve alterações no serviço.");
+                showToast('info', 'Não houve alterações no serviço.');
                 return;
             }
 
-            const modal = showModal("Editar serviço", "Confirma a edição do serviço?", async () => {
+            const modal = showModal('Editar serviço', 'Confirma a edição do serviço?', async () => {
                 try {
                     state.isProcessing = true;
                     await axiosInstance.put(`/servicos/${route.params.servicoId}`, payload);
-                    showToast("sucesso", "Serviço editado com sucesso!");
+                    showToast('sucesso', 'Serviço editado com sucesso!');
                     router.push('/servicos');
                 } catch (error) {
-                    showToast("erro", "Erro ao salvar serviço.");
+                    showToast('erro', 'Erro ao salvar serviço.');
                 } finally {
                     state.isProcessing = false;
                     modal.hide();
@@ -90,11 +91,11 @@ const onSubmit = async (values, { resetForm }) => {
 
         state.isProcessing = true;
         await axiosInstance.post('/servicos', payload);
-        showToast("sucesso", "Serviço criado com sucesso!");
+        showToast('sucesso', 'Serviço criado com sucesso!');
         resetForm();
         router.push('/servicos');
     } catch (error) {
-        showToast("erro", "Erro ao salvar serviço.");
+        showToast('erro', 'Erro ao salvar serviço.');
     } finally {
         state.isProcessing = false;
     }
@@ -133,14 +134,21 @@ const onSubmit = async (values, { resetForm }) => {
                             </div>
 
                             <div class="position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10;">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
                                     </div>
                                 </div>
-                                <Form v-if="state.isReady" @submit="onSubmit" :validation-schema="schema" :initial-values="state.servico">
+                                <Form
+                                    v-if="state.isReady"
+                                    @submit="onSubmit"
+                                    :validation-schema="schema"
+                                    :initial-values="state.servico"
+                                >
                                     <div class="card-body my-4">
                                         <div class="row g-3 p-3">
                                             <div class="col-lg-6">
@@ -156,9 +164,18 @@ const onSubmit = async (values, { resetForm }) => {
                                                 <div class="row p-2">
                                                     <label for="unidade" class="col-form-label col-lg-3">Unidade</label>
                                                     <div class="col-lg-9">
-                                                        <Field as="select" id="unidade" name="unidade" class="form-select">
+                                                        <Field
+                                                            as="select"
+                                                            id="unidade"
+                                                            name="unidade"
+                                                            class="form-select"
+                                                        >
                                                             <option value="">Selecione</option>
-                                                            <option v-for="unidade in unidades" :key="unidade" :value="unidade">
+                                                            <option
+                                                                v-for="unidade in unidades"
+                                                                :key="unidade"
+                                                                :value="unidade"
+                                                            >
                                                                 {{ unidade }}
                                                             </option>
                                                         </Field>
@@ -170,8 +187,14 @@ const onSubmit = async (values, { resetForm }) => {
                                                 <div class="row p-2">
                                                     <label for="preco" class="col-form-label col-lg-3">Preço</label>
                                                     <div class="col-lg-9">
-                                                        <Field id="preco" name="preco" type="number" step="0.01" min="0.01"
-                                                            class="form-control" />
+                                                        <Field
+                                                            id="preco"
+                                                            name="preco"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
                                                         <ErrorMessage name="preco" class="text-danger" />
                                                     </div>
                                                 </div>
@@ -183,8 +206,11 @@ const onSubmit = async (values, { resetForm }) => {
                                         <button type="submit" class="btn btn-primary button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="router.push('/servicos')">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="router.push('/servicos')"
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>
