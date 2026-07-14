@@ -922,33 +922,50 @@ onMounted(async () => {
                                             Orçamento vencido. Recalcule (para usar os preços atuais) ou cancele.
                                         </div>
 
-                                        <!-- 2 · Cliente -->
+                                        <!-- 2 · Cliente: grade rótulo/valor, mesmo padrão do cabeçalho -->
                                         <div class="border rounded p-3 m-2">
                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                 <strong>Cliente</strong>
-                                                <span v-if="categoriaClienteLabel" class="badge text-bg-light border">{{
-                                                    categoriaClienteLabel
-                                                }}</span>
+                                                <button
+                                                    v-if="clienteVenda"
+                                                    type="button"
+                                                    class="btn btn-outline-secondary btn-sm py-0"
+                                                    title="Abrir a ficha do cliente"
+                                                    @click="abrirFichaCliente"
+                                                >
+                                                    <i class="bi bi-box-arrow-up-right"></i>&nbsp;Ficha
+                                                </button>
                                             </div>
-                                            <div>
-                                                <a v-if="clienteVenda" href="#" @click.prevent="abrirFichaCliente">{{
-                                                    clienteVenda.nome
-                                                }}</a>
-                                                <span v-else>{{ nomeCliente(state.venda.clienteId) }}</span>
-                                            </div>
-                                            <div v-if="clienteVenda" class="text-muted small">
-                                                <span v-if="clienteVenda.telefone" class="me-3">
-                                                    <i class="bi bi-telephone"></i> {{ clienteVenda.telefone }}</span
-                                                >
-                                                <span v-if="clienteVenda.email" class="me-3">
-                                                    <i class="bi bi-envelope"></i> {{ clienteVenda.email }}</span
-                                                >
-                                                <span v-if="clienteVenda.municipio">
-                                                    <i class="bi bi-geo-alt"></i> {{ clienteVenda.municipio
-                                                    }}<template v-if="clienteVenda.uf"
-                                                        >/{{ clienteVenda.uf }}</template
-                                                    ></span
-                                                >
+                                            <div class="row g-2">
+                                                <div class="col-lg-4">
+                                                    <div class="text-muted small">Nome</div>
+                                                    <div class="fw-semibold">
+                                                        {{ clienteVenda?.nome || nomeCliente(state.venda.clienteId) }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <div class="text-muted small">Categoria</div>
+                                                    <div>{{ categoriaClienteLabel || '—' }}</div>
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <div class="text-muted small">Telefone</div>
+                                                    <div>{{ clienteVenda?.telefone || '—' }}</div>
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <div class="text-muted small">E-mail</div>
+                                                    <div class="text-truncate" :title="clienteVenda?.email">
+                                                        {{ clienteVenda?.email || '—' }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <div class="text-muted small">Cidade</div>
+                                                    <div>
+                                                        {{ clienteVenda?.municipio || '—'
+                                                        }}<template v-if="clienteVenda?.uf"
+                                                            >/{{ clienteVenda.uf }}</template
+                                                        >
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
