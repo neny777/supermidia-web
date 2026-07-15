@@ -48,6 +48,7 @@ const menuConfig = [
         children: [
             { name: 'Orçamentos', path: '/orcamentos', permission: 'vendas', icon: 'bi bi-file-earmark-text' },
             { name: 'Ordens de Serviço', path: '/ordens-servico', permission: 'vendas', icon: 'bi bi-clipboard-check' },
+            { name: 'Canceladas', path: '/vendas-canceladas', permission: 'vendas', icon: 'bi bi-x-circle' },
         ],
     },
     {

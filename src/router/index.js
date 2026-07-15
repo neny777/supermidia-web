@@ -318,6 +318,13 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout' },
         },
         {
+            path: '/vendas-canceladas',
+            name: 'vendas-canceladas',
+            component: VendasView,
+            props: { status: 'CANCELADO' },
+            meta: { layout: 'DefaultLayout' },
+        },
+        {
             path: '/venda/:vendaId?',
             name: 'venda',
             component: VendaView,

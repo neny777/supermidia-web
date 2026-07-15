@@ -17,7 +17,12 @@ const state = reactive({
 });
 
 const isOrcamento = computed(() => props.status === 'ORCAMENTO');
-const titulo = computed(() => (isOrcamento.value ? 'Orçamentos' : 'Ordens de Serviço'));
+const isCancelado = computed(() => props.status === 'CANCELADO');
+const titulo = computed(() => {
+    if (isOrcamento.value) return 'Orçamentos';
+    if (isCancelado.value) return 'Vendas Canceladas';
+    return 'Ordens de Serviço';
+});
 
 const formatBRL = (valor) =>
     valor == null ? '-' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -86,6 +91,7 @@ watch(() => props.status, fetchVendas);
                                     <h5>{{ titulo }}</h5>
                                 </div>
                                 <button
+                                    v-if="!isCancelado"
                                     type="button"
                                     class="btn btn-primary button-medium float-end"
                                     @click="router.push({ name: 'venda', query: isOrcamento ? {} : { tipo: 'os' } })"

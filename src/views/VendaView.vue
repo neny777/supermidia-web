@@ -110,7 +110,16 @@ const janelaEdicao = computed(() => {
     }
     return 'A janela de edição/exclusão expirou — itens e cliente estão congelados.';
 });
-const voltarParaLista = () => router.push(state.venda?.status === 'ORDEM_SERVICO' ? '/ordens-servico' : '/orcamentos');
+const voltarParaLista = () => {
+    switch (state.venda?.status) {
+        case 'ORDEM_SERVICO':
+            return router.push('/ordens-servico');
+        case 'CANCELADO':
+            return router.push('/vendas-canceladas');
+        default:
+            return router.push('/orcamentos');
+    }
+};
 
 // Reconstrói o formulário a partir do snapshot (entradaJson) para a edição na janela de 1h.
 const preencherFormularioParaEdicao = (venda) => {
