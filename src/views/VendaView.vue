@@ -622,89 +622,38 @@ onMounted(async () => {
                                         </div>
                                     </div>
                                     <div class="card-body my-3">
-                                        <div class="row g-3 p-2">
-                                            <div class="col-lg-3">
-                                                <label class="form-label"><strong>Tipo</strong></label>
-                                                <select v-model="state.form.status" class="form-select">
-                                                    <option value="ORCAMENTO">Orçamento</option>
-                                                    <option value="ORDEM_SERVICO">
-                                                        Ordem de Serviço (venda direta)
-                                                    </option>
-                                                </select>
-                                            </div>
-                                            <div class="col-lg-5">
-                                                <label class="form-label"><strong>Cliente</strong></label>
-                                                <BuscaSelect
-                                                    v-model="state.form.clienteId"
-                                                    :opcoes="state.clientes"
-                                                    placeholder="Digite para buscar o cliente..."
-                                                />
-                                            </div>
-                                            <div class="col-lg-4">
-                                                <label class="form-label">Referência</label>
-                                                <input
-                                                    v-model="state.form.referencia"
-                                                    type="text"
-                                                    maxlength="120"
-                                                    class="form-control"
-                                                    placeholder="ex.: fachada loja centro"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div class="row g-3 p-2">
-                                            <div class="col-lg-3">
-                                                <label class="form-label">Forma de pagamento</label>
-                                                <input
-                                                    v-model="state.form.formaPagamento"
-                                                    type="text"
-                                                    maxlength="120"
-                                                    class="form-control"
-                                                    placeholder="ex.: PIX, dinheiro, cartão"
-                                                />
-                                            </div>
-                                            <div class="col-lg-3">
-                                                <label class="form-label">Condição de pagamento</label>
-                                                <input
-                                                    v-model="state.form.condicaoPagamento"
-                                                    type="text"
-                                                    maxlength="120"
-                                                    class="form-control"
-                                                    placeholder="ex.: à vista, 50% + 50% na retirada"
-                                                />
-                                            </div>
-                                            <div class="col-lg-3">
-                                                <label class="form-label">Forma de entrega</label>
-                                                <input
-                                                    v-model="state.form.formaEntrega"
-                                                    type="text"
-                                                    maxlength="120"
-                                                    class="form-control"
-                                                    placeholder="ex.: retirada, entrega, instalação"
-                                                />
-                                            </div>
-                                            <div class="col-lg-3">
-                                                <label class="form-label">Prazo de entrega</label>
-                                                <input
-                                                    v-model="state.form.prazoEntrega"
-                                                    type="text"
-                                                    maxlength="60"
-                                                    class="form-control"
-                                                    placeholder="ex.: 5 dias úteis"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div class="row g-3 p-2 pt-0">
-                                            <div class="col-12">
-                                                <label class="form-label">Observações</label>
-                                                <textarea
-                                                    v-model="state.form.observacoes"
-                                                    maxlength="1000"
-                                                    rows="1"
-                                                    class="form-control"
-                                                    placeholder="instruções de produção, detalhes combinados..."
-                                                ></textarea>
+                                        <!-- Mesma anatomia do detalhe: Identificação → Itens →
+                                             Pagamento/Entrega/Total → Observações -->
+                                        <div class="border rounded p-3 m-2">
+                                            <div class="mb-2"><strong>Identificação</strong></div>
+                                            <div class="row g-3">
+                                                <div class="col-lg-3">
+                                                    <label class="form-label">Tipo</label>
+                                                    <select v-model="state.form.status" class="form-select">
+                                                        <option value="ORCAMENTO">Orçamento</option>
+                                                        <option value="ORDEM_SERVICO">
+                                                            Ordem de Serviço (venda direta)
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-lg-5">
+                                                    <label class="form-label">Cliente</label>
+                                                    <BuscaSelect
+                                                        v-model="state.form.clienteId"
+                                                        :opcoes="state.clientes"
+                                                        placeholder="Digite para buscar o cliente..."
+                                                    />
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <label class="form-label">Referência</label>
+                                                    <input
+                                                        v-model="state.form.referencia"
+                                                        type="text"
+                                                        maxlength="120"
+                                                        class="form-control"
+                                                        placeholder="ex.: fachada loja centro"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
@@ -891,13 +840,86 @@ onMounted(async () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <!-- Total corrente -->
-                                            <div v-if="totalPrevisto != null" class="row mt-3">
-                                                <div class="col text-end fs-5">
-                                                    <strong>Total: {{ formatBRL(totalPrevisto) }}</strong>
+                                        <!-- Pagamento / Entrega / Total ao vivo, como no detalhe -->
+                                        <div class="row g-2 m-2">
+                                            <div class="col-lg-4">
+                                                <div class="border rounded p-3 h-100">
+                                                    <div class="mb-2"><strong>Pagamento</strong></div>
+                                                    <div class="row g-2">
+                                                        <div class="col-lg-6">
+                                                            <label class="form-label small mb-0">Forma</label>
+                                                            <input
+                                                                v-model="state.form.formaPagamento"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="PIX, dinheiro, cartão..."
+                                                            />
+                                                        </div>
+                                                        <div class="col-lg-6">
+                                                            <label class="form-label small mb-0">Condição</label>
+                                                            <input
+                                                                v-model="state.form.condicaoPagamento"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="à vista, 50% + 50%..."
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div class="col-lg-4">
+                                                <div class="border rounded p-3 h-100">
+                                                    <div class="mb-2"><strong>Entrega</strong></div>
+                                                    <div class="row g-2">
+                                                        <div class="col-lg-7">
+                                                            <label class="form-label small mb-0">Forma</label>
+                                                            <input
+                                                                v-model="state.form.formaEntrega"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="retirada, entrega, instalação..."
+                                                            />
+                                                        </div>
+                                                        <div class="col-lg-5">
+                                                            <label class="form-label small mb-0">Prazo</label>
+                                                            <input
+                                                                v-model="state.form.prazoEntrega"
+                                                                type="text"
+                                                                maxlength="60"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="5 dias úteis..."
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="border rounded p-3 h-100 text-end">
+                                                    <div class="text-muted small">Total sugerido (ao vivo)</div>
+                                                    <div class="fs-5">
+                                                        <strong>{{
+                                                            totalPrevisto != null ? formatBRL(totalPrevisto) : '—'
+                                                        }}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Observações em linha própria, como no detalhe -->
+                                        <div class="border rounded p-3 m-2">
+                                            <div class="mb-2"><strong>Observações</strong></div>
+                                            <textarea
+                                                v-model="state.form.observacoes"
+                                                maxlength="1000"
+                                                rows="2"
+                                                class="form-control"
+                                                placeholder="instruções de produção, detalhes combinados..."
+                                            ></textarea>
                                         </div>
                                     </div>
                                     <div class="card-footer text-center">
