@@ -7,8 +7,10 @@ const props = defineProps({
     modelValue: { type: String, default: '' },
     opcoes: { type: Array, default: () => [] }, // [{ id, nome }]
     placeholder: { type: String, default: 'Digite para buscar...' },
+    // Mostra "+ Cadastrar 'X'" no rodapé da lista (cadastro rápido do balcão)
+    permitirCadastro: { type: Boolean, default: false },
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'cadastrar']);
 
 const aberto = ref(false);
 const filtro = ref('');
@@ -40,6 +42,10 @@ const aoEnter = () => {
         selecionar(filtradas.value[0]);
     }
 };
+const cadastrar = () => {
+    emit('cadastrar', filtro.value.trim());
+    fechar();
+};
 </script>
 
 <template>
@@ -65,6 +71,11 @@ const aoEnter = () => {
                     @mousedown.prevent="selecionar(opcao)"
                 >
                     {{ opcao.nome }}
+                </button>
+            </li>
+            <li v-if="permitirCadastro && filtro.trim()">
+                <button type="button" class="dropdown-item text-primary" @mousedown.prevent="cadastrar">
+                    <i class="bi bi-plus-circle"></i> Cadastrar "{{ filtro.trim().toUpperCase() }}"
                 </button>
             </li>
         </ul>

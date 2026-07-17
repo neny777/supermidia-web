@@ -18,7 +18,9 @@ const schema = yup.object({
     email: yup.string().nullable().optional().email('Email inválido').max(70, 'Máximo de 70 caracteres'),
     telefone: yup
         .string()
-        .required('Telefone é obrigatório')
+        .nullable()
+        .optional()
+        .transform((valor) => (valor === '' ? null : valor))
         .min(14, 'Mínimo de 14 caracteres')
         .max(15, 'Máximo de 15 caracteres'),
     cep: yup
@@ -33,7 +35,7 @@ const schema = yup.object({
     uf: yup.string().nullable().optional().length(2, '2 caracteres'),
     cpf: yup.string().nullable().optional().cpf('CPF inválido'),
     rg: yup.string().nullable().optional().max(14, 'Máximo de 14 caracteres'),
-    sexo: yup.string().required('Sexo é obrigatório'),
+    sexo: yup.string().nullable().optional(),
     nascimento: yup.string().nullable().optional().brDate('Data inválida').minAge('A idade mínima é 16 anos.'),
     categoria: yup.string().required('Categoria é obrigatório'),
 });
@@ -70,6 +72,10 @@ const onSubmit = async (values, { resetForm }) => {
     const formattedValues = {
         ...values,
         nascimento: formatToDatabaseDate(values.nascimento),
+        // Vazios viram null: telefone/e-mail têm UNIQUE no banco ('' colide, null não)
+        telefone: values.telefone || null,
+        email: values.email || null,
+        sexo: values.sexo || null,
     };
     if (isEditMode.value) {
         // Verifica se houve alterações nos valores do formulário

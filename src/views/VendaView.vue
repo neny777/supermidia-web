@@ -254,6 +254,40 @@ const totalPrevisto = computed(() => {
     return valores.reduce((soma, valor) => soma + Number(valor), 0);
 });
 
+// ---- cadastro rápido de cliente (balcão): nome + categoria bastam ----
+const novoCliente = reactive({ aberto: false, tipo: 'FISICO', nome: '', categoria: 'F', telefone: '' });
+const abrirNovoCliente = (nomeDigitado) => {
+    novoCliente.tipo = 'FISICO';
+    novoCliente.nome = (nomeDigitado || '').toUpperCase();
+    novoCliente.categoria = 'F';
+    novoCliente.telefone = '';
+    novoCliente.aberto = true;
+};
+const salvarNovoCliente = async () => {
+    if (!novoCliente.nome.trim()) {
+        showToast('erro', 'Informe o nome do cliente.');
+        return;
+    }
+    try {
+        state.isProcessing = true;
+        const rota = novoCliente.tipo === 'JURIDICO' ? '/clientes/juridico' : '/clientes/fisico';
+        const { data: novoId } = await axiosInstance.post(rota, {
+            nome: novoCliente.nome.trim(),
+            categoria: novoCliente.categoria,
+            telefone: novoCliente.telefone.trim() || null,
+        });
+        const clientesResponse = await axiosInstance.get('/clientes');
+        state.clientes = clientesResponse.data;
+        state.form.clienteId = novoId;
+        novoCliente.aberto = false;
+        showToast('sucesso', 'Cliente cadastrado — complete a ficha quando puder.');
+    } catch (error) {
+        showToast('erro', getErrorMessage(error, 'Não foi possível cadastrar o cliente.'));
+    } finally {
+        state.isProcessing = false;
+    }
+};
+
 const adicionarItem = () => state.form.itens.push(novoItem());
 const removerItem = (index) => {
     state.form.itens.splice(index, 1);
@@ -642,6 +676,8 @@ onMounted(async () => {
                                                         v-model="state.form.clienteId"
                                                         :opcoes="state.clientes"
                                                         placeholder="Digite para buscar o cliente..."
+                                                        permitir-cadastro
+                                                        @cadastrar="abrirNovoCliente"
                                                     />
                                                 </div>
                                                 <div class="col-lg-4">
@@ -939,6 +975,122 @@ onMounted(async () => {
                                         >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
+                                    </div>
+
+                                    <!-- Modal: cadastro rápido de cliente (nome + categoria bastam) -->
+                                    <div
+                                        v-if="novoCliente.aberto"
+                                        class="modal-cadastro-rapido"
+                                        @click.self="novoCliente.aberto = false"
+                                    >
+                                        <div class="card shadow" style="width: 26rem">
+                                            <div class="card-header">
+                                                <strong>Novo cliente — cadastro rápido</strong>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-2">
+                                                    <label class="form-label mb-0">Tipo</label>
+                                                    <div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input
+                                                                id="nc-fisico"
+                                                                v-model="novoCliente.tipo"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="FISICO"
+                                                            />
+                                                            <label class="form-check-label" for="nc-fisico"
+                                                                >Pessoa</label
+                                                            >
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input
+                                                                id="nc-juridico"
+                                                                v-model="novoCliente.tipo"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="JURIDICO"
+                                                            />
+                                                            <label class="form-check-label" for="nc-juridico"
+                                                                >Empresa</label
+                                                            >
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label mb-0">Nome</label>
+                                                    <input
+                                                        v-model="novoCliente.nome"
+                                                        type="text"
+                                                        maxlength="60"
+                                                        class="form-control"
+                                                        @keyup.enter="salvarNovoCliente"
+                                                    />
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label mb-0">Categoria</label>
+                                                    <div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input
+                                                                id="nc-final"
+                                                                v-model="novoCliente.categoria"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="F"
+                                                            />
+                                                            <label class="form-check-label" for="nc-final"
+                                                                >Consumidor final</label
+                                                            >
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input
+                                                                id="nc-revenda"
+                                                                v-model="novoCliente.categoria"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="R"
+                                                            />
+                                                            <label class="form-check-label" for="nc-revenda"
+                                                                >Revenda</label
+                                                            >
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label mb-0">Telefone (opcional)</label>
+                                                    <input
+                                                        v-model="novoCliente.telefone"
+                                                        type="text"
+                                                        maxlength="15"
+                                                        class="form-control"
+                                                        placeholder="(35) 99999-9999"
+                                                        @keyup.enter="salvarNovoCliente"
+                                                    />
+                                                </div>
+                                                <div class="form-text">
+                                                    Só nome e categoria são obrigatórios — a ficha completa pode ser
+                                                    preenchida depois. Para virar OS, o cliente precisará de telefone ou
+                                                    e-mail.
+                                                </div>
+                                            </div>
+                                            <div class="card-footer text-end">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-success me-2"
+                                                    :disabled="state.isProcessing"
+                                                    @click="salvarNovoCliente"
+                                                >
+                                                    <i class="bi bi-check-lg"></i>&nbsp;Cadastrar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-outline-secondary"
+                                                    @click="novoCliente.aberto = false"
+                                                >
+                                                    <i class="bi bi-x-lg"></i>&nbsp;Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
 
@@ -1492,3 +1644,15 @@ onMounted(async () => {
         </div>
     </main>
 </template>
+
+<style scoped>
+.modal-cadastro-rapido {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+</style>

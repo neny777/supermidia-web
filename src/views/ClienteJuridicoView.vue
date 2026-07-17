@@ -18,7 +18,9 @@ const schema = yup.object({
     email: yup.string().nullable().optional().email('Email inválido').max(70, 'Máximo de 70 caracteres'),
     telefone: yup
         .string()
-        .required('Telefone é obrigatório')
+        .nullable()
+        .optional()
+        .transform((valor) => (valor === '' ? null : valor))
         .min(14, 'Mínimo de 14 caracteres')
         .max(15, 'Máximo de 15 caracteres'),
     cep: yup
@@ -61,6 +63,8 @@ onMounted(async () => {
 });
 // Função de envio do formulário
 const onSubmit = async (values, { resetForm }) => {
+    // Vazios viram null: telefone/e-mail têm UNIQUE no banco ('' colide, null não)
+    values = { ...values, telefone: values.telefone || null, email: values.email || null };
     // Adiciona a validação no backend
     if (isEditMode.value) {
         // Verifica se houve alterações nos valores do formulário
