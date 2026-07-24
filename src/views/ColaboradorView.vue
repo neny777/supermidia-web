@@ -373,7 +373,7 @@ const fetchFisica = async (pessoaId) => {
                                                                 </ul>
                                                                 <div class="d-grid gap-2">
                                                                     <button
-                                                                        class="btn btn-primary mt-2"
+                                                                        class="btn btn-danger mt-2"
                                                                         @click="pessoas = []"
                                                                     >
                                                                         <i class="bi bi-x-circle"></i
@@ -648,7 +648,7 @@ const fetchFisica = async (pessoaId) => {
                                         <div class="row m-2">
                                             <div class="col-lg-6 text-center">
                                                 <RouterLink to="/colaboradores" class="nav-link"
-                                                    ><button type="button" class="btn btn-danger button-medium m-2">
+                                                    ><button type="button" class="btn btn-secondary button-medium m-2">
                                                         <i class="bi bi-arrow-counterclockwise"></i
                                                         >&nbsp;&nbsp;&nbsp;Voltar
                                                     </button>

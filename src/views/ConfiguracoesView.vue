@@ -263,7 +263,7 @@ const salvar = async () => {
                             <div class="card-footer text-center">
                                 <button
                                     type="button"
-                                    class="btn btn-primary button-medium m-2"
+                                    class="btn btn-success button-medium m-2"
                                     :disabled="state.isProcessing || !state.isReady"
                                     @click="salvar"
                                 >
@@ -271,7 +271,7 @@ const salvar = async () => {
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-primary button-medium m-2"
+                                    class="btn btn-secondary button-medium m-2"
                                     @click="router.push('/home')"
                                 >
                                     <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar

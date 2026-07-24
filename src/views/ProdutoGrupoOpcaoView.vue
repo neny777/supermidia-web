@@ -237,14 +237,14 @@ onMounted(async () => {
                                                 <div class="col-lg-7 text-end">
                                                     <button
                                                         type="button"
-                                                        class="btn btn-outline-secondary btn-sm m-1"
+                                                        class="btn btn-primary btn-sm m-1"
                                                         @click="adicionarContribuicao(opcao)"
                                                     >
                                                         <i class="bi bi-plus-slash-minus"></i> Contribuição
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-outline-primary btn-sm m-1"
+                                                        class="btn btn-primary btn-sm m-1"
                                                         :disabled="!isEditMode"
                                                         @click="irParaComponente('materia', opcaoIndex)"
                                                     >
@@ -252,7 +252,7 @@ onMounted(async () => {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-outline-primary btn-sm m-1"
+                                                        class="btn btn-primary btn-sm m-1"
                                                         :disabled="!isEditMode"
                                                         @click="irParaComponente('servico', opcaoIndex)"
                                                     >
@@ -302,7 +302,7 @@ onMounted(async () => {
                                                     />
                                                     <button
                                                         type="button"
-                                                        class="btn btn-outline-danger"
+                                                        class="btn btn-secondary"
                                                         @click="removerContribuicao(opcao, ci)"
                                                     >
                                                         <i class="bi bi-x"></i>
@@ -407,12 +407,12 @@ onMounted(async () => {
                                     </div>
 
                                     <div class="card-footer text-center">
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="salvar">
+                                        <button type="button" class="btn btn-success button-medium m-2" @click="salvar">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
                                         <button
                                             type="button"
-                                            class="btn btn-primary button-medium m-2"
+                                            class="btn btn-secondary button-medium m-2"
                                             @click="
                                                 router.push({
                                                     name: 'produto',

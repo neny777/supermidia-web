@@ -461,7 +461,7 @@ const onSubmit = async (values, { resetForm }) => {
                                         <div class="row m-2">
                                             <div class="col-lg-6 text-center">
                                                 <RouterLink to="/usuarios" class="nav-link"
-                                                    ><button type="button" class="btn btn-danger button-medium m-2">
+                                                    ><button type="button" class="btn btn-secondary button-medium m-2">
                                                         <i class="bi bi-arrow-counterclockwise"></i
                                                         >&nbsp;&nbsp;&nbsp;Voltar
                                                     </button>

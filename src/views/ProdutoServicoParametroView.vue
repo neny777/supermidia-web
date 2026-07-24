@@ -257,12 +257,12 @@ const onSubmit = async (values) => {
                                     </div>
 
                                     <div class="card-footer text-center">
-                                        <button type="submit" class="btn btn-primary button-medium m-2">
+                                        <button type="submit" class="btn btn-success button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
                                         <button
                                             type="button"
-                                            class="btn btn-primary button-medium m-2"
+                                            class="btn btn-secondary button-medium m-2"
                                             @click="
                                                 router.push({
                                                     name: 'produto-servico-editar',

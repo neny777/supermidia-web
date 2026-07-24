@@ -195,7 +195,7 @@ onMounted(async () => {
                             <!--end::Card Body-->
                             <!--begin::Card Footer-->
                             <div class="card-footer text-center">
-                                <button type="button" class="btn btn-primary button-medium m-2">
+                                <button type="button" class="btn btn-secondary button-medium m-2">
                                     <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                 </button>
                             </div>

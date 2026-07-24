@@ -402,7 +402,7 @@ const onSubmit = async (values) => {
                                                                             />
                                                                             <button
                                                                                 type="button"
-                                                                                class="btn btn-outline-danger"
+                                                                                class="btn btn-secondary"
                                                                                 @click="
                                                                                     removerVinculo(
                                                                                         values,
@@ -417,7 +417,7 @@ const onSubmit = async (values) => {
                                                                         </div>
                                                                         <button
                                                                             type="button"
-                                                                            class="btn btn-outline-secondary btn-sm mt-1"
+                                                                            class="btn btn-primary btn-sm mt-1"
                                                                             @click="
                                                                                 adicionarVinculo(
                                                                                     values,
@@ -444,12 +444,12 @@ const onSubmit = async (values) => {
                                     </div>
 
                                     <div class="card-footer text-center">
-                                        <button type="submit" class="btn btn-primary button-medium m-2">
+                                        <button type="submit" class="btn btn-success button-medium m-2">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
                                         <button
                                             type="button"
-                                            class="btn btn-primary button-medium m-2"
+                                            class="btn btn-secondary button-medium m-2"
                                             @click="voltar()"
                                         >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar

@@ -997,7 +997,7 @@ onMounted(async () => {
                                         </div>
                                     </div>
                                     <div class="card-footer text-center">
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="salvar">
+                                        <button type="button" class="btn btn-success button-medium m-2" @click="salvar">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
                                         <button
@@ -1181,7 +1181,7 @@ onMounted(async () => {
                                                     <button
                                                         v-if="podeEditarCabecalho"
                                                         type="button"
-                                                        class="btn btn-secondary btn-sm ms-1 py-0"
+                                                        class="btn btn-primary btn-sm ms-1 py-0"
                                                         title="Editar referência"
                                                         @click="iniciarEdicaoCampo('referencia')"
                                                     >
@@ -1220,7 +1220,7 @@ onMounted(async () => {
                                                 <button
                                                     v-if="clienteVenda"
                                                     type="button"
-                                                    class="btn btn-secondary btn-sm py-0"
+                                                    class="btn btn-primary btn-sm py-0"
                                                     title="Abrir a ficha do cliente em outra guia"
                                                     @click="abrirFichaCliente"
                                                 >
@@ -1313,7 +1313,7 @@ onMounted(async () => {
                                                             <button
                                                                 v-if="podeAjustarPreco"
                                                                 type="button"
-                                                                class="btn btn-secondary btn-sm ms-2 py-0"
+                                                                class="btn btn-primary btn-sm ms-2 py-0"
                                                                 title="Ajustar preço final"
                                                                 @click="iniciarEdicaoPreco(index, item)"
                                                             >
@@ -1401,7 +1401,7 @@ onMounted(async () => {
                                                                 podeEditarCabecalho && campoEdicao.campo !== 'pagamento'
                                                             "
                                                             type="button"
-                                                            class="btn btn-secondary btn-sm py-0"
+                                                            class="btn btn-primary btn-sm py-0"
                                                             title="Editar forma e condição de pagamento"
                                                             @click="iniciarEdicaoCampo('pagamento')"
                                                         >
@@ -1468,7 +1468,7 @@ onMounted(async () => {
                                                                 podeEditarCabecalho && campoEdicao.campo !== 'entrega'
                                                             "
                                                             type="button"
-                                                            class="btn btn-secondary btn-sm py-0"
+                                                            class="btn btn-primary btn-sm py-0"
                                                             title="Editar forma e prazo de entrega"
                                                             @click="iniciarEdicaoCampo('entrega')"
                                                         >
@@ -1561,7 +1561,7 @@ onMounted(async () => {
                                                 <button
                                                     v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
                                                     type="button"
-                                                    class="btn btn-secondary btn-sm py-0"
+                                                    class="btn btn-primary btn-sm py-0"
                                                     title="Editar observações"
                                                     @click="iniciarEdicaoCampo('observacoes')"
                                                 >
@@ -1629,7 +1629,7 @@ onMounted(async () => {
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
                                             <button
                                                 type="button"
-                                                class="btn btn-secondary button-medium m-2"
+                                                class="btn btn-primary button-medium m-2"
                                                 :disabled="!state.venda.editavel"
                                                 @click="editarVenda"
                                             >

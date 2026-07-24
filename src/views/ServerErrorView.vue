@@ -15,7 +15,7 @@ import logo from '@/assets/img/supermidia-logo-291x226.png';
                 </div>
                 <!--
         <div class="card-footer text-center">
-          <button type="button" class="btn btn-primary button-medium m-2"><i
+          <button type="button" class="btn btn-secondary button-medium m-2"><i
               class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar</button>
         </div>
         -->
