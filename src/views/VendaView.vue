@@ -5,6 +5,7 @@ import axiosInstance from '@/axiosInstance';
 import { showModal } from '@/composables/modalUtils';
 import { showToast } from '@/composables/toastUtils';
 import BuscaSelect from '@/components/BuscaSelect.vue';
+import SelectComOutra from '@/components/SelectComOutra.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -934,45 +935,32 @@ onMounted(async () => {
                                             </div>
                                         </div>
 
-                                        <!-- Pagamento / Entrega / Total ao vivo, como no detalhe -->
+                                        <!-- Pagamento e Entrega: dois blocos por linha, com subtítulos -->
                                         <div class="row g-2 m-2">
-                                            <div class="col-lg-4">
+                                            <div class="col-lg-6">
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="mb-2"><strong>Pagamento</strong></div>
                                                     <div class="row g-2">
                                                         <div class="col-lg-6">
                                                             <label class="form-label small mb-0">Forma</label>
-                                                            <input
+                                                            <SelectComOutra
                                                                 v-model="state.form.formaPagamento"
-                                                                type="text"
-                                                                maxlength="120"
-                                                                class="form-control form-control-sm"
-                                                                placeholder="PIX, dinheiro, cartão..."
+                                                                :opcoes="state.padroes?.formasSugeridas || []"
+                                                                placeholder-outra="Outra forma..."
                                                             />
                                                         </div>
                                                         <div class="col-lg-6">
                                                             <label class="form-label small mb-0">Condição</label>
-                                                            <input
+                                                            <SelectComOutra
                                                                 v-model="state.form.condicaoPagamento"
-                                                                type="text"
-                                                                maxlength="120"
-                                                                class="form-control form-control-sm"
-                                                                placeholder="à vista, 50% + 50%..."
-                                                                list="condicoes-sugeridas"
+                                                                :opcoes="state.padroes?.condicoesSugeridas || []"
+                                                                placeholder-outra="Outra condição..."
                                                             />
-                                                            <datalist id="condicoes-sugeridas">
-                                                                <option
-                                                                    v-for="sugestao in state.padroes
-                                                                        ?.condicoesSugeridas || []"
-                                                                    :key="sugestao"
-                                                                    :value="sugestao"
-                                                                ></option>
-                                                            </datalist>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4">
+                                            <div class="col-lg-6">
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="mb-2"><strong>Entrega</strong></div>
                                                     <div class="row g-2">
@@ -999,15 +987,15 @@ onMounted(async () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4">
-                                                <div class="border rounded p-3 h-100 text-end">
-                                                    <div class="text-muted small">Total sugerido (ao vivo)</div>
-                                                    <div class="fs-5">
-                                                        <strong>{{
-                                                            totalPrevisto != null ? formatBRL(totalPrevisto) : '—'
-                                                        }}</strong>
-                                                    </div>
-                                                </div>
+                                        </div>
+
+                                        <!-- Total ao vivo -->
+                                        <div class="row m-2">
+                                            <div class="col text-end fs-5">
+                                                <span class="text-muted small">Total sugerido (ao vivo): </span>
+                                                <strong>{{
+                                                    totalPrevisto != null ? formatBRL(totalPrevisto) : '—'
+                                                }}</strong>
                                             </div>
                                         </div>
 

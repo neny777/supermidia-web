@@ -14,6 +14,7 @@ const state = reactive({
         fatorVarejo: '',
         formaPagamentoPadrao: '',
         condicaoPagamentoPadrao: '',
+        formasSugeridas: '',
         condicoesSugeridas: '',
         formaEntregaPadrao: '',
         prazoEntregaPadrao: '',
@@ -41,6 +42,7 @@ onMounted(async () => {
         state.form.fatorVarejo = response.data.fatorVarejo;
         state.form.formaPagamentoPadrao = response.data.formaPagamentoPadrao || '';
         state.form.condicaoPagamentoPadrao = response.data.condicaoPagamentoPadrao || '';
+        state.form.formasSugeridas = response.data.formasSugeridas || '';
         state.form.condicoesSugeridas = response.data.condicoesSugeridas || '';
         state.form.formaEntregaPadrao = response.data.formaEntregaPadrao || '';
         state.form.prazoEntregaPadrao = response.data.prazoEntregaPadrao || '';
@@ -62,6 +64,7 @@ const salvar = async () => {
             fatorVarejo: Number(state.form.fatorVarejo),
             formaPagamentoPadrao: state.form.formaPagamentoPadrao,
             condicaoPagamentoPadrao: state.form.condicaoPagamentoPadrao,
+            formasSugeridas: state.form.formasSugeridas,
             condicoesSugeridas: state.form.condicoesSugeridas,
             formaEntregaPadrao: state.form.formaEntregaPadrao,
             prazoEntregaPadrao: state.form.prazoEntregaPadrao,
@@ -205,6 +208,19 @@ const salvar = async () => {
                                         />
                                     </div>
                                     <div class="col-lg-6">
+                                        <label class="form-label"><strong>Formas de pagamento</strong></label>
+                                        <textarea
+                                            v-model="state.form.formasSugeridas"
+                                            maxlength="500"
+                                            rows="3"
+                                            class="form-control"
+                                        ></textarea>
+                                        <div class="form-text">
+                                            Uma por linha — opções do dropdown Forma na venda (PIX, dinheiro,
+                                            cartão...).
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
                                         <label class="form-label"><strong>Condições sugeridas</strong></label>
                                         <textarea
                                             v-model="state.form.condicoesSugeridas"
@@ -213,7 +229,7 @@ const salvar = async () => {
                                             class="form-control"
                                         ></textarea>
                                         <div class="form-text">
-                                            Uma por linha — aparecem como sugestões no campo Condição da venda.
+                                            Uma por linha — opções do dropdown Condição na venda.
                                         </div>
                                     </div>
                                     <div class="col-lg-3">
