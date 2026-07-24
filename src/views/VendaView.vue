@@ -588,6 +588,22 @@ const recalcular = () =>
 const cancelar = () =>
     executarAcao('Cancelar venda', 'Confirma o cancelamento desta venda?', 'cancelar', 'Venda cancelada!');
 
+// PDF gerado no servidor (sem navegador): busca com o token via axios (blob) e
+// abre numa aba nova, de onde o vendedor salva ou envia ao cliente.
+const baixarPdf = async () => {
+    try {
+        state.isProcessing = true;
+        const response = await axiosInstance.get(`/vendas/${route.params.vendaId}/pdf`, { responseType: 'blob' });
+        const url = URL.createObjectURL(response.data);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (error) {
+        showToast('erro', getErrorMessage(error, 'Não foi possível gerar o PDF.'));
+    } finally {
+        state.isProcessing = false;
+    }
+};
+
 onMounted(async () => {
     try {
         state.isProcessing = true;
@@ -1630,6 +1646,14 @@ onMounted(async () => {
                                             "
                                         >
                                             <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline-secondary button-medium m-2"
+                                            :disabled="state.isProcessing"
+                                            @click="baixarPdf"
+                                        >
+                                            <i class="bi bi-file-earmark-pdf"></i>&nbsp;&nbsp;&nbsp;PDF
                                         </button>
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
                                             <button
