@@ -6,22 +6,22 @@ import { showToast } from '@/composables/toastUtils';
 import logo from '@/assets/img/supermidia-logo-291x226.png';
 
 // Dados da empresa no cabeçalho do impresso (futuro: configuração global).
+// Razão social/CNPJ/IE ficam de fora: são informação de documento fiscal.
 const EMPRESA = {
-    nome: 'SuperMídia',
     ramo: 'Comunicação Visual',
     whatsapp: '(35) 98879-1615',
     linhas: [
-        'Supermidia Alfenas Comercio Servicos e Comunicacao LTDA · CNPJ 06.333.873/0001-00 · IE 016305690.00-24',
         'Av. José Paulino da Costa, 693 · Cruz Preta · Alfenas/MG · CEP 37132-204',
         'WhatsApp: (35) 98879-1615 · contato@supermidiaalfenas.com.br',
     ],
 };
 
-// Cláusulas fixas do orçamento impresso (futuro: configuração global).
+// Cláusulas fixas — RESERVADAS para a futura OS impressa (decisão 2026-07-23:
+// orçamento sai sem letras miúdas).
+// eslint-disable-next-line no-unused-vars
 const MIUDINHAS = [
     'O prazo de produção conta a partir da aprovação da arte e da confirmação do pagamento combinado.',
     'Cores impressas podem variar levemente em relação às exibidas em tela.',
-    'Este orçamento não reserva agenda de produção.',
 ];
 
 const route = useRoute();
@@ -71,6 +71,8 @@ onMounted(async () => {
             state.cliente = (clientesResponse.data || []).find((c) => c.id === state.venda.clienteId) || null;
         }
         state.isReady = true;
+        // Título limpo na aba e no cabeçalho que o navegador imprime (se ativado)
+        document.title = `${tituloDocumento.value} ${numeroFormatado.value} — SuperMídia`;
         setTimeout(imprimir, 400);
     } catch (error) {
         showToast('erro', 'Não foi possível carregar a venda para impressão.');
@@ -79,6 +81,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     document.body.classList.remove('modo-impressao');
+    document.title = 'SuperMídia';
 });
 </script>
 
@@ -96,9 +99,12 @@ onBeforeUnmount(() => {
         <div v-if="state.isReady" class="folha">
             <header class="folha-cabecalho">
                 <div class="empresa">
-                    <img :src="logo" alt="Logo Supermídia" class="empresa-logo" />
+                    <img :src="logo" alt="Logo SuperMídia" class="empresa-logo" />
                     <div>
-                        <div class="empresa-nome">{{ EMPRESA.nome }}</div>
+                        <!-- Marca no padrão do cabeçalho do sistema: SUPER (negrito) + MÍDIA (itálico) -->
+                        <div class="empresa-nome">
+                            <span class="marca-super">SUPER</span><span class="marca-midia">MÍDIA</span>
+                        </div>
                         <div class="empresa-ramo">{{ EMPRESA.ramo }}</div>
                         <div v-for="(linha, index) in EMPRESA.linhas" :key="index" class="empresa-contato">
                             {{ linha }}
@@ -106,13 +112,11 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
                 <div class="documento-info">
-                    <div class="documento-titulo">{{ tituloDocumento }}</div>
-                    <div class="documento-numero">Nº {{ numeroFormatado }}</div>
+                    <div class="documento-titulo">{{ tituloDocumento }} {{ numeroFormatado }}</div>
                     <div v-if="state.venda.referencia">
                         <strong>Ref.: {{ state.venda.referencia }}</strong>
                     </div>
                     <div>Data: {{ formatData(state.venda.dataCriacao) }}</div>
-                    <div v-if="state.venda.atendenteNome">Atendente: {{ state.venda.atendenteNome }}</div>
                     <div v-if="isOrcamento">Válido até: {{ formatDia(state.venda.validoAte) }}</div>
                     <div v-if="isCancelado" class="documento-cancelado">CANCELADO</div>
                 </div>
@@ -219,9 +223,6 @@ onBeforeUnmount(() => {
                 </div>
             </section>
             <section v-else class="rodape-orcamento">
-                <ul class="miudinhas">
-                    <li v-for="(clausula, index) in MIUDINHAS" :key="index">{{ clausula }}</li>
-                </ul>
                 <div class="cta">
                     PARA APROVAR: chame no WhatsApp {{ EMPRESA.whatsapp }} informando o nº {{ numeroFormatado }}.
                 </div>
@@ -271,8 +272,17 @@ onBeforeUnmount(() => {
 
 .empresa-nome {
     font-size: 20pt;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-family: Arial, sans-serif;
+}
+
+/* Mesma marca do cabeçalho do sistema (custom.css: .super-bar/.midia-bar) */
+.marca-super {
+    font-weight: bolder;
+}
+
+.marca-midia {
+    font-style: italic;
+    font-weight: normal;
 }
 
 .empresa-ramo {
@@ -291,11 +301,6 @@ onBeforeUnmount(() => {
 }
 
 .documento-titulo {
-    font-size: 13pt;
-    font-weight: 700;
-}
-
-.documento-numero {
     font-size: 13pt;
     font-weight: 700;
 }
@@ -440,31 +445,28 @@ onBeforeUnmount(() => {
     font-size: 10.5pt;
 }
 
-/* Na impressão só a folha existe; regras presas ao body.modo-impressao para
-   não vazarem para o Ctrl+P de outras telas. */
+/* Na impressão só a folha existe. Escondemos o resto com display:none — o
+   visibility antigo preservava a ALTURA dos elementos e gerava uma segunda
+   página em branco. Regras presas ao body.modo-impressao para não vazarem
+   para o Ctrl+P de outras telas. */
 @media print {
-    body.modo-impressao * {
-        visibility: hidden;
+    body.modo-impressao .nao-imprime,
+    body.modo-impressao .app-footer {
+        display: none !important;
     }
 
-    body.modo-impressao .folha,
-    body.modo-impressao .folha * {
-        visibility: visible;
+    body.modo-impressao .imprimir-wrapper {
+        min-height: 0;
+        padding: 0;
+        background: #fff;
     }
 
     body.modo-impressao .folha {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
         max-width: none;
+        min-height: 0;
         margin: 0;
         padding: 0;
         box-shadow: none;
-    }
-
-    body.modo-impressao .nao-imprime {
-        display: none;
     }
 }
 
