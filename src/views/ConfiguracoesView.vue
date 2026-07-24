@@ -12,6 +12,11 @@ const state = reactive({
         edicaoHoras: '',
         pisoMargemPercentual: '', // exibido em %, gravado como fração
         fatorVarejo: '',
+        formaPagamentoPadrao: '',
+        condicaoPagamentoPadrao: '',
+        condicoesSugeridas: '',
+        formaEntregaPadrao: '',
+        prazoEntregaPadrao: '',
     },
     isProcessing: false,
     isReady: false,
@@ -34,6 +39,11 @@ onMounted(async () => {
         state.form.edicaoHoras = response.data.edicaoHoras;
         state.form.pisoMargemPercentual = Number((response.data.pisoMargem * 100).toFixed(2));
         state.form.fatorVarejo = response.data.fatorVarejo;
+        state.form.formaPagamentoPadrao = response.data.formaPagamentoPadrao || '';
+        state.form.condicaoPagamentoPadrao = response.data.condicaoPagamentoPadrao || '';
+        state.form.condicoesSugeridas = response.data.condicoesSugeridas || '';
+        state.form.formaEntregaPadrao = response.data.formaEntregaPadrao || '';
+        state.form.prazoEntregaPadrao = response.data.prazoEntregaPadrao || '';
         state.isReady = true;
     } catch (error) {
         showToast('erro', getErrorMessage(error, 'Erro ao carregar as configurações.'));
@@ -50,6 +60,11 @@ const salvar = async () => {
             edicaoHoras: Number(state.form.edicaoHoras),
             pisoMargem: Number(state.form.pisoMargemPercentual) / 100,
             fatorVarejo: Number(state.form.fatorVarejo),
+            formaPagamentoPadrao: state.form.formaPagamentoPadrao,
+            condicaoPagamentoPadrao: state.form.condicaoPagamentoPadrao,
+            condicoesSugeridas: state.form.condicoesSugeridas,
+            formaEntregaPadrao: state.form.formaEntregaPadrao,
+            prazoEntregaPadrao: state.form.prazoEntregaPadrao,
         });
         showToast('sucesso', 'Configurações salvas — já valem para os próximos cálculos.');
         router.push('/home');
@@ -163,6 +178,61 @@ const salvar = async () => {
                                                 <strong>{{ acrescimoVarejo }}%</strong> acima do atacado.</template
                                             >
                                         </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-1 mb-0">Padrões da venda</h6>
+                                        <div class="form-text">
+                                            Pré-preenchem o formulário de orçamento/OS — o vendedor só altera quando o
+                                            combinado for diferente.
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label"><strong>Forma de pagamento padrão</strong></label>
+                                        <input
+                                            v-model="state.form.formaPagamentoPadrao"
+                                            type="text"
+                                            maxlength="120"
+                                            class="form-control"
+                                        />
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label"><strong>Condição de pagamento padrão</strong></label>
+                                        <input
+                                            v-model="state.form.condicaoPagamentoPadrao"
+                                            type="text"
+                                            maxlength="120"
+                                            class="form-control"
+                                        />
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label"><strong>Condições sugeridas</strong></label>
+                                        <textarea
+                                            v-model="state.form.condicoesSugeridas"
+                                            maxlength="500"
+                                            rows="3"
+                                            class="form-control"
+                                        ></textarea>
+                                        <div class="form-text">
+                                            Uma por linha — aparecem como sugestões no campo Condição da venda.
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label class="form-label"><strong>Forma de entrega padrão</strong></label>
+                                        <input
+                                            v-model="state.form.formaEntregaPadrao"
+                                            type="text"
+                                            maxlength="120"
+                                            class="form-control"
+                                        />
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label class="form-label"><strong>Prazo de entrega padrão</strong></label>
+                                        <input
+                                            v-model="state.form.prazoEntregaPadrao"
+                                            type="text"
+                                            maxlength="60"
+                                            class="form-control"
+                                        />
                                     </div>
                                     <div class="col-12">
                                         <div class="alert alert-info mb-0" role="alert">

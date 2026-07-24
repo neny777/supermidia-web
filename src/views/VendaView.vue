@@ -16,6 +16,7 @@ const state = reactive({
     produtos: [],
     materias: [],
     venda: null,
+    padroes: null,
     form: {
         status: 'ORCAMENTO',
         clienteId: '',
@@ -300,6 +301,16 @@ const validarFormulario = () => {
     if (!state.form.clienteId) {
         return 'Selecione o cliente.';
     }
+    // Orçamento completo responde como paga e quando recebe (padrões já preenchem).
+    if (!state.form.formaPagamento.trim()) {
+        return 'Informe a forma de pagamento.';
+    }
+    if (!state.form.condicaoPagamento.trim()) {
+        return 'Informe a condição de pagamento.';
+    }
+    if (!state.form.prazoEntrega.trim()) {
+        return 'Informe o prazo de entrega.';
+    }
     for (const item of state.form.itens) {
         if (!item.produtoId) {
             return 'Selecione o produto em todos os itens.';
@@ -576,14 +587,16 @@ const cancelar = () =>
 onMounted(async () => {
     try {
         state.isProcessing = true;
-        const [clientesResponse, produtosResponse, materiasResponse] = await Promise.all([
+        const [clientesResponse, produtosResponse, materiasResponse, padroesResponse] = await Promise.all([
             axiosInstance.get('/clientes'),
             axiosInstance.get('/produtos'),
             axiosInstance.get('/materias'),
+            axiosInstance.get('/configuracoes/venda-padroes'),
         ]);
         state.clientes = clientesResponse.data;
         state.produtos = produtosResponse.data;
         state.materias = materiasResponse.data;
+        state.padroes = padroesResponse.data;
 
         if (route.params.vendaId) {
             const response = await axiosInstance.get(`/vendas/${route.params.vendaId}`);
@@ -591,8 +604,15 @@ onMounted(async () => {
             if (isEditVenda.value) {
                 preencherFormularioParaEdicao(response.data);
             }
-        } else if (route.query.tipo === 'os') {
-            state.form.status = 'ORDEM_SERVICO';
+        } else {
+            if (route.query.tipo === 'os') {
+                state.form.status = 'ORDEM_SERVICO';
+            }
+            // Venda nova nasce com os padrões da loja (Configurações) preenchidos.
+            state.form.formaPagamento = state.padroes.formaPagamento || '';
+            state.form.condicaoPagamento = state.padroes.condicaoPagamento || '';
+            state.form.formaEntrega = state.padroes.formaEntrega || '';
+            state.form.prazoEntrega = state.padroes.prazoEntrega || '';
         }
         state.isReady = true;
     } catch (error) {
@@ -630,9 +650,11 @@ onMounted(async () => {
                     <div class="col-12">
                         <div class="card">
                             <div class="position-relative">
-                                <div v-if="state.isProcessing"
+                                <div
+                                    v-if="state.isProcessing"
                                     class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10">
+                                    style="z-index: 10"
+                                >
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Processando...</span>
                                     </div>
@@ -647,8 +669,8 @@ onMounted(async () => {
                                                     isEditVenda
                                                         ? 'Editar Venda'
                                                         : state.form.status === 'ORDEM_SERVICO'
-                                                            ? 'Nova Ordem de Serviço'
-                                                            : 'Novo Orçamento'
+                                                          ? 'Nova Ordem de Serviço'
+                                                          : 'Novo Orçamento'
                                                 }}
                                             </h5>
                                         </div>
@@ -670,15 +692,23 @@ onMounted(async () => {
                                                 </div>
                                                 <div class="col-lg-5">
                                                     <label class="form-label">Cliente</label>
-                                                    <BuscaSelect v-model="state.form.clienteId" :opcoes="state.clientes"
-                                                        placeholder="Digite para buscar o cliente..." permitir-cadastro
-                                                        @cadastrar="abrirNovoCliente" />
+                                                    <BuscaSelect
+                                                        v-model="state.form.clienteId"
+                                                        :opcoes="state.clientes"
+                                                        placeholder="Digite para buscar o cliente..."
+                                                        permitir-cadastro
+                                                        @cadastrar="abrirNovoCliente"
+                                                    />
                                                 </div>
                                                 <div class="col-lg-4">
                                                     <label class="form-label">Referência</label>
-                                                    <input v-model="state.form.referencia" type="text" maxlength="120"
+                                                    <input
+                                                        v-model="state.form.referencia"
+                                                        type="text"
+                                                        maxlength="120"
                                                         class="form-control"
-                                                        placeholder="ex.: adesivos ursinhos carinhosos" />
+                                                        placeholder="ex.: adesivos ursinhos carinhosos"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -687,18 +717,25 @@ onMounted(async () => {
                                         <div class="border rounded p-3 m-2 mt-3">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <strong>Itens</strong>
-                                                <button type="button" class="btn btn-primary button-medium"
-                                                    @click="adicionarItem">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-primary button-medium"
+                                                    @click="adicionarItem"
+                                                >
                                                     <i class="bi bi-plus"></i>&nbsp;&nbsp;&nbsp;Adicionar item
                                                 </button>
                                             </div>
 
-                                            <div v-for="(item, index) in state.form.itens" :key="index"
-                                                class="border rounded p-3 mt-3">
+                                            <div
+                                                v-for="(item, index) in state.form.itens"
+                                                :key="index"
+                                                class="border rounded p-3 mt-3"
+                                            >
                                                 <div class="row g-2 align-items-end">
                                                     <div class="col-lg-4">
                                                         <label class="form-label">Produto</label>
-                                                        <BuscaSelect :model-value="item.produtoId"
+                                                        <BuscaSelect
+                                                            :model-value="item.produtoId"
                                                             :opcoes="state.produtos"
                                                             placeholder="Digite para buscar o produto..."
                                                             @update:model-value="
@@ -706,26 +743,45 @@ onMounted(async () => {
                                                                     item.produtoId = valor;
                                                                     aoTrocarProduto(item);
                                                                 }
-                                                            " />
+                                                            "
+                                                        />
                                                     </div>
                                                     <div class="col-lg-2">
                                                         <label class="form-label">Altura (cm)</label>
-                                                        <input v-model="item.altura" type="number" step="0.01"
-                                                            min="0.01" class="form-control" />
+                                                        <input
+                                                            v-model="item.altura"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
                                                     </div>
                                                     <div class="col-lg-2">
                                                         <label class="form-label">Largura (cm)</label>
-                                                        <input v-model="item.largura" type="number" step="0.01"
-                                                            min="0.01" class="form-control" />
+                                                        <input
+                                                            v-model="item.largura"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
                                                     </div>
                                                     <div class="col-lg-2">
                                                         <label class="form-label">Qtde</label>
-                                                        <input v-model="item.quantidade" type="number" step="0.01"
-                                                            min="0.01" class="form-control" />
+                                                        <input
+                                                            v-model="item.quantidade"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            class="form-control"
+                                                        />
                                                     </div>
                                                     <div class="col-lg-2 text-end">
-                                                        <button type="button" class="btn btn-danger"
-                                                            @click="removerItem(index)">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger"
+                                                            @click="removerItem(index)"
+                                                        >
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </div>
@@ -733,33 +789,49 @@ onMounted(async () => {
 
                                                 <!-- Medidas extras declaradas pelo produto -->
                                                 <div v-if="medidasDe(item).length" class="row g-2 mt-1">
-                                                    <div v-for="medida in medidasDe(item)" :key="medida.id"
-                                                        class="col-lg-3">
+                                                    <div
+                                                        v-for="medida in medidasDe(item)"
+                                                        :key="medida.id"
+                                                        class="col-lg-3"
+                                                    >
                                                         <label class="form-label">
                                                             {{ medida.nome }}
                                                             <span v-if="medida.unidade">({{ medida.unidade }})</span>
                                                             <span v-if="medida.obrigatoria" class="text-danger">*</span>
-                                                            <small v-if="medida.minimo != null || medida.maximo != null"
-                                                                class="text-muted">
+                                                            <small
+                                                                v-if="medida.minimo != null || medida.maximo != null"
+                                                                class="text-muted"
+                                                            >
                                                                 [{{ medida.minimo ?? '…' }} a
                                                                 {{ medida.maximo ?? '…' }}]
                                                             </small>
                                                         </label>
-                                                        <input v-model="item.medidas[medida.nome]" type="number"
-                                                            step="0.01" class="form-control" />
+                                                        <input
+                                                            v-model="item.medidas[medida.nome]"
+                                                            type="number"
+                                                            step="0.01"
+                                                            class="form-control"
+                                                        />
                                                     </div>
                                                 </div>
 
                                                 <!-- Escolha do material dos slots -->
                                                 <div v-if="slotsDe(item).length" class="row g-2 mt-1">
                                                     <div v-for="slot in slotsDe(item)" :key="slot.id" class="col-lg-4">
-                                                        <label class="form-label">Material ({{ slot.grupoSlot }})
-                                                            <span class="text-danger">*</span></label>
-                                                        <select v-model="item.escolhasMateria[slot.id]"
-                                                            class="form-select">
+                                                        <label class="form-label"
+                                                            >Material ({{ slot.grupoSlot }})
+                                                            <span class="text-danger">*</span></label
+                                                        >
+                                                        <select
+                                                            v-model="item.escolhasMateria[slot.id]"
+                                                            class="form-select"
+                                                        >
                                                             <option value="">Selecione</option>
-                                                            <option v-for="materia in materiasDoGrupo(slot.grupoSlot)"
-                                                                :key="materia.id" :value="materia.id">
+                                                            <option
+                                                                v-for="materia in materiasDoGrupo(slot.grupoSlot)"
+                                                                :key="materia.id"
+                                                                :value="materia.id"
+                                                            >
                                                                 {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{
                                                                     materia.unidade
                                                                 }}
@@ -770,17 +842,28 @@ onMounted(async () => {
 
                                                 <!-- Grupos de opções (acabamentos/seleções) -->
                                                 <div v-if="gruposDe(item).length" class="row g-2 mt-1">
-                                                    <div v-for="grupo in gruposDe(item)" :key="grupo.id"
-                                                        class="col-lg-3">
-                                                        <label class="form-label">{{ grupo.nome }}
-                                                            <span v-if="grupo.obrigatorio"
-                                                                class="text-danger">*</span></label>
-                                                        <select v-model="item.escolhasOpcao[grupo.id]"
-                                                            class="form-select">
+                                                    <div
+                                                        v-for="grupo in gruposDe(item)"
+                                                        :key="grupo.id"
+                                                        class="col-lg-3"
+                                                    >
+                                                        <label class="form-label"
+                                                            >{{ grupo.nome }}
+                                                            <span v-if="grupo.obrigatorio" class="text-danger"
+                                                                >*</span
+                                                            ></label
+                                                        >
+                                                        <select
+                                                            v-model="item.escolhasOpcao[grupo.id]"
+                                                            class="form-select"
+                                                        >
                                                             <option v-if="!grupo.obrigatorio" value="">Nenhum</option>
                                                             <option v-else value="" disabled>Selecione</option>
-                                                            <option v-for="opcao in grupo.opcoes" :key="opcao.id"
-                                                                :value="opcao.id">
+                                                            <option
+                                                                v-for="opcao in grupo.opcoes"
+                                                                :key="opcao.id"
+                                                                :value="opcao.id"
+                                                            >
                                                                 {{ opcao.nome }}
                                                             </option>
                                                         </select>
@@ -790,12 +873,19 @@ onMounted(async () => {
                                                 <!-- Preço ao vivo do item -->
                                                 <div class="row mt-2">
                                                     <div class="col text-end">
-                                                        <span v-if="previews[index]?.carregando"
-                                                            class="text-muted small">calculando…</span>
-                                                        <span v-else-if="previews[index]?.erro"
-                                                            class="text-danger small">{{ previews[index].erro }}</span>
+                                                        <span
+                                                            v-if="previews[index]?.carregando"
+                                                            class="text-muted small"
+                                                            >calculando…</span
+                                                        >
+                                                        <span
+                                                            v-else-if="previews[index]?.erro"
+                                                            class="text-danger small"
+                                                            >{{ previews[index].erro }}</span
+                                                        >
                                                         <strong v-else-if="previews[index]?.preco != null">
-                                                            {{ formatBRL(previews[index].preco) }}</strong>
+                                                            {{ formatBRL(previews[index].preco) }}</strong
+                                                        >
                                                         <span v-else-if="previews[index]?.varejo != null" class="small">
                                                             Varejo
                                                             <strong>{{ formatBRL(previews[index].varejo) }}</strong> ·
@@ -816,15 +906,32 @@ onMounted(async () => {
                                                     <div class="row g-2">
                                                         <div class="col-lg-6">
                                                             <label class="form-label small mb-0">Forma</label>
-                                                            <input v-model="state.form.formaPagamento" type="text"
-                                                                maxlength="120" class="form-control form-control-sm"
-                                                                placeholder="PIX, dinheiro, cartão..." />
+                                                            <input
+                                                                v-model="state.form.formaPagamento"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="PIX, dinheiro, cartão..."
+                                                            />
                                                         </div>
                                                         <div class="col-lg-6">
                                                             <label class="form-label small mb-0">Condição</label>
-                                                            <input v-model="state.form.condicaoPagamento" type="text"
-                                                                maxlength="120" class="form-control form-control-sm"
-                                                                placeholder="à vista, 50% + 50%..." />
+                                                            <input
+                                                                v-model="state.form.condicaoPagamento"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="à vista, 50% + 50%..."
+                                                                list="condicoes-sugeridas"
+                                                            />
+                                                            <datalist id="condicoes-sugeridas">
+                                                                <option
+                                                                    v-for="sugestao in state.padroes
+                                                                        ?.condicoesSugeridas || []"
+                                                                    :key="sugestao"
+                                                                    :value="sugestao"
+                                                                ></option>
+                                                            </datalist>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -835,15 +942,23 @@ onMounted(async () => {
                                                     <div class="row g-2">
                                                         <div class="col-lg-7">
                                                             <label class="form-label small mb-0">Forma</label>
-                                                            <input v-model="state.form.formaEntrega" type="text"
-                                                                maxlength="120" class="form-control form-control-sm"
-                                                                placeholder="retirada, entrega, instalação..." />
+                                                            <input
+                                                                v-model="state.form.formaEntrega"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="retirada, entrega, instalação..."
+                                                            />
                                                         </div>
                                                         <div class="col-lg-5">
                                                             <label class="form-label small mb-0">Prazo</label>
-                                                            <input v-model="state.form.prazoEntrega" type="text"
-                                                                maxlength="60" class="form-control form-control-sm"
-                                                                placeholder="5 dias úteis..." />
+                                                            <input
+                                                                v-model="state.form.prazoEntrega"
+                                                                type="text"
+                                                                maxlength="60"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="5 dias úteis..."
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -854,7 +969,7 @@ onMounted(async () => {
                                                     <div class="fs-5">
                                                         <strong>{{
                                                             totalPrevisto != null ? formatBRL(totalPrevisto) : '—'
-                                                            }}</strong>
+                                                        }}</strong>
                                                     </div>
                                                 </div>
                                             </div>
@@ -863,29 +978,40 @@ onMounted(async () => {
                                         <!-- Observações em linha própria, como no detalhe -->
                                         <div class="border rounded p-3 m-2">
                                             <div class="mb-2"><strong>Observações</strong></div>
-                                            <textarea v-model="state.form.observacoes" maxlength="1000" rows="2"
+                                            <textarea
+                                                v-model="state.form.observacoes"
+                                                maxlength="1000"
+                                                rows="2"
                                                 class="form-control"
-                                                placeholder="instruções de produção, detalhes combinados..."></textarea>
+                                                placeholder="instruções de produção, detalhes combinados..."
+                                            ></textarea>
                                         </div>
                                     </div>
                                     <div class="card-footer text-center">
                                         <button type="button" class="btn btn-primary button-medium m-2" @click="salvar">
                                             <i class="bi bi-floppy"></i>&nbsp;&nbsp;&nbsp;Salvar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2" @click="
-                                            router.push(
-                                                state.form.status === 'ORDEM_SERVICO'
-                                                    ? '/ordens-servico'
-                                                    : '/orcamentos'
-                                            )
-                                            ">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="
+                                                router.push(
+                                                    state.form.status === 'ORDEM_SERVICO'
+                                                        ? '/ordens-servico'
+                                                        : '/orcamentos'
+                                                )
+                                            "
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                     </div>
 
                                     <!-- Modal: cadastro rápido de cliente (nome + categoria bastam) -->
-                                    <div v-if="novoCliente.aberto" class="modal-cadastro-rapido"
-                                        @click.self="novoCliente.aberto = false">
+                                    <div
+                                        v-if="novoCliente.aberto"
+                                        class="modal-cadastro-rapido"
+                                        @click.self="novoCliente.aberto = false"
+                                    >
                                         <div class="card shadow" style="width: 26rem">
                                             <div class="card-header">
                                                 <strong>Novo cliente — cadastro rápido</strong>
@@ -895,47 +1021,80 @@ onMounted(async () => {
                                                     <label class="form-label mb-0">Tipo</label>
                                                     <div>
                                                         <div class="form-check form-check-inline">
-                                                            <input id="nc-fisico" v-model="novoCliente.tipo"
-                                                                class="form-check-input" type="radio" value="FISICO" />
-                                                            <label class="form-check-label"
-                                                                for="nc-fisico">Pessoa</label>
+                                                            <input
+                                                                id="nc-fisico"
+                                                                v-model="novoCliente.tipo"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="FISICO"
+                                                            />
+                                                            <label class="form-check-label" for="nc-fisico"
+                                                                >Pessoa</label
+                                                            >
                                                         </div>
                                                         <div class="form-check form-check-inline">
-                                                            <input id="nc-juridico" v-model="novoCliente.tipo"
-                                                                class="form-check-input" type="radio"
-                                                                value="JURIDICO" />
-                                                            <label class="form-check-label"
-                                                                for="nc-juridico">Empresa</label>
+                                                            <input
+                                                                id="nc-juridico"
+                                                                v-model="novoCliente.tipo"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="JURIDICO"
+                                                            />
+                                                            <label class="form-check-label" for="nc-juridico"
+                                                                >Empresa</label
+                                                            >
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="mb-2">
                                                     <label class="form-label mb-0">Nome</label>
-                                                    <input v-model="novoCliente.nome" type="text" maxlength="60"
-                                                        class="form-control" @keyup.enter="salvarNovoCliente" />
+                                                    <input
+                                                        v-model="novoCliente.nome"
+                                                        type="text"
+                                                        maxlength="60"
+                                                        class="form-control"
+                                                        @keyup.enter="salvarNovoCliente"
+                                                    />
                                                 </div>
                                                 <div class="mb-2">
                                                     <label class="form-label mb-0">Categoria</label>
                                                     <div>
                                                         <div class="form-check form-check-inline">
-                                                            <input id="nc-final" v-model="novoCliente.categoria"
-                                                                class="form-check-input" type="radio" value="F" />
-                                                            <label class="form-check-label" for="nc-final">Consumidor
-                                                                final</label>
+                                                            <input
+                                                                id="nc-final"
+                                                                v-model="novoCliente.categoria"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="F"
+                                                            />
+                                                            <label class="form-check-label" for="nc-final"
+                                                                >Consumidor final</label
+                                                            >
                                                         </div>
                                                         <div class="form-check form-check-inline">
-                                                            <input id="nc-revenda" v-model="novoCliente.categoria"
-                                                                class="form-check-input" type="radio" value="R" />
-                                                            <label class="form-check-label"
-                                                                for="nc-revenda">Revenda</label>
+                                                            <input
+                                                                id="nc-revenda"
+                                                                v-model="novoCliente.categoria"
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                value="R"
+                                                            />
+                                                            <label class="form-check-label" for="nc-revenda"
+                                                                >Revenda</label
+                                                            >
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="mb-2">
                                                     <label class="form-label mb-0">Telefone (opcional)</label>
-                                                    <input v-model="novoCliente.telefone" type="text" maxlength="15"
-                                                        class="form-control" placeholder="(35) 99999-9999"
-                                                        @keyup.enter="salvarNovoCliente" />
+                                                    <input
+                                                        v-model="novoCliente.telefone"
+                                                        type="text"
+                                                        maxlength="15"
+                                                        class="form-control"
+                                                        placeholder="(35) 99999-9999"
+                                                        @keyup.enter="salvarNovoCliente"
+                                                    />
                                                 </div>
                                                 <div class="form-text">
                                                     Só nome e categoria são obrigatórios — a ficha completa pode ser
@@ -944,12 +1103,19 @@ onMounted(async () => {
                                                 </div>
                                             </div>
                                             <div class="card-footer text-end">
-                                                <button type="button" class="btn btn-success me-2"
-                                                    :disabled="state.isProcessing" @click="salvarNovoCliente">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-success me-2"
+                                                    :disabled="state.isProcessing"
+                                                    @click="salvarNovoCliente"
+                                                >
                                                     <i class="bi bi-check-lg"></i>&nbsp;Cadastrar
                                                 </button>
-                                                <button type="button" class="btn btn-outline-secondary"
-                                                    @click="novoCliente.aberto = false">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-outline-secondary"
+                                                    @click="novoCliente.aberto = false"
+                                                >
                                                     <i class="bi bi-x-lg"></i>&nbsp;Cancelar
                                                 </button>
                                             </div>
@@ -964,33 +1130,52 @@ onMounted(async () => {
                                         <div class="row g-2 w-100 align-items-center">
                                             <div class="col-lg-2">
                                                 <h5 class="mb-0">{{ tituloVenda }}</h5>
-                                                <span v-if="badgeSituacao" class="badge"
-                                                    :class="badgeSituacao.classe">{{ badgeSituacao.texto }}</span>
+                                                <span
+                                                    v-if="badgeSituacao"
+                                                    class="badge"
+                                                    :class="badgeSituacao.classe"
+                                                    >{{ badgeSituacao.texto }}</span
+                                                >
                                             </div>
                                             <div class="col-lg-6">
                                                 <div class="text-muted small">Referência</div>
                                                 <template v-if="campoEdicao.campo === 'referencia'">
                                                     <div class="input-group input-group-sm" style="max-width: 26rem">
-                                                        <input v-model="campoEdicao.valor" type="text" maxlength="120"
-                                                            class="form-control" placeholder="referência do trabalho"
+                                                        <input
+                                                            v-model="campoEdicao.valor"
+                                                            type="text"
+                                                            maxlength="120"
+                                                            class="form-control"
+                                                            placeholder="referência do trabalho"
                                                             @keyup.enter="salvarCampo"
-                                                            @keyup.esc="cancelarEdicaoCampo" />
-                                                        <button type="button" class="btn btn-success"
-                                                            :disabled="state.isProcessing" @click="salvarCampo">
+                                                            @keyup.esc="cancelarEdicaoCampo"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success"
+                                                            :disabled="state.isProcessing"
+                                                            @click="salvarCampo"
+                                                        >
                                                             <i class="bi bi-check-lg"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-outline-secondary"
-                                                            @click="cancelarEdicaoCampo">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-outline-secondary"
+                                                            @click="cancelarEdicaoCampo"
+                                                        >
                                                             <i class="bi bi-x-lg"></i>
                                                         </button>
                                                     </div>
                                                 </template>
                                                 <div v-else class="fw-semibold">
                                                     {{ state.venda.referencia || '—' }}
-                                                    <button v-if="podeEditarCabecalho" type="button"
+                                                    <button
+                                                        v-if="podeEditarCabecalho"
+                                                        type="button"
                                                         class="btn btn-outline-secondary btn-sm ms-1 py-0"
                                                         title="Editar referência"
-                                                        @click="iniciarEdicaoCampo('referencia')">
+                                                        @click="iniciarEdicaoCampo('referencia')"
+                                                    >
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
                                                 </div>
@@ -1023,10 +1208,13 @@ onMounted(async () => {
                                         <div class="border rounded p-3 m-2">
                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                 <strong>Cliente</strong>
-                                                <button v-if="clienteVenda" type="button"
+                                                <button
+                                                    v-if="clienteVenda"
+                                                    type="button"
                                                     class="btn btn-outline-secondary btn-sm py-0"
                                                     title="Abrir a ficha do cliente em outra guia"
-                                                    @click="abrirFichaCliente">
+                                                    @click="abrirFichaCliente"
+                                                >
                                                     <i class="bi bi-box-arrow-up-right"></i>&nbsp;Ficha
                                                 </button>
                                             </div>
@@ -1055,8 +1243,9 @@ onMounted(async () => {
                                                     <div class="text-muted small">Cidade</div>
                                                     <div>
                                                         {{ clienteVenda?.municipio || '—'
-                                                        }}<template v-if="clienteVenda?.uf">/{{ clienteVenda.uf
-                                                            }}</template>
+                                                        }}<template v-if="clienteVenda?.uf"
+                                                            >/{{ clienteVenda.uf }}</template
+                                                        >
                                                     </div>
                                                 </div>
                                             </div>
@@ -1065,8 +1254,12 @@ onMounted(async () => {
                                         <!-- 3 · Itens: contêiner único; itens separados por divisórias -->
                                         <div class="border rounded p-3 m-2">
                                             <div class="mb-2"><strong>Itens</strong></div>
-                                            <div v-for="(item, index) in state.venda.itens" :key="index" class="py-2"
-                                                :class="{ 'border-top': index > 0 }">
+                                            <div
+                                                v-for="(item, index) in state.venda.itens"
+                                                :key="index"
+                                                class="py-2"
+                                                :class="{ 'border-top': index > 0 }"
+                                            >
                                                 <div class="row">
                                                     <div class="col-lg-9">
                                                         <strong>{{ item.descricao || item.produtoNome }}</strong>
@@ -1074,30 +1267,47 @@ onMounted(async () => {
                                                     <div class="col-lg-3 text-end">
                                                         <template v-if="precoEdicao.index === index">
                                                             <div class="input-group input-group-sm justify-content-end">
-                                                                <input type="number" step="0.01" min="0.01"
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min="0.01"
                                                                     class="form-control text-end"
-                                                                    style="max-width: 8rem" v-model="precoEdicao.valor"
+                                                                    style="max-width: 8rem"
+                                                                    v-model="precoEdicao.valor"
                                                                     @keyup.enter="salvarPrecoFinal(item)"
-                                                                    @keyup.esc="cancelarEdicaoPreco" />
-                                                                <button type="button" class="btn btn-success"
+                                                                    @keyup.esc="cancelarEdicaoPreco"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-success"
                                                                     :disabled="state.isProcessing"
-                                                                    @click="salvarPrecoFinal(item)">
+                                                                    @click="salvarPrecoFinal(item)"
+                                                                >
                                                                     <i class="bi bi-check-lg"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-outline-secondary"
-                                                                    @click="cancelarEdicaoPreco">
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-outline-secondary"
+                                                                    @click="cancelarEdicaoPreco"
+                                                                >
                                                                     <i class="bi bi-x-lg"></i>
                                                                 </button>
                                                             </div>
                                                         </template>
                                                         <template v-else>
-                                                            <span v-if="precoAjustado(item)"
-                                                                class="badge text-bg-info me-2">ajustado</span>
+                                                            <span
+                                                                v-if="precoAjustado(item)"
+                                                                class="badge text-bg-info me-2"
+                                                                >ajustado</span
+                                                            >
                                                             <strong>{{ formatBRL(item.precoFinal) }}</strong>
-                                                            <button v-if="podeAjustarPreco" type="button"
+                                                            <button
+                                                                v-if="podeAjustarPreco"
+                                                                type="button"
                                                                 class="btn btn-outline-secondary btn-sm ms-2 py-0"
                                                                 title="Ajustar preço final"
-                                                                @click="iniciarEdicaoPreco(index, item)">
+                                                                @click="iniciarEdicaoPreco(index, item)"
+                                                            >
                                                                 <i class="bi bi-pencil"></i>
                                                             </button>
                                                         </template>
@@ -1106,26 +1316,37 @@ onMounted(async () => {
                                                 <div class="row text-muted small mb-2">
                                                     <div class="col">
                                                         Sugerido: {{ formatBRL(item.precoSugerido) }}
-                                                        <button v-if="temDadosDeCusto(item)" type="button"
+                                                        <button
+                                                            v-if="temDadosDeCusto(item)"
+                                                            type="button"
                                                             class="btn btn-outline-secondary btn-sm ms-2 py-0"
-                                                            @click="toggleDetalhes(index)">
-                                                            <i class="bi" :class="detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'
-                                                                "></i>
+                                                            @click="toggleDetalhes(index)"
+                                                        >
+                                                            <i
+                                                                class="bi"
+                                                                :class="
+                                                                    detalhesAbertos[index] ? 'bi-eye-slash' : 'bi-eye'
+                                                                "
+                                                            ></i>
                                                             {{
                                                                 detalhesAbertos[index] ? 'Ocultar detalhes' : 'Detalhes'
                                                             }}
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div v-if="detalhesAbertos[index] && item.custoTotal != null"
-                                                    class="row text-muted small mb-2">
+                                                <div
+                                                    v-if="detalhesAbertos[index] && item.custoTotal != null"
+                                                    class="row text-muted small mb-2"
+                                                >
                                                     <div class="col">
                                                         Custo: {{ formatBRL(item.custoTotal) }} · Margem:
                                                         {{ item.markupAplicado }}%
                                                     </div>
                                                 </div>
-                                                <div v-if="detalhesAbertos[index] && item.detalhes?.length"
-                                                    class="table-responsive">
+                                                <div
+                                                    v-if="detalhesAbertos[index] && item.detalhes?.length"
+                                                    class="table-responsive"
+                                                >
                                                     <table class="table table-sm table-bordered mb-0">
                                                         <thead>
                                                             <tr>
@@ -1142,7 +1363,8 @@ onMounted(async () => {
                                                                 <td>
                                                                     {{ d.nome }}
                                                                     <small v-if="d.opcaoNome" class="text-muted">
-                                                                        ({{ d.opcaoNome }})</small>
+                                                                        ({{ d.opcaoNome }})</small
+                                                                    >
                                                                 </td>
                                                                 <td>{{ d.tipoItem }}</td>
                                                                 <td class="text-end">{{ d.quantidadeCalculada }}</td>
@@ -1165,37 +1387,55 @@ onMounted(async () => {
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                         <strong>Pagamento</strong>
-                                                        <button v-if="
-                                                            podeEditarCabecalho && campoEdicao.campo !== 'pagamento'
-                                                        " type="button"
+                                                        <button
+                                                            v-if="
+                                                                podeEditarCabecalho && campoEdicao.campo !== 'pagamento'
+                                                            "
+                                                            type="button"
                                                             class="btn btn-outline-secondary btn-sm py-0"
                                                             title="Editar forma e condição de pagamento"
-                                                            @click="iniciarEdicaoCampo('pagamento')">
+                                                            @click="iniciarEdicaoCampo('pagamento')"
+                                                        >
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
                                                     </div>
                                                     <div v-if="campoEdicao.campo === 'pagamento'" class="row g-2">
                                                         <div class="col-lg-5">
-                                                            <input v-model="campoEdicao.valor" type="text"
-                                                                maxlength="120" class="form-control form-control-sm"
+                                                            <input
+                                                                v-model="campoEdicao.valor"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
                                                                 placeholder="forma: PIX, dinheiro..."
                                                                 @keyup.enter="salvarCampo"
-                                                                @keyup.esc="cancelarEdicaoCampo" />
+                                                                @keyup.esc="cancelarEdicaoCampo"
+                                                            />
                                                         </div>
                                                         <div class="col-lg-4">
-                                                            <input v-model="campoEdicao.valorExtra" type="text"
-                                                                maxlength="120" class="form-control form-control-sm"
-                                                                placeholder="condição" @keyup.enter="salvarCampo"
-                                                                @keyup.esc="cancelarEdicaoCampo" />
+                                                            <input
+                                                                v-model="campoEdicao.valorExtra"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="condição"
+                                                                @keyup.enter="salvarCampo"
+                                                                @keyup.esc="cancelarEdicaoCampo"
+                                                            />
                                                         </div>
                                                         <div class="col-lg-3 text-end">
-                                                            <button type="button" class="btn btn-success btn-sm me-1"
-                                                                :disabled="state.isProcessing" @click="salvarCampo">
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-success btn-sm me-1"
+                                                                :disabled="state.isProcessing"
+                                                                @click="salvarCampo"
+                                                            >
                                                                 <i class="bi bi-check-lg"></i>
                                                             </button>
-                                                            <button type="button"
+                                                            <button
+                                                                type="button"
                                                                 class="btn btn-outline-secondary btn-sm"
-                                                                @click="cancelarEdicaoCampo">
+                                                                @click="cancelarEdicaoCampo"
+                                                            >
                                                                 <i class="bi bi-x-lg"></i>
                                                             </button>
                                                         </div>
@@ -1214,37 +1454,55 @@ onMounted(async () => {
                                                 <div class="border rounded p-3 h-100">
                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                         <strong>Entrega</strong>
-                                                        <button v-if="
-                                                            podeEditarCabecalho && campoEdicao.campo !== 'entrega'
-                                                        " type="button"
+                                                        <button
+                                                            v-if="
+                                                                podeEditarCabecalho && campoEdicao.campo !== 'entrega'
+                                                            "
+                                                            type="button"
                                                             class="btn btn-outline-secondary btn-sm py-0"
                                                             title="Editar forma e prazo de entrega"
-                                                            @click="iniciarEdicaoCampo('entrega')">
+                                                            @click="iniciarEdicaoCampo('entrega')"
+                                                        >
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
                                                     </div>
                                                     <div v-if="campoEdicao.campo === 'entrega'" class="row g-2">
                                                         <div class="col-lg-7">
-                                                            <input v-model="campoEdicao.valor" type="text"
-                                                                maxlength="120" class="form-control form-control-sm"
+                                                            <input
+                                                                v-model="campoEdicao.valor"
+                                                                type="text"
+                                                                maxlength="120"
+                                                                class="form-control form-control-sm"
                                                                 placeholder="forma: retirada, entrega, instalação..."
                                                                 @keyup.enter="salvarCampo"
-                                                                @keyup.esc="cancelarEdicaoCampo" />
+                                                                @keyup.esc="cancelarEdicaoCampo"
+                                                            />
                                                         </div>
                                                         <div class="col-lg-3">
-                                                            <input v-model="campoEdicao.valorExtra" type="text"
-                                                                maxlength="60" class="form-control form-control-sm"
-                                                                placeholder="prazo" @keyup.enter="salvarCampo"
-                                                                @keyup.esc="cancelarEdicaoCampo" />
+                                                            <input
+                                                                v-model="campoEdicao.valorExtra"
+                                                                type="text"
+                                                                maxlength="60"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="prazo"
+                                                                @keyup.enter="salvarCampo"
+                                                                @keyup.esc="cancelarEdicaoCampo"
+                                                            />
                                                         </div>
                                                         <div class="col-lg-2 text-end">
-                                                            <button type="button" class="btn btn-success btn-sm me-1"
-                                                                :disabled="state.isProcessing" @click="salvarCampo">
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-success btn-sm me-1"
+                                                                :disabled="state.isProcessing"
+                                                                @click="salvarCampo"
+                                                            >
                                                                 <i class="bi bi-check-lg"></i>
                                                             </button>
-                                                            <button type="button"
+                                                            <button
+                                                                type="button"
                                                                 class="btn btn-outline-secondary btn-sm"
-                                                                @click="cancelarEdicaoCampo">
+                                                                @click="cancelarEdicaoCampo"
+                                                            >
                                                                 <i class="bi bi-x-lg"></i>
                                                             </button>
                                                         </div>
@@ -1265,14 +1523,19 @@ onMounted(async () => {
                                                         Total sugerido: {{ formatBRL(resumoFinanceiro.sugerido) }}
                                                         <template v-if="resumoFinanceiro.ajuste !== 0">
                                                             ·
-                                                            <span :class="resumoFinanceiro.ajuste < 0
-                                                                    ? 'text-success'
-                                                                    : 'text-danger'
-                                                                ">
+                                                            <span
+                                                                :class="
+                                                                    resumoFinanceiro.ajuste < 0
+                                                                        ? 'text-success'
+                                                                        : 'text-danger'
+                                                                "
+                                                            >
                                                                 {{
-                                                                    resumoFinanceiro.ajuste < 0 ? 'Desconto' : 'Acréscimo'
-                                                                }}: {{ formatBRL(Math.abs(resumoFinanceiro.ajuste))
-                                                                    }} </span>
+                                                                    resumoFinanceiro.ajuste < 0
+                                                                        ? 'Desconto'
+                                                                        : 'Acréscimo'
+                                                                }}: {{ formatBRL(Math.abs(resumoFinanceiro.ajuste)) }}
+                                                            </span>
                                                         </template>
                                                     </div>
                                                     <div class="fs-5">
@@ -1288,23 +1551,36 @@ onMounted(async () => {
                                                 <strong>Observações</strong>
                                                 <button
                                                     v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
-                                                    type="button" class="btn btn-outline-secondary btn-sm py-0"
+                                                    type="button"
+                                                    class="btn btn-outline-secondary btn-sm py-0"
                                                     title="Editar observações"
-                                                    @click="iniciarEdicaoCampo('observacoes')">
+                                                    @click="iniciarEdicaoCampo('observacoes')"
+                                                >
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                             </div>
                                             <template v-if="campoEdicao.campo === 'observacoes'">
-                                                <textarea v-model="campoEdicao.valor" maxlength="1000" rows="2"
+                                                <textarea
+                                                    v-model="campoEdicao.valor"
+                                                    maxlength="1000"
+                                                    rows="2"
                                                     class="form-control form-control-sm"
-                                                    @keyup.esc="cancelarEdicaoCampo"></textarea>
+                                                    @keyup.esc="cancelarEdicaoCampo"
+                                                ></textarea>
                                                 <div class="text-end mt-1">
-                                                    <button type="button" class="btn btn-success btn-sm me-1"
-                                                        :disabled="state.isProcessing" @click="salvarCampo">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-success btn-sm me-1"
+                                                        :disabled="state.isProcessing"
+                                                        @click="salvarCampo"
+                                                    >
                                                         <i class="bi bi-check-lg"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                        @click="cancelarEdicaoCampo">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-outline-secondary btn-sm"
+                                                        @click="cancelarEdicaoCampo"
+                                                    >
                                                         <i class="bi bi-x-lg"></i>
                                                     </button>
                                                 </div>
@@ -1317,44 +1593,73 @@ onMounted(async () => {
                                     <div class="card-footer text-center">
                                         <!-- Ação principal do status em cor sólida; secundárias em outline;
                                              destrutivas agrupadas; janela de 1h desabilita em vez de sumir. -->
-                                        <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                            class="btn btn-success button-medium m-2" @click="converter">
+                                        <button
+                                            v-if="state.venda.status === 'ORCAMENTO'"
+                                            type="button"
+                                            class="btn btn-success button-medium m-2"
+                                            @click="converter"
+                                        >
                                             <i class="bi bi-clipboard-check"></i>&nbsp;&nbsp;&nbsp;Converter em OS
                                         </button>
-                                        <button v-if="state.venda.status === 'ORCAMENTO'" type="button"
-                                            class="btn btn-outline-warning button-medium m-2" @click="recalcular">
+                                        <button
+                                            v-if="state.venda.status === 'ORCAMENTO'"
+                                            type="button"
+                                            class="btn btn-outline-warning button-medium m-2"
+                                            @click="recalcular"
+                                        >
                                             <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
                                         </button>
-                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                            class="button-medium m-2" :class="state.venda.status === 'ORDEM_SERVICO'
+                                        <button
+                                            v-if="state.venda.status !== 'CANCELADO'"
+                                            type="button"
+                                            class="button-medium m-2"
+                                            :class="
+                                                state.venda.status === 'ORDEM_SERVICO'
                                                     ? 'btn btn-success'
                                                     : 'btn btn-outline-secondary'
-                                                " @click="
+                                            "
+                                            @click="
                                                 router.push({
                                                     name: 'venda-imprimir',
                                                     params: { vendaId: route.params.vendaId },
                                                 })
-                                                ">
+                                            "
+                                        >
                                             <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
                                         </button>
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
-                                            <button type="button" class="btn btn-outline-primary button-medium m-2"
-                                                :disabled="!state.venda.editavel" @click="editarVenda">
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-primary button-medium m-2"
+                                                :disabled="!state.venda.editavel"
+                                                @click="editarVenda"
+                                            >
                                                 <i class="bi bi-pen"></i>&nbsp;&nbsp;&nbsp;Editar
                                             </button>
                                         </span>
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
-                                            <button type="button" class="btn btn-outline-danger button-medium m-2"
-                                                :disabled="!state.venda.editavel" @click="excluirVenda">
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-danger button-medium m-2"
+                                                :disabled="!state.venda.editavel"
+                                                @click="excluirVenda"
+                                            >
                                                 <i class="bi bi-trash"></i>&nbsp;&nbsp;&nbsp;Excluir
                                             </button>
                                         </span>
-                                        <button v-if="state.venda.status !== 'CANCELADO'" type="button"
-                                            class="btn btn-outline-danger button-medium m-2" @click="cancelar">
+                                        <button
+                                            v-if="state.venda.status !== 'CANCELADO'"
+                                            type="button"
+                                            class="btn btn-outline-danger button-medium m-2"
+                                            @click="cancelar"
+                                        >
                                             <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
                                         </button>
-                                        <button type="button" class="btn btn-primary button-medium m-2"
-                                            @click="voltarParaLista">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium m-2"
+                                            @click="voltarParaLista"
+                                        >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
                                         </button>
                                         <div v-if="janelaEdicao" class="text-muted small mt-1">{{ janelaEdicao }}</div>
