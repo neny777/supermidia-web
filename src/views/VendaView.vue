@@ -1002,7 +1002,7 @@ onMounted(async () => {
                                         </button>
                                         <button
                                             type="button"
-                                            class="btn btn-primary button-medium m-2"
+                                            class="btn btn-secondary button-medium m-2"
                                             @click="
                                                 router.push(
                                                     state.form.status === 'ORDEM_SERVICO'
@@ -1122,7 +1122,7 @@ onMounted(async () => {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    class="btn btn-outline-secondary"
+                                                    class="btn btn-secondary"
                                                     @click="novoCliente.aberto = false"
                                                 >
                                                     <i class="bi bi-x-lg"></i>&nbsp;Cancelar
@@ -1169,7 +1169,7 @@ onMounted(async () => {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            class="btn btn-outline-secondary"
+                                                            class="btn btn-secondary"
                                                             @click="cancelarEdicaoCampo"
                                                         >
                                                             <i class="bi bi-x-lg"></i>
@@ -1181,7 +1181,7 @@ onMounted(async () => {
                                                     <button
                                                         v-if="podeEditarCabecalho"
                                                         type="button"
-                                                        class="btn btn-outline-secondary btn-sm ms-1 py-0"
+                                                        class="btn btn-secondary btn-sm ms-1 py-0"
                                                         title="Editar referência"
                                                         @click="iniciarEdicaoCampo('referencia')"
                                                     >
@@ -1220,7 +1220,7 @@ onMounted(async () => {
                                                 <button
                                                     v-if="clienteVenda"
                                                     type="button"
-                                                    class="btn btn-outline-secondary btn-sm py-0"
+                                                    class="btn btn-secondary btn-sm py-0"
                                                     title="Abrir a ficha do cliente em outra guia"
                                                     @click="abrirFichaCliente"
                                                 >
@@ -1296,7 +1296,7 @@ onMounted(async () => {
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    class="btn btn-outline-secondary"
+                                                                    class="btn btn-secondary"
                                                                     @click="cancelarEdicaoPreco"
                                                                 >
                                                                     <i class="bi bi-x-lg"></i>
@@ -1313,7 +1313,7 @@ onMounted(async () => {
                                                             <button
                                                                 v-if="podeAjustarPreco"
                                                                 type="button"
-                                                                class="btn btn-outline-secondary btn-sm ms-2 py-0"
+                                                                class="btn btn-secondary btn-sm ms-2 py-0"
                                                                 title="Ajustar preço final"
                                                                 @click="iniciarEdicaoPreco(index, item)"
                                                             >
@@ -1328,7 +1328,7 @@ onMounted(async () => {
                                                         <button
                                                             v-if="temDadosDeCusto(item)"
                                                             type="button"
-                                                            class="btn btn-outline-secondary btn-sm ms-2 py-0"
+                                                            class="btn btn-secondary btn-sm ms-2 py-0"
                                                             @click="toggleDetalhes(index)"
                                                         >
                                                             <i
@@ -1401,7 +1401,7 @@ onMounted(async () => {
                                                                 podeEditarCabecalho && campoEdicao.campo !== 'pagamento'
                                                             "
                                                             type="button"
-                                                            class="btn btn-outline-secondary btn-sm py-0"
+                                                            class="btn btn-secondary btn-sm py-0"
                                                             title="Editar forma e condição de pagamento"
                                                             @click="iniciarEdicaoCampo('pagamento')"
                                                         >
@@ -1442,7 +1442,7 @@ onMounted(async () => {
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                class="btn btn-outline-secondary btn-sm"
+                                                                class="btn btn-secondary btn-sm"
                                                                 @click="cancelarEdicaoCampo"
                                                             >
                                                                 <i class="bi bi-x-lg"></i>
@@ -1468,7 +1468,7 @@ onMounted(async () => {
                                                                 podeEditarCabecalho && campoEdicao.campo !== 'entrega'
                                                             "
                                                             type="button"
-                                                            class="btn btn-outline-secondary btn-sm py-0"
+                                                            class="btn btn-secondary btn-sm py-0"
                                                             title="Editar forma e prazo de entrega"
                                                             @click="iniciarEdicaoCampo('entrega')"
                                                         >
@@ -1509,7 +1509,7 @@ onMounted(async () => {
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                class="btn btn-outline-secondary btn-sm"
+                                                                class="btn btn-secondary btn-sm"
                                                                 @click="cancelarEdicaoCampo"
                                                             >
                                                                 <i class="bi bi-x-lg"></i>
@@ -1561,7 +1561,7 @@ onMounted(async () => {
                                                 <button
                                                     v-if="podeEditarCabecalho && campoEdicao.campo !== 'observacoes'"
                                                     type="button"
-                                                    class="btn btn-outline-secondary btn-sm py-0"
+                                                    class="btn btn-secondary btn-sm py-0"
                                                     title="Editar observações"
                                                     @click="iniciarEdicaoCampo('observacoes')"
                                                 >
@@ -1587,7 +1587,7 @@ onMounted(async () => {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-outline-secondary btn-sm"
+                                                        class="btn btn-secondary btn-sm"
                                                         @click="cancelarEdicaoCampo"
                                                     >
                                                         <i class="bi bi-x-lg"></i>
@@ -1613,19 +1613,14 @@ onMounted(async () => {
                                         <button
                                             v-if="state.venda.status === 'ORCAMENTO'"
                                             type="button"
-                                            class="btn btn-outline-warning button-medium m-2"
+                                            class="btn btn-warning button-medium m-2"
                                             @click="recalcular"
                                         >
                                             <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
                                         </button>
                                         <button
                                             type="button"
-                                            class="button-medium m-2"
-                                            :class="
-                                                state.venda.status === 'ORDEM_SERVICO'
-                                                    ? 'btn btn-success'
-                                                    : 'btn btn-outline-secondary'
-                                            "
+                                            class="btn btn-primary button-medium m-2"
                                             :disabled="state.isProcessing"
                                             @click="imprimirPdf"
                                         >
@@ -1634,7 +1629,7 @@ onMounted(async () => {
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
                                             <button
                                                 type="button"
-                                                class="btn btn-outline-primary button-medium m-2"
+                                                class="btn btn-secondary button-medium m-2"
                                                 :disabled="!state.venda.editavel"
                                                 @click="editarVenda"
                                             >
@@ -1644,7 +1639,7 @@ onMounted(async () => {
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
                                             <button
                                                 type="button"
-                                                class="btn btn-outline-danger button-medium m-2"
+                                                class="btn btn-danger button-medium m-2"
                                                 :disabled="!state.venda.editavel"
                                                 @click="excluirVenda"
                                             >
@@ -1654,14 +1649,14 @@ onMounted(async () => {
                                         <button
                                             v-if="state.venda.status !== 'CANCELADO'"
                                             type="button"
-                                            class="btn btn-outline-danger button-medium m-2"
+                                            class="btn btn-danger button-medium m-2"
                                             @click="cancelar"
                                         >
                                             <i class="bi bi-x-circle"></i>&nbsp;&nbsp;&nbsp;Cancelar
                                         </button>
                                         <button
                                             type="button"
-                                            class="btn btn-primary button-medium m-2"
+                                            class="btn btn-secondary button-medium m-2"
                                             @click="voltarParaLista"
                                         >
                                             <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;Voltar
