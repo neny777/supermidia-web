@@ -589,31 +589,16 @@ const recalcular = () =>
 const cancelar = () =>
     executarAcao('Cancelar venda', 'Confirma o cancelamento desta venda?', 'cancelar', 'Venda cancelada!');
 
-// PDF gerado no servidor (sem navegador): busca com o token via axios (blob) e
-// BAIXA com nome amigável ("Orçamento 0012 - SuperMídia.pdf"), pronto para
-// anexar no WhatsApp/e-mail do cliente. (window.open perdia o nome do arquivo.)
-const nomeArquivoPdf = () => {
-    const tipo =
-        state.venda.status === 'ORDEM_SERVICO'
-            ? 'Ordem de Serviço'
-            : state.venda.status === 'CANCELADO'
-              ? 'Venda'
-              : 'Orçamento';
-    const numero = state.venda.numero ? String(state.venda.numero).padStart(4, '0') : 's-n';
-    return `${tipo} ${numero} - SuperMídia.pdf`;
-};
-const baixarPdf = async () => {
+// Imprimir = gera o PDF no servidor e ABRE numa aba do navegador, de onde o
+// vendedor imprime (Ctrl+P, limpo, sem carimbo de URL) ou salva. Busca via
+// axios (blob) para levar o token JWT — a rota exige autenticação.
+const imprimirPdf = async () => {
     try {
         state.isProcessing = true;
         const response = await axiosInstance.get(`/vendas/${route.params.vendaId}/pdf`, { responseType: 'blob' });
         const url = URL.createObjectURL(response.data);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = nomeArquivoPdf();
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error) {
         showToast('erro', getErrorMessage(error, 'Não foi possível gerar o PDF.'));
     } finally {
@@ -1634,7 +1619,6 @@ onMounted(async () => {
                                             <i class="bi bi-arrow-repeat"></i>&nbsp;&nbsp;&nbsp;Recalcular
                                         </button>
                                         <button
-                                            v-if="state.venda.status !== 'CANCELADO'"
                                             type="button"
                                             class="button-medium m-2"
                                             :class="
@@ -1642,22 +1626,10 @@ onMounted(async () => {
                                                     ? 'btn btn-success'
                                                     : 'btn btn-outline-secondary'
                                             "
-                                            @click="
-                                                router.push({
-                                                    name: 'venda-imprimir',
-                                                    params: { vendaId: route.params.vendaId },
-                                                })
-                                            "
+                                            :disabled="state.isProcessing"
+                                            @click="imprimirPdf"
                                         >
                                             <i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;Imprimir
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline-secondary button-medium m-2"
-                                            :disabled="state.isProcessing"
-                                            @click="baixarPdf"
-                                        >
-                                            <i class="bi bi-file-earmark-pdf"></i>&nbsp;&nbsp;&nbsp;PDF
                                         </button>
                                         <span v-if="state.venda.status !== 'CANCELADO'" :title="janelaEdicao">
                                             <button
