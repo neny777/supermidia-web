@@ -301,6 +301,10 @@ const validarFormulario = () => {
     if (!state.form.clienteId) {
         return 'Selecione o cliente.';
     }
+    // Referência identifica o trabalho nas listas, buscas e no impresso.
+    if (!state.form.referencia.trim()) {
+        return 'Informe a referência do trabalho (ex.: fachada loja centro).';
+    }
     // Orçamento completo responde como paga e quando recebe (padrões já preenchem).
     if (!state.form.formaPagamento.trim()) {
         return 'Informe a forma de pagamento.';
