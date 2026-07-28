@@ -407,23 +407,24 @@ const toggleDetalhes = (index) => {
 const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || []).length > 0;
 
 // Ordenação da tabela de detalhes, por item (cada tabela lembra sua coluna/direção).
+// Padrão: agrupada por Tipo (MATERIA/SERVICO) crescente.
 const NUMERICOS = ['quantidadeCalculada', 'precoUnitario', 'valorTotal'];
+const ORDEM_PADRAO = { campo: 'tipoItem', asc: true };
 const ordemDetalhe = reactive({});
+const ordemEfetiva = (index) => ordemDetalhe[index] || ORDEM_PADRAO;
 const ordenarDetalhe = (index, campo) => {
-    const atual = ordemDetalhe[index];
-    ordemDetalhe[index] = atual && atual.campo === campo ? { campo, asc: !atual.asc } : { campo, asc: true };
+    const atual = ordemEfetiva(index);
+    ordemDetalhe[index] = atual.campo === campo ? { campo, asc: !atual.asc } : { campo, asc: true };
 };
 const setaDetalhe = (index, campo) => {
-    const o = ordemDetalhe[index];
-    if (!o || o.campo !== campo) return '';
+    const o = ordemEfetiva(index);
+    if (o.campo !== campo) return '';
     return o.asc ? ' ▲' : ' ▼';
 };
 const detalhesOrdenados = (item, index) => {
-    const linhas = [...(item.detalhes || [])];
-    const o = ordemDetalhe[index];
-    if (!o) return linhas;
+    const o = ordemEfetiva(index);
     const num = NUMERICOS.includes(o.campo);
-    return linhas.sort((a, b) => {
+    return [...(item.detalhes || [])].sort((a, b) => {
         const [x, y] = [a[o.campo], b[o.campo]];
         const cmp = num ? Number(x || 0) - Number(y || 0) : String(x ?? '').localeCompare(String(y ?? ''));
         return o.asc ? cmp : -cmp;
