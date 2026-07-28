@@ -73,6 +73,62 @@ const slotsDeOpcoesSelecionadas = (item) => {
 const materiasDoGrupo = (grupo) =>
     state.materias.filter((m) => (m.grupo || '').toUpperCase() === (grupo || '').toUpperCase());
 
+// ---- medidas condicionais ----
+// Uma medida só aparece se for "geral" (usada pela base) ou se alguma opção ESCOLHIDA a
+// referencia por vínculo (ex.: "QUANTIDADE ILHÓS" só na opção de ilhós por quantidade).
+// Evita campo órfão confundindo um vendedor distraído.
+const medidasCitadasEm = (componentes) => {
+    const nomes = new Set();
+    for (const c of componentes || []) {
+        for (const p of c.parametros || []) {
+            for (const v of p.vinculos || []) {
+                if (v.medidaNome) nomes.add(v.medidaNome);
+            }
+        }
+    }
+    return nomes;
+};
+const componentesBaseDe = (item) => {
+    const p = produtoDe(item);
+    return p ? [...(p.materiasCalculo || []), ...(p.servicosCalculo || [])] : [];
+};
+const componentesDaOpcao = (opcao) => [...(opcao?.materiasCalculo || []), ...(opcao?.servicosCalculo || [])];
+// Medidas citadas SÓ por opções (não pela base) => são condicionais.
+const medidasExclusivasDeOpcao = (item) => {
+    const daBase = medidasCitadasEm(componentesBaseDe(item));
+    const deOpcoes = new Set();
+    for (const grupo of gruposDe(item)) {
+        for (const opcao of grupo.opcoes || []) {
+            medidasCitadasEm(componentesDaOpcao(opcao)).forEach((n) => deOpcoes.add(n));
+        }
+    }
+    return new Set([...deOpcoes].filter((n) => !daBase.has(n)));
+};
+// Medidas citadas pelas opções atualmente escolhidas.
+const medidasDeOpcoesSelecionadas = (item) => {
+    const nomes = new Set();
+    for (const grupo of gruposDe(item)) {
+        const opcaoId = item.escolhasOpcao[grupo.id];
+        if (!opcaoId) continue;
+        const opcao = (grupo.opcoes || []).find((o) => o.id === opcaoId);
+        medidasCitadasEm(componentesDaOpcao(opcao)).forEach((n) => nomes.add(n));
+    }
+    return nomes;
+};
+// Medidas visíveis: as gerais sempre; as condicionais só quando a opção que as usa está escolhida.
+const medidasVisiveis = (item) => {
+    const condicionais = medidasExclusivasDeOpcao(item);
+    const ativas = medidasDeOpcoesSelecionadas(item);
+    return medidasDe(item).filter((m) => !condicionais.has(m.nome) || ativas.has(m.nome));
+};
+// Medidas que a opção escolhida EXIGE (condicional + ativa) => não podem ficar em zero/vazias
+// (ex.: escolher "ilhós por quantidade" com 0 ilhós não faz sentido).
+const medidasExigidasPorOpcao = (item) => {
+    const condicionais = medidasExclusivasDeOpcao(item);
+    const ativas = medidasDeOpcoesSelecionadas(item);
+    return medidasDe(item).filter((m) => condicionais.has(m.nome) && ativas.has(m.nome));
+};
+
 const aoTrocarProduto = (item) => {
     item.medidas = {};
     item.escolhasMateria = {};
@@ -199,9 +255,12 @@ const clienteFormulario = computed(() => state.clientes.find((c) => c.id === sta
 const itemCompleto = (item) => {
     if (!item.produtoId) return false;
     if (!(Number(item.altura) > 0) || !(Number(item.largura) > 0) || !(Number(item.quantidade) > 0)) return false;
-    for (const medida of medidasDe(item)) {
+    for (const medida of medidasVisiveis(item)) {
         const valor = item.medidas[medida.nome];
         if (medida.obrigatoria && (valor === '' || valor == null)) return false;
+    }
+    for (const medida of medidasExigidasPorOpcao(item)) {
+        if (!(Number(item.medidas[medida.nome]) > 0)) return false;
     }
     for (const slot of slotsDe(item)) {
         if (!item.escolhasMateria[slot.id]) return false;
@@ -347,10 +406,15 @@ const validarFormulario = () => {
         if (!(Number(item.altura) > 0) || !(Number(item.largura) > 0) || !(Number(item.quantidade) > 0)) {
             return 'Preencha altura, largura e quantidade (maiores que zero) em todos os itens.';
         }
-        for (const medida of medidasDe(item)) {
+        for (const medida of medidasVisiveis(item)) {
             const valor = item.medidas[medida.nome];
             if (medida.obrigatoria && (valor === '' || valor == null)) {
                 return `Informe a medida ${medida.nome}.`;
+            }
+        }
+        for (const medida of medidasExigidasPorOpcao(item)) {
+            if (!(Number(item.medidas[medida.nome]) > 0)) {
+                return `Informe ${medida.nome} maior que zero — a opção escolhida exige.`;
             }
         }
         for (const slot of slotsDe(item)) {
@@ -863,10 +927,10 @@ onMounted(async () => {
                                                     </div>
                                                 </div>
 
-                                                <!-- Medidas extras declaradas pelo produto -->
-                                                <div v-if="medidasDe(item).length" class="row g-2 mt-1">
+                                                <!-- Medidas extras: gerais sempre; condicionais só com a opção que as usa escolhida -->
+                                                <div v-if="medidasVisiveis(item).length" class="row g-2 mt-1">
                                                     <div
-                                                        v-for="medida in medidasDe(item)"
+                                                        v-for="medida in medidasVisiveis(item)"
                                                         :key="medida.id"
                                                         class="col-lg-3"
                                                     >
