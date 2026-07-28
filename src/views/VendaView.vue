@@ -634,6 +634,11 @@ const salvarPrecoFinal = async (item) => {
         showToast('erro', 'Informe um preço final maior que zero.');
         return;
     }
+    // Mesma regra do servidor, aqui só para avisar sem esperar a ida e volta.
+    if (item.custoTotal != null && valor < Number(item.custoTotal)) {
+        showToast('erro', `O preço final não pode ficar abaixo do custo do item (${formatBRL(item.custoTotal)}).`);
+        return;
+    }
     try {
         state.isProcessing = true;
         const response = await axiosInstance.put(`/vendas/${route.params.vendaId}/itens/${item.id}/preco-final`, {
