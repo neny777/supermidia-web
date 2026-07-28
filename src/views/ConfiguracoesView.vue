@@ -291,19 +291,17 @@ const salvar = async () => {
 
                                     <div class="col-12">
                                         <h6 class="border-bottom pb-1 mb-2">Backup</h6>
-                                        <label class="form-label mb-1"><strong>Banco de dados</strong></label>
-                                        <div class="form-text mt-0 mb-2">
-                                            Baixa um arquivo <code>.sql</code> com todo o banco (o mesmo do Workbench).
-                                            Guarde em local seguro — é a sua cópia de segurança.
+                                        <label class="form-label mb-2"><strong>Banco de dados</strong></label>
+                                        <div>
+                                            <button
+                                                type="button"
+                                                class="btn btn-primary"
+                                                :disabled="state.isProcessing"
+                                                @click="exportarBanco"
+                                            >
+                                                <i class="bi bi-download"></i>&nbsp;&nbsp;Exportar
+                                            </button>
                                         </div>
-                                        <button
-                                            type="button"
-                                            class="btn btn-primary"
-                                            :disabled="state.isProcessing"
-                                            @click="exportarBanco"
-                                        >
-                                            <i class="bi bi-download"></i>&nbsp;&nbsp;Exportar
-                                        </button>
                                     </div>
                                 </div>
                             </div>
