@@ -34,10 +34,9 @@ const colunas = [
     { data: 'dataCriacao', title: 'Data', render: (d) => formatData(d) },
     { data: 'clienteNome', title: 'Cliente', render: (c) => c || '—' },
     { data: 'referencia', title: 'Referência', render: (r) => r || '—' },
-    { data: 'atendenteNome', title: 'Atendente', render: (a) => a || '—' },
     { data: 'total', title: 'Total', className: 'text-end', render: (t) => formatBRL(t) },
 ];
-const chavesOrdem = ['numero', 'data', 'cliente', 'referencia', 'atendente', 'total'];
+const chavesOrdem = ['numero', 'data', 'cliente', 'referencia', 'total'];
 if (isOrcamento.value) {
     colunas.push({
         data: 'vencido',
@@ -51,6 +50,9 @@ if (isOrcamento.value) {
     });
     chavesOrdem.push(null);
 }
+// Atendente fica por último entre os dados — logo antes das Ações.
+colunas.push({ data: 'atendenteNome', title: 'Atendente', render: (a) => a || '—' });
+chavesOrdem.push('atendente');
 colunas.push({
     data: 'id',
     title: 'Ações',
