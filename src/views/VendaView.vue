@@ -1381,7 +1381,7 @@ onMounted(async () => {
                                                     v-if="detalhesAbertos[index] && item.detalhes?.length"
                                                     class="table-responsive"
                                                 >
-                                                    <table class="table table-sm table-bordered mb-0">
+                                                    <table class="table table-sm table-bordered table-striped mb-0">
                                                         <thead>
                                                             <tr class="ordenavel">
                                                                 <th @click="ordenarDetalhe(index, 'nome')">
