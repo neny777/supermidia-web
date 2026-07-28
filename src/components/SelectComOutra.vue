@@ -14,11 +14,15 @@ const emit = defineEmits(['update:modelValue']);
 const OUTRA = '__OUTRA__';
 const outraManual = ref(false);
 
-// Mostra o texto livre quando o usuário escolheu "Outra..." OU quando o valor
-// atual não está na lista (ex.: uma condição personalizada de venda editada).
-const mostrarTexto = computed(
-    () => outraManual.value || (!!props.modelValue && !props.opcoes.includes(props.modelValue))
-);
+// O valor atual entra na lista quando não está nela (ex.: o padrão da Configuração
+// ou uma forma personalizada de venda antiga). Assim ele aparece SELECIONADO no
+// dropdown em vez de cair em "Outra..." + campo de texto — que confundia no balcão.
+const opcoesExibidas = computed(() => {
+    const atual = props.modelValue;
+    return atual && !props.opcoes.includes(atual) ? [...props.opcoes, atual] : props.opcoes;
+});
+// Texto livre só quando o usuário PEDE ("Outra..."), nunca por dedução.
+const mostrarTexto = computed(() => outraManual.value);
 const valorSelect = computed(() => (mostrarTexto.value ? OUTRA : props.modelValue));
 
 const aoSelecionar = (evento) => {
@@ -37,7 +41,7 @@ const aoSelecionar = (evento) => {
     <div>
         <select :value="valorSelect" class="form-select form-select-sm" @change="aoSelecionar">
             <option value="">Selecione</option>
-            <option v-for="opcao in opcoes" :key="opcao" :value="opcao">{{ opcao }}</option>
+            <option v-for="opcao in opcoesExibidas" :key="opcao" :value="opcao">{{ opcao }}</option>
             <option :value="OUTRA">Outra...</option>
         </select>
         <input

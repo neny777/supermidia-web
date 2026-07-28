@@ -1498,6 +1498,13 @@ onMounted(async () => {
                                                     <div class="col">
                                                         Custo: {{ formatBRL(item.custoTotal) }} · Margem:
                                                         {{ item.markupAplicado }}%
+                                                        <template v-if="item.precoAtacado != null">
+                                                            <br />
+                                                            Sugeridos — Revenda:
+                                                            <strong>{{ formatBRL(item.precoAtacado) }}</strong>
+                                                            · Cliente final:
+                                                            <strong>{{ formatBRL(item.precoVarejo) }}</strong>
+                                                        </template>
                                                     </div>
                                                 </div>
                                                 <div

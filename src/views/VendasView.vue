@@ -34,9 +34,10 @@ const colunas = [
     { data: 'dataCriacao', title: 'Data', render: (d) => formatData(d) },
     { data: 'clienteNome', title: 'Cliente', render: (c) => c || '—' },
     { data: 'referencia', title: 'Referência', render: (r) => r || '—' },
+    { data: 'atendenteNome', title: 'Atendente', render: (a) => a || '—' },
     { data: 'total', title: 'Total', className: 'text-end', render: (t) => formatBRL(t) },
 ];
-const chavesOrdem = ['numero', 'data', 'cliente', 'referencia', 'total'];
+const chavesOrdem = ['numero', 'data', 'cliente', 'referencia', 'atendente', 'total'];
 if (isOrcamento.value) {
     colunas.push({
         data: 'vencido',
