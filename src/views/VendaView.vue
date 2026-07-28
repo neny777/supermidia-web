@@ -56,6 +56,20 @@ const produtoDe = (item) => state.produtos.find((p) => p.id === item.produtoId) 
 const medidasDe = (item) => produtoDe(item)?.medidas || [];
 const slotsDe = (item) => (produtoDe(item)?.materiasCalculo || []).filter((mc) => mc.grupoSlot);
 const gruposDe = (item) => produtoDe(item)?.gruposOpcoes || [];
+// Slots que vivem DENTRO de uma opção escolhida (ex.: bastão/ponteira do "COM
+// BASTÃO"). Aparecem só quando a opção é selecionada; a base é coberta por slotsDe.
+const slotsDeOpcoesSelecionadas = (item) => {
+    const slots = [];
+    for (const grupo of gruposDe(item)) {
+        const opcaoId = item.escolhasOpcao[grupo.id];
+        if (!opcaoId) continue;
+        const opcao = (grupo.opcoes || []).find((o) => o.id === opcaoId);
+        (opcao?.materiasCalculo || [])
+            .filter((mc) => mc.grupoSlot)
+            .forEach((slot) => slots.push({ ...slot, contexto: `${grupo.nome} · ${opcao.nome}` }));
+    }
+    return slots;
+};
 const materiasDoGrupo = (grupo) =>
     state.materias.filter((m) => (m.grupo || '').toUpperCase() === (grupo || '').toUpperCase());
 
@@ -159,6 +173,13 @@ const preencherFormularioParaEdicao = (venda) => {
             (produto.gruposOpcoes || []).forEach((grupo) => {
                 const escolhida = (grupo.opcoes || []).find((o) => (entrada.escolhasOpcao || []).includes(o.id));
                 item.escolhasOpcao[grupo.id] = escolhida ? escolhida.id : '';
+                // slots dentro da opção escolhida (ex.: bastão/ponteira)
+                (escolhida?.materiasCalculo || [])
+                    .filter((mc) => mc.grupoSlot)
+                    .forEach((slot) => {
+                        const esc = (entrada.escolhasMateria || []).find((e) => e.componenteId === slot.id);
+                        item.escolhasMateria[slot.id] = esc ? esc.materiaId : '';
+                    });
             });
         }
         return item;
@@ -187,6 +208,9 @@ const itemCompleto = (item) => {
     }
     for (const grupo of gruposDe(item)) {
         if (grupo.obrigatorio && !item.escolhasOpcao[grupo.id]) return false;
+    }
+    for (const slot of slotsDeOpcoesSelecionadas(item)) {
+        if (!item.escolhasMateria[slot.id]) return false;
     }
     return true;
 };
@@ -337,6 +361,11 @@ const validarFormulario = () => {
         for (const grupo of gruposDe(item)) {
             if (grupo.obrigatorio && !item.escolhasOpcao[grupo.id]) {
                 return `Escolha uma opção de ${grupo.nome}.`;
+            }
+        }
+        for (const slot of slotsDeOpcoesSelecionadas(item)) {
+            if (!item.escolhasMateria[slot.id]) {
+                return `Escolha o material do grupo ${slot.grupoSlot}.`;
             }
         }
     }
@@ -912,6 +941,36 @@ onMounted(async () => {
                                                                 :value="opcao.id"
                                                             >
                                                                 {{ opcao.nome }}
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Slots dentro das opções escolhidas (ex.: bastão/ponteira) -->
+                                                <div v-if="slotsDeOpcoesSelecionadas(item).length" class="row g-2 mt-1">
+                                                    <div
+                                                        v-for="slot in slotsDeOpcoesSelecionadas(item)"
+                                                        :key="slot.id"
+                                                        class="col-lg-4"
+                                                    >
+                                                        <label class="form-label">
+                                                            {{ slot.grupoSlot }}
+                                                            <small class="text-muted">({{ slot.contexto }})</small>
+                                                            <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select
+                                                            v-model="item.escolhasMateria[slot.id]"
+                                                            class="form-select"
+                                                        >
+                                                            <option value="">Selecione</option>
+                                                            <option
+                                                                v-for="materia in materiasDoGrupo(slot.grupoSlot)"
+                                                                :key="materia.id"
+                                                                :value="materia.id"
+                                                            >
+                                                                {{ materia.nome }} — {{ formatBRL(materia.preco) }}/{{
+                                                                    materia.unidade
+                                                                }}
                                                             </option>
                                                         </select>
                                                     </div>
