@@ -406,6 +406,30 @@ const toggleDetalhes = (index) => {
 };
 const temDadosDeCusto = (item) => item.custoTotal != null || (item.detalhes || []).length > 0;
 
+// Ordenação da tabela de detalhes, por item (cada tabela lembra sua coluna/direção).
+const NUMERICOS = ['quantidadeCalculada', 'precoUnitario', 'valorTotal'];
+const ordemDetalhe = reactive({});
+const ordenarDetalhe = (index, campo) => {
+    const atual = ordemDetalhe[index];
+    ordemDetalhe[index] = atual && atual.campo === campo ? { campo, asc: !atual.asc } : { campo, asc: true };
+};
+const setaDetalhe = (index, campo) => {
+    const o = ordemDetalhe[index];
+    if (!o || o.campo !== campo) return '';
+    return o.asc ? ' ▲' : ' ▼';
+};
+const detalhesOrdenados = (item, index) => {
+    const linhas = [...(item.detalhes || [])];
+    const o = ordemDetalhe[index];
+    if (!o) return linhas;
+    const num = NUMERICOS.includes(o.campo);
+    return linhas.sort((a, b) => {
+        const [x, y] = [a[o.campo], b[o.campo]];
+        const cmp = num ? Number(x || 0) - Number(y || 0) : String(x ?? '').localeCompare(String(y ?? ''));
+        return o.asc ? cmp : -cmp;
+    });
+};
+
 // Campos livres do cabeçalho (referência/pagamento/prazo/observações): não
 // mexem em preço, então são editáveis fora da janela de 1h. Cada bloco tem
 // seu lápis; tudo bate no mesmo PUT /cabecalho.
@@ -1358,17 +1382,43 @@ onMounted(async () => {
                                                 >
                                                     <table class="table table-sm table-bordered mb-0">
                                                         <thead>
-                                                            <tr>
-                                                                <th>Item</th>
-                                                                <th>Tipo</th>
-                                                                <th class="text-end">Qtde</th>
-                                                                <th>Un</th>
-                                                                <th class="text-end">Preço</th>
-                                                                <th class="text-end">Total</th>
+                                                            <tr class="ordenavel">
+                                                                <th @click="ordenarDetalhe(index, 'nome')">
+                                                                    Item{{ setaDetalhe(index, 'nome') }}
+                                                                </th>
+                                                                <th @click="ordenarDetalhe(index, 'tipoItem')">
+                                                                    Tipo{{ setaDetalhe(index, 'tipoItem') }}
+                                                                </th>
+                                                                <th
+                                                                    class="text-end"
+                                                                    @click="
+                                                                        ordenarDetalhe(index, 'quantidadeCalculada')
+                                                                    "
+                                                                >
+                                                                    Qtde{{ setaDetalhe(index, 'quantidadeCalculada') }}
+                                                                </th>
+                                                                <th @click="ordenarDetalhe(index, 'unidade')">
+                                                                    Un{{ setaDetalhe(index, 'unidade') }}
+                                                                </th>
+                                                                <th
+                                                                    class="text-end"
+                                                                    @click="ordenarDetalhe(index, 'precoUnitario')"
+                                                                >
+                                                                    Preço{{ setaDetalhe(index, 'precoUnitario') }}
+                                                                </th>
+                                                                <th
+                                                                    class="text-end"
+                                                                    @click="ordenarDetalhe(index, 'valorTotal')"
+                                                                >
+                                                                    Total{{ setaDetalhe(index, 'valorTotal') }}
+                                                                </th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            <tr v-for="(d, di) in item.detalhes" :key="di">
+                                                            <tr
+                                                                v-for="(d, di) in detalhesOrdenados(item, index)"
+                                                                :key="di"
+                                                            >
                                                                 <td>
                                                                     {{ d.nome }}
                                                                     <small v-if="d.opcaoNome" class="text-muted">
@@ -1682,5 +1732,15 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     z-index: 1050;
+}
+
+/* Cabeçalhos ordenáveis da tabela de detalhes: cursor e feedback ao passar */
+.ordenavel th {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.ordenavel th:hover {
+    background-color: rgba(13, 110, 253, 0.08);
 }
 </style>
