@@ -1,20 +1,19 @@
 <script setup>
-import { reactive, computed, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
+import DataTable from 'datatables.net-vue3';
+import DataTablesCore from 'datatables.net-bs5';
 import axiosInstance from '@/axiosInstance';
 import { showToast } from '@/composables/toastUtils';
+import { customDataTables } from '@/composables/customDataTables';
+
+DataTable.use(DataTablesCore);
 
 const props = defineProps({
     status: { type: String, required: true },
 });
 
 const router = useRouter();
-const state = reactive({
-    vendas: [],
-    clientesById: {},
-    filtro: '',
-    isProcessing: false,
-});
 
 const isOrcamento = computed(() => props.status === 'ORCAMENTO');
 const isCancelado = computed(() => props.status === 'CANCELADO');
@@ -27,40 +26,95 @@ const titulo = computed(() => {
 const formatBRL = (valor) =>
     valor == null ? '-' : Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatData = (valor) => (valor ? new Date(valor).toLocaleDateString('pt-BR') : '-');
-const nomeCliente = (id) => state.clientesById[id] || '-';
 
-// Busca local por nº, cliente ou referência (o apelido do trabalho).
-const vendasFiltradas = computed(() => {
-    const termo = state.filtro.trim().toLowerCase();
-    if (!termo) return state.vendas;
-    return state.vendas.filter(
-        (venda) =>
-            String(venda.numero || '').includes(termo) ||
-            nomeCliente(venda.clienteId).toLowerCase().includes(termo) ||
-            (venda.referencia || '').toLowerCase().includes(termo)
-    );
+// Colunas do DataTable. As chaves de ordenação (whitelist do backend) andam em
+// paralelo — null = coluna não ordenável (Situação e Ações).
+const colunas = [
+    { data: 'numero', title: 'Nº', render: (n) => n ?? '—' },
+    { data: 'dataCriacao', title: 'Data', render: (d) => formatData(d) },
+    { data: 'clienteNome', title: 'Cliente', render: (c) => c || '—' },
+    { data: 'referencia', title: 'Referência', render: (r) => r || '—' },
+    { data: 'total', title: 'Total', className: 'text-end', render: (t) => formatBRL(t) },
+];
+const chavesOrdem = ['numero', 'data', 'cliente', 'referencia', 'total'];
+if (isOrcamento.value) {
+    colunas.push({
+        data: 'vencido',
+        title: 'Situação',
+        className: 'text-center',
+        orderable: false,
+        render: (v) =>
+            v
+                ? '<span class="badge text-bg-warning">Vencido</span>'
+                : '<span class="badge text-bg-success">Vigente</span>',
+    });
+    chavesOrdem.push(null);
+}
+colunas.push({
+    data: 'id',
+    title: 'Ações',
+    className: 'text-center',
+    orderable: false,
+    searchable: false,
+    render: (id) =>
+        `<button class="btn btn-primary btn-sm abrir-venda" data-id="${id}"><i class="bi bi-box-arrow-up-right"></i>&nbsp; Abrir</button>`,
 });
+chavesOrdem.push(null);
 
-const fetchVendas = async () => {
-    try {
-        state.isProcessing = true;
-        const [vendasResponse, clientesResponse] = await Promise.all([
-            axiosInstance.get('/vendas', { params: { status: props.status } }),
-            axiosInstance.get('/clientes'),
-        ]);
-        // Mais recentes primeiro (vendas antigas sem número vão para o fim).
-        state.vendas = (vendasResponse.data || []).sort((a, b) => (b.numero || 0) - (a.numero || 0));
-        state.clientesById = Object.fromEntries((clientesResponse.data || []).map((c) => [c.id, c.nome]));
-    } catch (error) {
-        showToast('erro', `Erro ao carregar ${titulo.value.toLowerCase()}.`);
-    } finally {
-        state.isProcessing = false;
-    }
+// Busca, ordenação e página vêm do SERVIDOR — escala com o volume de vendas.
+const ajax = (data, callback) => {
+    const ordem = data.order && data.order[0];
+    const coluna = (ordem && chavesOrdem[ordem.column]) || 'numero';
+    const direcao = ordem ? ordem.dir : 'desc';
+    axiosInstance
+        .get('/vendas/pagina', {
+            params: {
+                status: props.status,
+                termo: data.search?.value || '',
+                inicio: data.start,
+                tamanho: data.length,
+                coluna,
+                direcao,
+            },
+        })
+        .then((resp) => {
+            callback({
+                draw: data.draw,
+                recordsTotal: resp.data.recordsTotal,
+                recordsFiltered: resp.data.recordsFiltered,
+                data: resp.data.data,
+            });
+        })
+        .catch(() => {
+            showToast('erro', `Erro ao carregar ${titulo.value.toLowerCase()}.`);
+            callback({ draw: data.draw, recordsTotal: 0, recordsFiltered: 0, data: [] });
+        });
 };
 
-onMounted(fetchVendas);
-// As duas telas usam o mesmo componente; recarrega ao trocar de status.
-watch(() => props.status, fetchVendas);
+const options = {
+    ...customDataTables().options,
+    serverSide: true,
+    processing: true,
+    ajax,
+    columns: colunas,
+    order: [[0, 'desc']], // nº decrescente = mais recentes primeiro
+    lengthMenu: [
+        [10, 25, 50, 100],
+        [10, 25, 50, 100],
+    ],
+};
+
+// Botão "Abrir" é HTML renderizado pelo DataTable — clique via delegação num
+// container estável (sobrevive à troca de página/ordenação).
+const wrapper = ref(null);
+const aoClicar = (evento) => {
+    const botao = evento.target.closest('.abrir-venda');
+    if (botao) {
+        router.push({ name: 'venda', params: { vendaId: botao.dataset.id } });
+    }
+};
+onMounted(() => wrapper.value?.addEventListener('click', aoClicar));
+onBeforeUnmount(() => wrapper.value?.removeEventListener('click', aoClicar));
 </script>
 
 <template>
@@ -101,77 +155,9 @@ watch(() => props.status, fetchVendas);
                                     }}
                                 </button>
                             </div>
-                            <div class="card-body position-relative">
-                                <div
-                                    v-if="state.isProcessing"
-                                    class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75"
-                                    style="z-index: 10"
-                                >
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Processando...</span>
-                                    </div>
-                                </div>
-
-                                <div v-if="state.vendas.length" class="p-2 pb-0" style="max-width: 420px">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input
-                                            v-model="state.filtro"
-                                            type="text"
-                                            class="form-control"
-                                            placeholder="Buscar por nº, cliente ou referência..."
-                                        />
-                                    </div>
-                                </div>
-
-                                <div v-if="!state.vendas.length" class="text-muted p-2">
-                                    Nenhum registro encontrado.
-                                </div>
-                                <div v-else-if="!vendasFiltradas.length" class="text-muted p-2">
-                                    Nenhum registro corresponde à busca.
-                                </div>
-                                <div v-else class="table-responsive p-2">
-                                    <table class="table table-bordered table-striped mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 70px">Nº</th>
-                                                <th>Data</th>
-                                                <th>Cliente</th>
-                                                <th>Referência</th>
-                                                <th class="text-end">Total</th>
-                                                <th v-if="isOrcamento" class="text-center">Situação</th>
-                                                <th class="text-center" style="width: 120px">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="venda in vendasFiltradas" :key="venda.id">
-                                                <td>{{ venda.numero ?? '—' }}</td>
-                                                <td>{{ formatData(venda.dataCriacao) }}</td>
-                                                <td>{{ nomeCliente(venda.clienteId) }}</td>
-                                                <td>{{ venda.referencia || '—' }}</td>
-                                                <td class="text-end">{{ formatBRL(venda.total) }}</td>
-                                                <td v-if="isOrcamento" class="text-center">
-                                                    <span v-if="venda.vencido" class="badge text-bg-warning"
-                                                        >Vencido</span
-                                                    >
-                                                    <span v-else class="badge text-bg-success">Vigente</span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <button
-                                                        class="btn btn-primary btn-sm"
-                                                        @click="
-                                                            router.push({
-                                                                name: 'venda',
-                                                                params: { vendaId: venda.id },
-                                                            })
-                                                        "
-                                                    >
-                                                        <i class="bi bi-box-arrow-up-right"></i>&nbsp; Abrir
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                            <div ref="wrapper" class="card-body">
+                                <div class="table-responsive p-2">
+                                    <DataTable class="table table-bordered table-striped w-100" :options="options" />
                                 </div>
                             </div>
                             <div class="card-footer text-center">
