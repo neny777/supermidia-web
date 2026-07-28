@@ -54,6 +54,36 @@ onMounted(async () => {
     }
 });
 
+// Exporta o banco (.sql) para download — reaproveita o mysqldump no servidor.
+const exportarBanco = async () => {
+    try {
+        state.isProcessing = true;
+        const resp = await axiosInstance.get('/backup/exportar', { responseType: 'blob' });
+        const nome = `supermidia-${new Date().toISOString().slice(0, 10)}.sql`;
+        const url = URL.createObjectURL(resp.data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = nome;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        showToast('sucesso', 'Backup gerado — arquivo baixado.');
+    } catch (error) {
+        // O erro vem como blob (responseType); lê o texto para mostrar a mensagem real.
+        let msg = 'Não foi possível exportar o banco.';
+        try {
+            const texto = await error.response?.data?.text?.();
+            if (texto) msg = JSON.parse(texto).message || msg;
+        } catch {
+            /* mantém a mensagem padrão */
+        }
+        showToast('erro', msg);
+    } finally {
+        state.isProcessing = false;
+    }
+};
+
 const salvar = async () => {
     try {
         state.isProcessing = true;
@@ -256,6 +286,22 @@ const salvar = async () => {
                                             As mudanças valem imediatamente para os <strong>próximos</strong> cálculos e
                                             verificações. Vendas já criadas não são recalculadas — os preços delas
                                             continuam congelados.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-1 mb-2">Backup</h6>
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary button-medium"
+                                            :disabled="state.isProcessing"
+                                            @click="exportarBanco"
+                                        >
+                                            <i class="bi bi-download"></i>&nbsp;&nbsp;&nbsp;Exportar banco de dados
+                                        </button>
+                                        <div class="form-text">
+                                            Baixa um arquivo <code>.sql</code> com todo o banco (o mesmo do Workbench).
+                                            Guarde em local seguro — é a sua cópia de segurança.
                                         </div>
                                     </div>
                                 </div>
