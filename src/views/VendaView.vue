@@ -54,7 +54,18 @@ const nomeCliente = (id) => state.clientes.find((c) => c.id === id)?.nome || '-'
 // ---- definição dinâmica do item conforme o produto escolhido ----
 const produtoDe = (item) => state.produtos.find((p) => p.id === item.produtoId) || null;
 const medidasDe = (item) => produtoDe(item)?.medidas || [];
-const slotsDe = (item) => (produtoDe(item)?.materiasCalculo || []).filter((mc) => mc.grupoSlot);
+// Ordem estável dos campos de material, igual em todos os produtos: primeiro o
+// substrato (o que a peça é feita, medido por área), depois os acessórios em
+// ordem alfabética. Sem isto a ordem vinha do banco e variava de produto para
+// produto — banner pedia ponteira antes de bastão, faixa o contrário.
+const AREA = ['AREA_BASE', 'AREA_COM_FATOR', 'AREA_COM_ACRESCIMOS_E_FATOR'];
+const ordenarSlots = (slots) =>
+    [...slots].sort((a, b) => {
+        const subA = AREA.includes(a.tipoCalculo) ? 0 : 1;
+        const subB = AREA.includes(b.tipoCalculo) ? 0 : 1;
+        return subA !== subB ? subA - subB : (a.grupoSlot || '').localeCompare(b.grupoSlot || '', 'pt-BR');
+    });
+const slotsDe = (item) => ordenarSlots((produtoDe(item)?.materiasCalculo || []).filter((mc) => mc.grupoSlot));
 const gruposDe = (item) => produtoDe(item)?.gruposOpcoes || [];
 // Slots que vivem DENTRO de uma opção escolhida (ex.: bastão/ponteira do "COM
 // BASTÃO"). Aparecem só quando a opção é selecionada; a base é coberta por slotsDe.
@@ -68,7 +79,7 @@ const slotsDeOpcoesSelecionadas = (item) => {
             .filter((mc) => mc.grupoSlot)
             .forEach((slot) => slots.push({ ...slot, contexto: `${grupo.nome} · ${opcao.nome}` }));
     }
-    return slots;
+    return ordenarSlots(slots);
 };
 const materiasDoGrupo = (grupo) =>
     state.materias.filter((m) => (m.grupo || '').toUpperCase() === (grupo || '').toUpperCase());
