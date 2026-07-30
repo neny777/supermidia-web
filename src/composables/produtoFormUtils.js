@@ -36,7 +36,13 @@ export const createMedida = () => ({
 });
 export const createVinculo = () => ({ medidaNome: '', multiplicador: 1 });
 export const createContribuicao = () => ({ codigo: '', valor: '' });
-export const createOpcao = () => ({ nome: '', materiasCalculo: [], servicosCalculo: [], contribuicoes: [] });
+export const createOpcao = () => ({
+    nome: '',
+    nomeComercial: '',
+    materiasCalculo: [],
+    servicosCalculo: [],
+    contribuicoes: [],
+});
 export const createGrupoOpcao = () => ({ nome: '', obrigatorio: false, opcoes: [] });
 export const createProduto = () => ({
     nome: '',

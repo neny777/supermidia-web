@@ -225,7 +225,7 @@ onMounted(async () => {
                                             class="border rounded p-3 m-2"
                                         >
                                             <div class="row g-2 align-items-end">
-                                                <div class="col-lg-5">
+                                                <div class="col-lg-4">
                                                     <label class="form-label"><strong>Opção</strong></label>
                                                     <input
                                                         v-model="opcao.nome"
@@ -233,8 +233,19 @@ onMounted(async () => {
                                                         class="form-control"
                                                         placeholder="Ex.: COM ILHÓS, RETO, CONTORNO"
                                                     />
+                                                    <div class="form-text">Nome interno — a bancada vê este.</div>
                                                 </div>
-                                                <div class="col-lg-7 text-end">
+                                                <div class="col-lg-3">
+                                                    <label class="form-label">Nome p/ o cliente</label>
+                                                    <input
+                                                        v-model="opcao.nomeComercial"
+                                                        type="text"
+                                                        class="form-control"
+                                                        placeholder="Vazio = usa o nome ao lado"
+                                                    />
+                                                    <div class="form-text">Sai no orçamento.</div>
+                                                </div>
+                                                <div class="col-lg-5 text-end">
                                                     <button
                                                         type="button"
                                                         class="btn btn-primary btn-sm m-1"
