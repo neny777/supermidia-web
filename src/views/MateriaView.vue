@@ -14,6 +14,7 @@ const isEditMode = ref(!!route.params.materiaId);
 
 const schema = yup.object({
     nome: yup.string().required('Informe o nome da matéria.').max(140, 'Máximo de 140 caracteres.'),
+    nomeComercial: yup.string().max(140, 'Máximo de 140 caracteres.'),
     grupo: yup.string().max(40, 'Máximo de 40 caracteres.'),
     unidade: yup.string().required('Selecione a unidade.'),
     preco: yup
@@ -26,6 +27,7 @@ const schema = yup.object({
 const state = reactive({
     materia: {
         nome: '',
+        nomeComercial: '',
         grupo: '',
         unidade: '',
         preco: '',
@@ -62,6 +64,7 @@ onMounted(async () => {
         const response = await axiosInstance.get(`/materias/${route.params.materiaId}`);
         state.materia = {
             nome: response.data.nome,
+            nomeComercial: response.data.nomeComercial ?? '',
             grupo: response.data.grupo ?? '',
             unidade: response.data.unidade,
             preco: response.data.preco,
@@ -78,6 +81,7 @@ onMounted(async () => {
 const onSubmit = async (values, { resetForm }) => {
     const payload = {
         nome: values.nome,
+        nomeComercial: values.nomeComercial ? values.nomeComercial.toUpperCase() : null,
         grupo: values.grupo ? values.grupo.toUpperCase() : null,
         unidade: values.unidade,
         preco: values.preco,
@@ -174,6 +178,26 @@ const onSubmit = async (values, { resetForm }) => {
                                                     <div class="col-lg-9">
                                                         <Field id="nome" name="nome" type="text" class="form-control" />
                                                         <ErrorMessage name="nome" class="text-danger" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="row p-2">
+                                                    <label for="nomeComercial" class="col-form-label col-lg-3"
+                                                        >Nome p/ o cliente</label
+                                                    >
+                                                    <div class="col-lg-9">
+                                                        <Field
+                                                            id="nomeComercial"
+                                                            name="nomeComercial"
+                                                            type="text"
+                                                            class="form-control"
+                                                            placeholder="Deixe vazio para usar o nome acima"
+                                                        />
+                                                        <ErrorMessage name="nomeComercial" class="text-danger" />
+                                                        <div class="form-text">
+                                                            É este nome que sai no orçamento do cliente.
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
