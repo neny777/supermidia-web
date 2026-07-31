@@ -97,6 +97,9 @@ export const normalizeParametros = (parametros) =>
 
 export const normalizeItems = (items, tipo) =>
     (items || []).map((item) => ({
+        // o id volta para o servidor: é ele que impede o componente de ser
+        // recriado a cada edição (as vendas gravadas apontam para esse id)
+        id: item.id ?? null,
         ...(tipo === 'materia'
             ? { materiaId: item.materiaId || null, grupoSlot: item.grupoSlot || null }
             : { servicoId: item.servicoId ?? '' }),
@@ -116,10 +119,13 @@ const normalizeMedidas = (medidas) =>
 
 const normalizeGrupos = (grupos) =>
     (grupos || []).map((grupo) => ({
+        id: grupo.id ?? null,
         nome: grupo.nome ?? '',
         obrigatorio: !!grupo.obrigatorio,
         opcoes: (grupo.opcoes || []).map((opcao) => ({
+            id: opcao.id ?? null,
             nome: opcao.nome ?? '',
+            nomeComercial: opcao.nomeComercial || null,
             materiasCalculo: normalizeItems(opcao.materiasCalculo, 'materia'),
             servicosCalculo: normalizeItems(opcao.servicosCalculo, 'servico'),
             contribuicoes: (opcao.contribuicoes || []).map((contribuicao) => ({
